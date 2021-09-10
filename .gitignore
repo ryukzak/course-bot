@@ -1,0 +1,7 @@
+.calva
+target/
+data/
+.DS_Store
+.lsp
+.nrepl-port
+.clj-kondo
