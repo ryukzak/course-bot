@@ -4,8 +4,7 @@ Course bot for performing laboratory works for "Computer Architecture" disciplin
 
 ## Usage
 
-- `docker build -t course-bot . && docker stop csa-bot && docker rm csa-bot`
-- `docker run -e BOT_TOKEN=.............. -v $HOME/course-data:/data --restart=on-failure:10 --name csa-bot course-bot`
+`docker run -e BOT_TOKEN=... -v $HOME/course-data:/data --restart=on-failure:10 --name csa-bot ghcr.io/ryukzak/course-bot:master`
 
 ## License
 
