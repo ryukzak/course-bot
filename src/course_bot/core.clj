@@ -44,6 +44,17 @@
 
 (def drop-lab1-msg "Увы, но пришлось сбросить ваше согласование по лабораторной работе №1. Можете перезалить описание, но первой строкой пустить название вашего доклада. Глядя на него должно быть видно, что вы такой один в своей группе.")
 
+(defn lab1-drop-from-queue
+  ([db id] (lab1-drop-from-queue db id nil))
+  ([db id msg]
+   (let [group (c/get-at! db [id :group])
+         q (c/get-at! db [:schedule :lab1 group :queue])
+         q-new (filter #(not= id %) q)]
+     (c/assoc-at! db [:schedule :lab1 group :queue] q-new)
+     (when msg
+       (t/send-text token id msg)
+       (t/send-text token admin-chat (str "Студенту было отправлено:" "\n\n" msg))))))
+
 ;(drop-lab1-review db admin-chat)
 
 (defn lab1-state [on-review? approved?]
@@ -142,8 +153,44 @@
                                   (c/assoc-at! db [id :lab1 :on-review?] true))
                               (t/send-text token id "Нет проблем, выполните команду /lab1 повторно."))))
 
+  (d/dialog "lab1onNextLesson" db {{id :id} :from text :text}
+            :guard (let [lab1 (c/get-at! db [id :lab1])]
+                     (cond
+                       (not (:approved? lab1))
+                       (t/send-text token id "Увы, но вам необходимо сперва согласовать свою тему доклада на первую лабораторную работу.")
+                       :else nil))
+            (let [group-id (c/get-at! db [id :group])
+                  q (c/get-at! db [:schedule :lab1 group-id :queue])
+                  q-text #(->> %
+                               (map (fn [id] (lab1-status db id)))
+                               (clojure.string/join "\n"))
+                  ps (str "Будьте внимательны, только первые три пункта будут на ближайшем занятии. "
+                          "\n\n"
+                          "Если по каким-то причинам вам нужно изменить план, тогда вам надо: "
+                          "1) согласовать это с остальными ребятами в очереди (найти замену, поменяться местами и т.п.); "
+                          "2) сообщить об этом преподавателю, что бы внести правки в ручном режиме.")]
+              (if (some #(= id %) q)
+                (t/send-text token id (str "Вы уже в очереди: " "\n\n" (q-text q) "\n\n" ps))
+                (let [q (c/assoc-at! db [:schedule :lab1 group-id :queue] (conj q id))]
+                  (t/send-text token id (str "Ваш доклад добавлен в очередь на следующее занятие. Сейчас она выглядит так:"
+                                             "\n\n" (q-text q)
+                                             "\n\n" ps))))))
+
+  (d/dialog "lab1schedule" db {{id :id} :from text :text}
+            (doall
+             (->> (c/get-at! db [:schedule :lab1])
+                  (map (fn [[group desc]]
+                         (t/send-text token id
+                                      (str "Группа: " group
+                                           "\n"
+                                           (clojure.string/join "\n"
+                                                                (map #(str "- " (lab1-status db %)) (:queue desc))))))))))
+
   (h/command "magic" {{id :id} :chat}
-            (when (= id admin-chat)
+             (when (= id admin-chat)
+               ;(lab1-drop-from-queue db admin-chat)
+               ;(t/send-text token admin-chat (c/get-at! db [492965339]))
+               ;(drop-lab1-review db 434532551 "Извините, случайно одобрил (отозвал). Можете перегрузить описание указав первой строкой название доклада")
               ))
 
   (d/dialog "lab1status" db {{id :id} :from text :text}
