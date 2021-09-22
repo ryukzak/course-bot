@@ -38,7 +38,9 @@
 (defn drop-lab1-review [db id msg]
   (c/assoc-at! db [id :lab1 :on-review?] nil)
   (c/assoc-at! db [id :lab1 :approved?] nil)
-  (when msg (t/send-text token id msg)))
+  (when msg
+    (t/send-text token id msg)
+    (t/send-text token admin-chat (str "Студенту было отправлено:" "\n\n" msg))))
 
 (def drop-lab1-msg "Увы, но пришлось сбросить ваше согласование по лабораторной работе №1. Можете перезалить описание, но первой строкой пустить название вашего доклада. Глядя на него должно быть видно, что вы такой один в своей группе.")
 
@@ -167,8 +169,11 @@
                        nil)
                      :break)
             (let [[stud desc] (if true (get-lab1-for-review db) [admin-chat (c/get-at! db admin-chat)])]
-              (t/send-text token id (str "Было пирслано следующее на согласование (группа: " (:group desc) "):"))
-              (t/send-text token id (str "Тема: " (-> desc :lab1 :description clojure.string/split-lines first)))
+              (t/send-text token id (str "Было пирслано следующее на согласование (группа " (:group desc) "): "
+                                         "\n\n"
+                                         (lab1-status-str id desc)
+                                         "\n\n"
+                                         "Тема: " (-> desc :lab1 :description clojure.string/split-lines first)))
               (t/send-text token id (-> desc :lab1 :description))
               (c/assoc-at! db [admin-chat :admin :lab1 :on-approve] stud)
               (send-yes-no-kbd token id "Все нормально?"))
