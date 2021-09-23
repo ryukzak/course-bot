@@ -184,7 +184,8 @@
                                       (str "Группа: " group
                                            "\n"
                                            (clojure.string/join "\n"
-                                                                (map #(str "- " (lab1-status db %)) (:queue desc))))))))))
+                                                                (map (fn [[i stud-id]] (str (+ 1 i) ". " (lab1-status db stud-id)))
+                                                                     (zipmap (range) (:queue desc)))))))))))
 
   (h/command "magic" {{id :id} :chat}
              (when (= id admin-chat)
