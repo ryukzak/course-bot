@@ -154,6 +154,9 @@
                               (t/send-text token id "Нет проблем, выполните команду /lab1 повторно."))))
 
   (d/dialog "lab1onNextLesson" db {{id :id} :from text :text}
+            (t/send-text token id "Используйте команду /lab1benext, так как телеграм не хочет подсказывать команды с camelCase-ом."))
+
+  (d/dialog "lab1benext" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
                      (cond
                        (not (:approved? lab1))
