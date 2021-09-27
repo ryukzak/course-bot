@@ -102,6 +102,23 @@
 
 ;; (send-keyboard token id "Approve: " [{:text "approve"} {:text "decline"}])
 
+(defn send-lab1-status
+  ([db token id] (send-lab1-status db token id nil))
+  ([db token id only-group]
+   (doall
+    (->> (c/get-at! db [])
+         (group-by (fn [[id desc]] (:group desc)))
+         (filter (fn [[group _records]] (and (some? group) (or (nil? only-group) (= only-group group))) ))
+         (map (fn [[group records]]
+                [group (filter (fn [[id desc]] (some? (some-> desc :lab1 :on-review?))) records)]))
+         (map (fn [[group records]]
+                (t/send-text token id
+                             (str "Группа: " group
+                                  "\n"
+                                  (clojure.string/join "\n"
+                                                       (map #(str "- " (apply lab1-status-str %))
+                                                            (sort-by (fn [[id {{on-review? :on-review? approved? :approved?} :lab1}]] (lab1-state on-review? approved?)) records)))))))))))
+
 (h/defhandler bot-api
   (d/dialog "start" db {{id :id :as chat} :chat}
             (save-chat-info id chat)
@@ -200,19 +217,7 @@
 
   (d/dialog "lab1status" db {{id :id} :from text :text}
             :guard (if (= id admin-chat) nil :break)
-            (doall
-              (->> (c/get-at! db [])
-                   (group-by (fn [[id desc]] (:group desc)))
-                   (filter (fn [[group _records]] (some? group)))
-                   (map (fn [[group records]]
-                          [group (filter (fn [[id desc]] (some? (some-> desc :lab1 :on-review?))) records)]))
-                   (map (fn [[group records]]
-                     (t/send-text token id
-                       (str "Группа: " group
-                            "\n"
-                            (clojure.string/join "\n"
-                                                 (map #(str "- " (apply lab1-status-str %))
-                                                      (sort-by (fn [[id {{on-review? :on-review? approved? :approved?} :lab1}]] (lab1-state on-review? approved?)) records))))))))))
+            (send-lab1-status db token id))
 
   (d/dialog "lab1next" db {{id :id} :from text :text}
             :guard (if (= id admin-chat)
@@ -221,6 +226,7 @@
                        nil)
                      :break)
             (let [[stud desc] (if true (get-lab1-for-review db) [admin-chat (c/get-at! db admin-chat)])]
+              (send-lab1-status db token id (:group desc))
               (t/send-text token id (str "Было пирслано следующее на согласование (группа " (:group desc) "): "
                                          "\n\n"
                                          (lab1-status-str id desc)
