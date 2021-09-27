@@ -174,7 +174,8 @@
                           "2) сообщить об этом преподавателю, что бы внести правки в ручном режиме.")]
               (if (some #(= id %) q)
                 (t/send-text token id (str "Вы уже в очереди: " "\n\n" (q-text q) "\n\n" ps))
-                (let [q (c/assoc-at! db [:schedule :lab1 group-id :queue] (conj q id))]
+                (let [q (c/assoc-at! db [:schedule :lab1 group-id :queue] (concat q (list id)))]
+                  (t/send-text token admin-chat (str "Заявка на доклад в группу: " group-id))
                   (t/send-text token id (str "Ваш доклад добавлен в очередь на следующее занятие. Сейчас она выглядит так:"
                                              "\n\n" (q-text q)
                                              "\n\n" ps))))))
