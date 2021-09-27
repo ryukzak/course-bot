@@ -119,6 +119,27 @@
                                                        (map #(str "- " (apply lab1-status-str %))
                                                             (sort-by (fn [[id {{on-review? :on-review? approved? :approved?} :lab1}]] (lab1-state on-review? approved?)) records)))))))))))
 
+(defn send-lab1-schedule-list [token id group lst]
+  (t/send-text token id
+               (str "Группа: " group
+                    "\n"
+                    (clojure.string/join "\n"
+                                         (map (fn [[i stud-id]] (str (+ 1 i) ". " (lab1-status db stud-id)))
+                                              (zipmap (range) lst))))))
+
+  (defn lab1fix [db group n]
+    (let [desc (c/get-at! db [:schedule :lab1 group])
+          next (take n (:queue desc))
+          other (drop n (:queue desc))]
+      (println "lab1fix " group n)
+      (println :history (cons next (:history desc)))
+      (println :queue other)
+      (c/assoc-at! db [:schedule :lab1 group :history] (cons next (:history desc)))
+      (c/assoc-at! db [:schedule :lab1 group :queue] other)))
+
+(defn drop-lab1-feedback [db group]
+  (c/assoc-at! db [:schedule :lab1 group :feedback] nil))
+
 (h/defhandler bot-api
   (d/dialog "start" db {{id :id :as chat} :chat}
             (save-chat-info id chat)
@@ -200,16 +221,39 @@
   (d/dialog "lab1schedule" db {{id :id} :from text :text}
             (doall
              (->> (c/get-at! db [:schedule :lab1])
-                  (map (fn [[group desc]]
-                         (t/send-text token id
-                                      (str "Группа: " group
-                                           "\n"
-                                           (clojure.string/join "\n"
-                                                                (map (fn [[i stud-id]] (str (+ 1 i) ". " (lab1-status db stud-id)))
-                                                                     (zipmap (range) (:queue desc)))))))))))
+                  (map (fn [[group desc]] (send-lab1-schedule-list token id group (:queue desc)))))))
+
+  (d/dialog "lab1feedback" db {{id :id :as chat} :chat}
+            (let [group (c/get-at! db [id :group])
+                  history (c/get-at! db [:schedule :lab1 group :history])]
+              (println :group group)
+              (println :history history)
+              (send-lab1-schedule-list token id group (first history)))
+            (t/send-text token id (str "По идее, вы только что были на лабораторном занятии и ознакомились с тремя докладами (если список "
+                                       "не корректный -- сообщите об этом преподавателю)."
+                                       "\n\n"
+                                       "Пожалуйста, отсортируйте доклады от лучшего к худшему на ваш взгляд. Для этого "
+                                       "напишите мне строку вида \"123\", если с каждым докладом становилось только лучше. "
+                                       "Если лучшим докладом был второй, а худшим - первый, то напишите 213."
+                                       "\n\n"
+                                       "Я буду вынужден сохранить информацию о том, кто как головал, что бы не было дублей, "
+                                       "но публичной будет только сводная характеристика (либо кто-то сделает доклад об этом косяке)."
+                                       "\n\n"
+                                       "Ваша оценка:"))
+            (:listen {{id :id :as chat} :chat text :text}
+                     (let [group (c/get-at! db [id :group])
+                           feedback (c/get-at! db [:schedule :lab1 group :feedback])]
+                       (c/assoc-at! db [:schedule :lab1 group :feedback]
+                                    (cons [id (str (new java.util.Date)) text] feedback)))
+                     (t/send-text token id "Записал, если что-то напутали -- загрузите еще раз.")))
 
   (h/command "magic" {{id :id} :chat}
              (when (= id admin-chat)
+               ;(lab1fix db "P33312" 3)
+               (let [desc (c/get-at! db [:schedule :lab1 "P33312"])]
+                 (println :desc desc)
+                 (doall (map println (:feedback desc))))
+               ;(drop-lab1-feedback db "P33312")
                ;(lab1-drop-from-queue db admin-chat)
                ;(t/send-text token admin-chat (c/get-at! db [492965339]))
                ;(drop-lab1-review db 434532551 "Извините, случайно одобрил (отозвал). Можете перегрузить описание указав первой строкой название доклада")
