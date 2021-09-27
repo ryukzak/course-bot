@@ -127,18 +127,46 @@
                                          (map (fn [[i stud-id]] (str (+ 1 i) ". " (lab1-status db stud-id)))
                                               (zipmap (range) lst))))))
 
-  (defn lab1fix [db group n]
+(defn lab1fix [db group n]
+  (let [desc (c/get-at! db [:schedule :lab1 group])
+        next (take n (:queue desc))
+        other (drop n (:queue desc))]
+    (println "lab1fix " group n)
+    (println :history (cons next (:history desc)))
+    (println :queue other)
+    (c/assoc-at! db [:schedule :lab1 group :fixed] next)
+    (c/assoc-at! db [:schedule :lab1 group :queue] other)))
+
+(defn lab1-score [feedback]
+  (let [scores (->> feedback
+                    (map (fn [[id _dt score]] [id (clojure.string/replace score #" |\t|\n" "")]))
+                    reverse
+                    (into (hash-map))
+                    (map second)
+                    (filter #(= 3 (count %))))
+        n (float (count scores))]
+    (map (fn [i] (Math/round (/ (apply + (map #(- 5 (clojure.string/index-of % (str i))) scores)) n))) (range 1 4))))
+
+
+(defn lab1pass [db group]
     (let [desc (c/get-at! db [:schedule :lab1 group])
-          next (take n (:queue desc))
-          other (drop n (:queue desc))]
-      (println "lab1fix " group n)
-      (println :history (cons next (:history desc)))
-      (println :queue other)
-      (c/assoc-at! db [:schedule :lab1 group :history] (cons next (:history desc)))
-      (c/assoc-at! db [:schedule :lab1 group :queue] other)))
+          fixed (:fixed desc)
+          feedback (:feedback desc)
+          record {:reports fixed :feedback feedback :user-scores (lab1-score feedback)}]
+      (if fixed
+        (do
+          (println "lab1pass" group record)
+          (doall (map println (reverse feedback)))
+          (c/assoc-at! db [:schedule :lab1 group :history] (cons record (:history desc)))
+          (c/assoc-at! db [:schedule :lab1 group :fixed] nil)
+          (c/assoc-at! db [:schedule :lab1 group :feedback] nil))
+        (println "lab1pass FAIL:" desc))))
 
 (defn drop-lab1-feedback [db group]
   (c/assoc-at! db [:schedule :lab1 group :feedback] nil))
+
+(defn drop-lab1-history [db group]
+  (c/assoc-at! db [:schedule :lab1 group :history] nil))
 
 (h/defhandler bot-api
   (d/dialog "start" db {{id :id :as chat} :chat}
@@ -223,12 +251,26 @@
              (->> (c/get-at! db [:schedule :lab1])
                   (map (fn [[group desc]] (send-lab1-schedule-list token id group (:queue desc)))))))
 
+  (d/dialog "lab1reportqueue" db {{id :id} :from text :text}
+            (doall
+             (->> (c/get-at! db [:schedule :lab1])
+                  (map (fn [[group desc]] (send-lab1-schedule-list token id group (:queue desc)))))))
+
+  (d/dialog "lab1reportnext" db {{id :id} :from text :text}
+            (doall
+             (->> (c/get-at! db [:schedule :lab1])
+                  (map (fn [[group desc]]
+                         (when (:fixed desc) (send-lab1-schedule-list token id group (:fixed desc))))))))
+
   (d/dialog "lab1feedback" db {{id :id :as chat} :chat}
+            :guard (let [group (c/get-at! db [id :group])
+                         fixed (c/get-at! db [:schedule :lab1 group :fixed])]
+                     (if fixed
+                       nil
+                       (t/send-text token id "Голосование либо не запущено, либо уже завершено.")))
             (let [group (c/get-at! db [id :group])
-                  history (c/get-at! db [:schedule :lab1 group :history])]
-              (println :group group)
-              (println :history history)
-              (send-lab1-schedule-list token id group (first history)))
+                  fixed (c/get-at! db [:schedule :lab1 group :fixed])]
+              (send-lab1-schedule-list token id group fixed))
             (t/send-text token id (str "По идее, вы только что были на лабораторном занятии и ознакомились с тремя докладами (если список "
                                        "не корректный -- сообщите об этом преподавателю)."
                                        "\n\n"
@@ -250,13 +292,18 @@
   (h/command "magic" {{id :id} :chat}
              (when (= id admin-chat)
                ;(lab1fix db "P33312" 3)
-               (let [desc (c/get-at! db [:schedule :lab1 "P33312"])]
-                 (println :desc desc)
-                 (doall (map println (:feedback desc))))
+               ;(c/assoc-at! db [:schedule :lab1 "P33312" :fixed] (first (c/get-at! db [:schedule :lab1 "P33312" :history])))
+               ;(drop-lab1-history db "P33312")
+               ;(lab1pass db "P33312")
+
+               (println (c/get-at! db [:schedule :lab1 "P33312"]))
+               ;(println :desc (c/get-at! db [:schedule :lab1 "P33312"]))
+               ;(lab1fix db "P33112" 1)
                ;(drop-lab1-feedback db "P33312")
                ;(lab1-drop-from-queue db admin-chat)
                ;(t/send-text token admin-chat (c/get-at! db [492965339]))
                ;(drop-lab1-review db 434532551 "Извините, случайно одобрил (отозвал). Можете перегрузить описание указав первой строкой название доклада")
+               (t/send-text token id "magic happen...")
               ))
 
   (d/dialog "lab1status" db {{id :id} :from text :text}
