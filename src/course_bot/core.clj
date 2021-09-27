@@ -51,6 +51,7 @@
          q (c/get-at! db [:schedule :lab1 group :queue])
          q-new (filter #(not= id %) q)]
      (c/assoc-at! db [:schedule :lab1 group :queue] q-new)
+     (c/assoc-at! db [id :lab1 :in-queue?] nil)
      (when msg
        (t/send-text token id msg)
        (t/send-text token admin-chat (str "Студенту было отправлено:" "\n\n" msg))))))
@@ -225,6 +226,8 @@
   (d/dialog "lab1benext" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
                      (cond
+                       (:in-queue? lab1)
+                       (t/send-text token id "Вы уже в очереди.")
                        (not (:approved? lab1))
                        (t/send-text token id "Увы, но вам необходимо сперва согласовать свою тему доклада на первую лабораторную работу.")
                        :else nil))
@@ -241,6 +244,7 @@
               (if (some #(= id %) q)
                 (t/send-text token id (str "Вы уже в очереди: " "\n\n" (q-text q) "\n\n" ps))
                 (let [q (c/assoc-at! db [:schedule :lab1 group-id :queue] (concat q (list id)))]
+                  (c/assoc-at! db [id :lab1 :in-queue?] true)
                   (t/send-text token admin-chat (str "Заявка на доклад в группу: " group-id))
                   (t/send-text token id (str "Ваш доклад добавлен в очередь на следующее занятие. Сейчас она выглядит так:"
                                              "\n\n" (q-text q)
