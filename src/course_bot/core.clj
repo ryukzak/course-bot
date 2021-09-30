@@ -69,15 +69,15 @@
     (str [on-review? approved?])))
 
 (defn lab1-status-str [id desc]
-    (let [{{on-review? :on-review? approved? :approved? desc :description} :lab1
-          name :name
-          group :group
-          {username :username} :chat} desc]
-      (str name " (" id ", @" username ") "
-           (lab1-state on-review? approved?)
-           (when approved?
-             (str "\n"
-                  "  > " (first (clojure.string/split-lines desc)))))))
+  (let [{{on-review? :on-review? approved? :approved? desc :description} :lab1
+         name :name
+         group :group
+         {username :username} :chat} desc]
+    (str name " (" id ", @" username ") "
+         (lab1-state on-review? approved?)
+         (when approved?
+           (str "\n"
+                "  > " (first (clojure.string/split-lines desc)))))))
 
 (defn lab1-status
   ([db id] (lab1-status-str id (c/get-at! db [id]))))
@@ -109,7 +109,7 @@
    (doall
     (->> (c/get-at! db [])
          (group-by (fn [[id desc]] (:group desc)))
-         (filter (fn [[group _records]] (and (some? group) (or (nil? only-group) (= only-group group))) ))
+         (filter (fn [[group _records]] (and (some? group) (or (nil? only-group) (= only-group group)))))
          (map (fn [[group records]]
                 [group (filter (fn [[id desc]] (some? (some-> desc :lab1 :on-review?))) records)]))
          (map (fn [[group records]]
@@ -148,20 +148,19 @@
         n (float (count scores))]
     (map (fn [i] (Math/round (/ (apply + (map #(- 5 (clojure.string/index-of % (str i))) scores)) n))) (range 1 4))))
 
-
 (defn lab1pass [db group]
-    (let [desc (c/get-at! db [:schedule :lab1 group])
-          fixed (:fixed desc)
-          feedback (:feedback desc)
-          record {:reports fixed :feedback feedback :user-scores (lab1-score feedback)}]
-      (if fixed
-        (do
-          (println "lab1pass" group record)
-          (doall (map println (reverse feedback)))
-          (c/assoc-at! db [:schedule :lab1 group :history] (cons record (:history desc)))
-          (c/assoc-at! db [:schedule :lab1 group :fixed] nil)
-          (c/assoc-at! db [:schedule :lab1 group :feedback] nil))
-        (println "lab1pass FAIL:" desc))))
+  (let [desc (c/get-at! db [:schedule :lab1 group])
+        fixed (:fixed desc)
+        feedback (:feedback desc)
+        record {:reports fixed :feedback feedback :user-scores (lab1-score feedback)}]
+    (if fixed
+      (do
+        (println "lab1pass" group record)
+        (doall (map println (reverse feedback)))
+        (c/assoc-at! db [:schedule :lab1 group :history] (cons record (:history desc)))
+        (c/assoc-at! db [:schedule :lab1 group :fixed] nil)
+        (c/assoc-at! db [:schedule :lab1 group :feedback] nil))
+      (println "lab1pass FAIL:" desc))))
 
 (defn drop-lab1-feedback [db group]
   (c/assoc-at! db [:schedule :lab1 group :feedback] nil))
@@ -307,8 +306,7 @@
                ;(lab1-drop-from-queue db admin-chat)
                ;(t/send-text token admin-chat (c/get-at! db [492965339]))
                ;(drop-lab1-review db 434532551 "Извините, случайно одобрил (отозвал). Можете перегрузить описание указав первой строкой название доклада")
-               (t/send-text token id "magic happen...")
-              ))
+               (t/send-text token id "magic happen...")))
 
   (d/dialog "lab1status" db {{id :id} :from text :text}
             :guard (if (= id admin-chat) nil :break)
@@ -344,29 +342,32 @@
                                                   "\n\n"
                                                   "Еще /lab1next?")))
                      (do
-                        (t/send-text token id "Все плохо, но надо рассказать почему:")
-                        (:listen {{id :id} :from text :text}
-                          (let [stud (c/get-at! db [admin-chat :admin :lab1 :on-approve])]
-                           (c/assoc-at! db [admin-chat :admin :lab1 :on-approve] nil)
-                           (c/assoc-at! db [stud :lab1 :on-review?] false)
-                           (c/assoc-at! db [stud :lab1 :approved?] false)
+                       (t/send-text token id "Все плохо, но надо рассказать почему:")
+                       (:listen {{id :id} :from text :text}
+                                (let [stud (c/get-at! db [admin-chat :admin :lab1 :on-approve])]
+                                  (c/assoc-at! db [admin-chat :admin :lab1 :on-approve] nil)
+                                  (c/assoc-at! db [stud :lab1 :on-review?] false)
+                                  (c/assoc-at! db [stud :lab1 :approved?] false)
 
-                           (t/send-text token stud (str "Увы, но ваше описание инцидента для лабораторно работы №1 отвергли со следующим комментарием: "
-                                                         "\n\n"
-                                                         text
-                                                         "\n\n"
-                                                         "Попробуйте снова.
+                                  (t/send-text token stud (str "Увы, но ваше описание инцидента для лабораторно работы №1 отвергли со следующим комментарием: "
+                                                               "\n\n"
+                                                               text
+                                                               "\n\n"
+                                                               "Попробуйте снова.
                                                          "))
-                           (t/send-text token id (str "Замечания отправлено студенту."
-                                                      "\n\n"
-                                                      (lab1-status db stud)
-                                                      "\n\n"
-                                                      "Ещё /lab1next")))))))
+                                  (t/send-text token id (str "Замечания отправлено студенту."
+                                                             "\n\n"
+                                                             (lab1-status db stud)
+                                                             "\n\n"
+                                                             "Ещё /lab1next")))))))
 
   (h/command "help" {{id :id} :chat}
-    (t/send-text token id (str "/start - регистрация\n"
-                               "/dump - что бот знает о вас\n"
-                               "/lab1 - согласовать задание на лабораторную работу №1"))))
+             (t/send-text token id (str "start - регистрация\n"
+                                        "lab1 - отправка описания инцидента на согласование\n"
+                                        "lab1benext - заявиться докладчиком на ближайшее занятие\n"
+                                        "lab1schedule - очередь докладов на ближайшие занятия (по группам)\n"
+                                        "lab1feedback - оценить доклады с занятия\n"
+                                        "dump - что бот знает про меня?\n"))))
 
 ;; (h/defhandler bot-api
 ;;   (d/dialog "start" db {{id :id :as chat} :chat}
@@ -380,6 +381,7 @@
 
 ;; (def channel (p/start token bot-api))
 ;; (p/stop channel)
+
 
 (defn -main
   "I don't do a whole lot ... yet."
