@@ -168,6 +168,11 @@
 (defn drop-lab1-history [db group]
   (c/assoc-at! db [:schedule :lab1 group :history] nil))
 
+(defn send-whoami [db token id]
+  (let [{name :name group :group} (c/get-at! db [id])]
+    (t/send-text token id (str "Ваше  имя: " name ". Ваша группа: " group " (примечание: группа четверга это отдельная группа)."))))
+
+
 (h/defhandler bot-api
   (d/dialog "start" db {{id :id :as chat} :chat}
             (save-chat-info id chat)
@@ -183,6 +188,7 @@
                               :guard (when-not (contains? group-list text)
                                        (t/send-text token id (str "Увы, но я не знаю такой группы. Мне сказали что должна быть одна из: "
                                                                   (clojure.string/join " " group-list))))
+                              ;; TODO: проверка, менял ли студент группу.
                               (c/assoc-at! db [id :group] text)
                               (let [{name :name group :group} (c/get-at! db [id])]
                                 (t/send-text token id (str "Итого: " name " из группы " group " зарегистрирован."
@@ -228,8 +234,7 @@
                                   (c/assoc-at! db [id :lab1 :on-review?] true))
                               (t/send-text token id "Нет проблем, выполните команду /lab1 повторно."))))
 
-  (d/dialog "lab1onNextLesson" db {{id :id} :from text :text}
-            (t/send-text token id "Используйте команду /lab1benext, так как телеграм не хочет подсказывать команды с camelCase-ом."))
+  (d/dialog "lab1onNextLesson" db {{id :id} :from text :text} (t/send-text token id "Используйте команду /lab1benext, так как телеграм не хочет с camelCase-ом."))
 
   (d/dialog "lab1benext" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
@@ -258,10 +263,7 @@
                                              "\n\n" (q-text q)
                                              "\n\n" ps))))))
 
-  (d/dialog "lab1schedule" db {{id :id} :from text :text}
-            (doall
-             (->> (c/get-at! db [:schedule :lab1])
-                  (map (fn [[group desc]] (send-lab1-schedule-list token id group (:queue desc)))))))
+  (d/dialog "lab1schedule" db {{id :id} :from text :text} (t/send-text token id "Используйте /lab1reportqueue"))
 
   (d/dialog "lab1reportqueue" db {{id :id} :from text :text}
             (doall
