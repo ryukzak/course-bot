@@ -175,6 +175,7 @@
                                        "Через меня будут организовано выполнение лабораторных работ."
                                        "\n\n"
                                        "Представьтесь пожалуйста, мне нужно знать как вносить вас в ведомости (ФИО):"))
+            (c/assoc-at! db [id :reg-date] (str (new java.util.Date)))
             (:listen {{id :id} :from text :text}
                      (c/assoc-at! db [id :name] text)
                      (t/send-text token id "Из какой вы группы?")
@@ -186,10 +187,17 @@
                               (let [{name :name group :group} (c/get-at! db [id])]
                                 (t/send-text token id (str "Итого: " name " из группы " group " зарегистрирован."
                                                            "\n"
-                                                           "Если вы где-то ошиблись - выполните команду /start повторно. Помощь - /help."))))))
+                                                           "Если вы где-то ошиблись - выполните команду /start повторно. Помощь -- /help."))))))
 
   (h/command "dump" {{id :id} :chat}
              (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
+
+  ;; TODO: change to whoami
+  (h/command "mygroup" {{id :id} :chat}
+             (t/send-text token id (str "Ваша группа (четверг -- тоже группа!):" (c/get-at! db [id :group])))
+             (t/send-text token id (str "Если ошибка, то вам необходимо сделать /start. "
+                                        "Если у вас есть согласована тема доклада или заявка на доклад -- сообщите об этом преподавателю "
+                                        "(кто вы, что за доклад, в какую группу он попал по ошибке). Будем смотреть как это исправить.")))
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
@@ -244,7 +252,7 @@
                 (t/send-text token id (str "Вы уже в очереди: " "\n\n" (q-text q) "\n\n" ps))
                 (let [q (c/assoc-at! db [:schedule :lab1 group-id :queue] (concat q (list id)))]
                   (c/assoc-at! db [id :lab1 :in-queue?] true)
-                  (t/send-text token admin-chat (str "Заявка на доклад в группу: " group-id))
+                  (t/send-text token admin-chat (str "Заявка на доклад в группу (группа четверга -- отдельная группа!): " group-id))
                   (t/send-text token id (str "Ваш доклад добавлен в очередь на следующее занятие. Сейчас она выглядит так:"
                                              "\n\n" (q-text q)
                                              "\n\n" ps))))))
