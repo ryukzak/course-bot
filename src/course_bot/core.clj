@@ -2,6 +2,7 @@
   (:require [course-bot.dialog :as d])
   (:require [codax.core :as c])
   (:require [clj-http.client :as http])
+  (:require [clojure.string :as str])
   (:require [morse.handlers :as h]
             [morse.api :as t]
             [morse.polling :as p])
@@ -78,7 +79,7 @@
          (lab1-state on-review? approved?)
          (when approved?
            (str "\n"
-                "  > " (first (clojure.string/split-lines desc)))))))
+                "  > " (first (str/split-lines desc)))))))
 
 (defn lab1-status
   ([db id] (lab1-status-str id (c/get-at! db [id]))))
@@ -117,7 +118,7 @@
                 (t/send-text token id
                              (str "Группа: " group
                                   "\n"
-                                  (clojure.string/join "\n"
+                                  (str/join "\n"
                                                        (map #(str "- " (apply lab1-status-str %))
                                                             (sort-by (fn [[id {{on-review? :on-review? approved? :approved?} :lab1}]] (lab1-state on-review? approved?)) records)))))))))))
 
@@ -125,7 +126,7 @@
   (t/send-text token id
                (str "Группа: " group
                     "\n"
-                    (clojure.string/join "\n"
+                    (str/join "\n"
                                          (map (fn [[i stud-id]] (str (+ 1 i) ". " (lab1-status db stud-id)))
                                               (zipmap (range) lst))))))
 
@@ -143,13 +144,13 @@
 
 (defn lab1-score [feedback]
   (let [scores (->> feedback
-                    (map (fn [[id _dt score]] [id (clojure.string/replace score #" |\t|\n" "")]))
+                    (map (fn [[id _dt score]] [id (str/replace score #" |\t|\n" "")]))
                     reverse
                     (into (hash-map))
                     (map second)
                     (filter #(= 3 (count %))))
         n (float (count scores))]
-    (map (fn [i] (Math/round (/ (apply + (map #(- 5 (clojure.string/index-of % (str i))) scores)) n))) (range 1 4))))
+    (map (fn [i] (Math/round (/ (apply + (map #(- 5 (str/index-of % (str i))) scores)) n))) (range 1 4))))
 
 (defn lab1pass [db group]
   (let [desc (c/get-at! db [:schedule :lab1 group])
@@ -218,7 +219,7 @@
                      (:listen {{id :id} :from text :text}
                               :guard (when-not (contains? group-list text)
                                        (t/send-text token id (str "Увы, но я не знаю такой группы. Мне сказали что должна быть одна из: "
-                                                                  (clojure.string/join " " group-list))))
+                                                                  (str/join " " group-list))))
                               ;; TODO: проверка, менял ли студент группу.
                               (c/assoc-at! db [id :group] text)
                               (let [{name :name group :group} (c/get-at! db [id])]
@@ -268,7 +269,7 @@
                   q (c/get-at! db [:schedule :lab1 group-id :queue])
                   q-text #(->> %
                                (map (fn [id] (lab1-status db id)))
-                               (clojure.string/join "\n"))
+                               (str/join "\n"))
                   ps (str "Будьте внимательны, только первые три пункта будут на ближайшем занятии. "
                           "\n\n"
                           "Если по каким-то причинам вам нужно изменить план, тогда вам надо: "
@@ -353,7 +354,7 @@
                                          "\n\n"
                                          (lab1-status-str id desc)
                                          "\n\n"
-                                         "Тема: " (-> desc :lab1 :description clojure.string/split-lines first)))
+                                         "Тема: " (-> desc :lab1 :description str/split-lines first)))
               (t/send-text token id (-> desc :lab1 :description))
               (c/assoc-at! db [admin-chat :admin :lab1 :on-approve] stud)
               (send-yes-no-kbd token id "Все нормально?"))
