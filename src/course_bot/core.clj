@@ -177,6 +177,11 @@
 
 (h/defhandler bot-api
   (d/dialog "start" db {{id :id :as chat} :chat}
+            :guard (let [info (c/get-at! db [id])]
+                     (cond
+                       (nil? info) nil
+                       (:allow-restart info) nil
+                       :else (t/send-text token id "Что бы изменить информацию о вас -- сообщите об этом преподавателю.")))
             (save-chat-info id chat)
             (t/send-text token id (str "Привет, я бот курса \"Архитектура компьютера\". "
                                        "Через меня будут организовано выполнение лабораторных работ."
