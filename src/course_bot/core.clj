@@ -5,6 +5,7 @@
   (:require [morse.handlers :as h]
             [morse.api :as t]
             [morse.polling :as p])
+  (:use [clojure.pprint])
   (:gen-class))
 
 ; (def db (c/open-database! (or (System/getenv "DATA_STORE") "course_database")))
@@ -172,7 +173,7 @@
 
 (defn send-whoami [db token id]
   (let [{name :name group :group} (c/get-at! db [id])]
-    (t/send-text token id (str "Ваше  имя: " name ". Ваша группа: " group " (примечание: группа четверга это отдельная группа)."))))
+    (t/send-text token id (str "Ваше имя: " name ". Ваша группа: " group " (примечание: группа четверга это отдельная группа). Ваш телеграмм id: " id))))
 
 
 (h/defhandler bot-api
@@ -198,20 +199,11 @@
                               ;; TODO: проверка, менял ли студент группу.
                               (c/assoc-at! db [id :group] text)
                               (let [{name :name group :group} (c/get-at! db [id])]
-                                (t/send-text token id (str "Итого: " name " из группы " group " зарегистрирован."
-                                                           "\n"
-                                                           "Если вы где-то ошиблись - выполните команду /start повторно. Помощь -- /help."))))))
+                                (send-whoami db token id)
+                                (t/send-text token id "Если вы где-то ошиблись - выполните команду /start повторно. Помощь -- /help.")))))
 
-  (h/command "dump" {{id :id} :chat}
-             (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
-
+  (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
   (h/command "whoami" {{id :id} :chat} (send-whoami db token id))
-
-  (h/command "mygroup" {{id :id} :chat}
-             (send-whoami db token id)
-             (t/send-text token id (str "Если ошибка, то вам необходимо сделать /start. "
-                                        "Если у вас есть согласована тема доклада или заявка на доклад -- сообщите об этом преподавателю "
-                                        "(кто вы, что за доклад, в какую группу он попал по ошибке). Будем смотреть как это исправить.")))
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
@@ -241,8 +233,6 @@
                                   (c/assoc-at! db [id :lab1 :on-review?] true))
                               (t/send-text token id "Нет проблем, выполните команду /lab1 повторно."))))
 
-  (d/dialog "lab1onNextLesson" db {{id :id} :from text :text} (t/send-text token id "Используйте команду /lab1benext, так как телеграм не хочет с camelCase-ом."))
-
   (d/dialog "lab1benext" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
                      (cond
@@ -270,8 +260,6 @@
                                              "\n\n" (q-text q)
                                              "\n\n" ps))))))
 
-  (d/dialog "lab1schedule" db {{id :id} :from text :text} (t/send-text token id "Используйте /lab1reportqueue"))
-
   (d/dialog "lab1reportqueue" db {{id :id} :from text :text}
             (doall
              (->> (c/get-at! db [:schedule :lab1])
@@ -281,7 +269,8 @@
             (doall
              (->> (c/get-at! db [:schedule :lab1])
                   (map (fn [[group desc]]
-                         (when (:fixed desc) (send-lab1-schedule-list token id group (:fixed desc))))))))
+                         (when (:fixed desc) (send-lab1-schedule-list token id group (:fixed desc)))))))
+             (t/send-text token id "Всё что было я прислал."))
 
   (d/dialog "lab1feedback" db {{id :id :as chat} :chat}
             :guard (let [group (c/get-at! db [id :group])
@@ -381,9 +370,11 @@
 
   (h/command "help" {{id :id} :chat}
              (t/send-text token id (str "start - регистрация\n"
+                                        "whoami - какая у меня группа\n"
                                         "lab1 - отправка описания инцидента на согласование\n"
                                         "lab1benext - заявиться докладчиком на ближайшее занятие\n"
-                                        "lab1schedule - очередь докладов на ближайшие занятия (по группам)\n"
+                                        "lab1reportqueue - очередь докладов на ближайшие занятия (по группам)\n"
+                                        "lab1reportnext - доклады наследующий раз (по группам)\n"
                                         "lab1feedback - оценить доклады с занятия\n"
                                         "dump - что бот знает про меня?\n"))))
 
