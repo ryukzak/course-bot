@@ -132,6 +132,8 @@
   (let [desc (c/get-at! db [:schedule :lab1 group])
         next (take n (:queue desc))
         other (drop n (:queue desc))]
+    (when-not (empty? (:fixed desc))
+      (throw (Exception. "Already fixed!")))
     (println "lab1fix " group n)
     (println :history (cons next (:history desc)))
     (println :queue other)
