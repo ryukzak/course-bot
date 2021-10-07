@@ -418,5 +418,9 @@
   "I don't do a whole lot ... yet."
   [& args]
   (println "Bot activated, my Lord!")
-  (p/start token bot-api)
-  (Thread/sleep Long/MAX_VALUE))
+  (loop [channel (p/start token bot-api)]
+    (Thread/sleep 1000)
+    ;; (print ".")(flush)
+    (when-not (.closed? channel)
+      (recur channel)))
+  (println "Bot is dead, my Lord!"))
