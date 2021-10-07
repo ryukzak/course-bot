@@ -175,6 +175,29 @@
   (let [{name :name group :group} (c/get-at! db [id])]
     (t/send-text token id (str "Ваше имя: " name ". Ваша группа: " group " (примечание: группа четверга это отдельная группа). Ваш телеграмм id: " id))))
 
+(defn drop-lab1-schedule-for! [db id]
+  (let [lab1 (c/get-at! db [:schedule :lab1])
+        upd (into {}
+                   (map (fn [[gr info]]
+                          [gr (assoc info
+                                     :fixed (filter #(not= % id) (:fixed info))
+                                     :queue (filter #(not= % id) (:queue info)))])
+                        lab1))]
+    (c/assoc-at! db [:schedule :lab1] upd)))
+
+(defn drop-lab1-review! [db token id msg]
+  (c/assoc-at! db [id :lab1 :on-review?] nil)
+  (c/assoc-at! db [id :lab1 :approved?] nil)
+  (c/assoc-at! db [id :lab1 :in-queue?] nil)
+  (when msg
+    (t/send-text token id msg)
+    (t/send-text token admin-chat (str "Студенту было отправлено:" "\n\n" msg))))
+
+(def drop-lab1-msg "Увы, но пришлось сбросить ваше согласование по лабораторной работе №1.")
+
+(defn drop-lab1-for! [db token id]
+  (drop-lab1-schedule-for! db id)
+  (drop-lab1-review! db token id drop-lab1-msg))
 
 (h/defhandler bot-api
   (d/dialog "start" db {{id :id :as chat} :chat}
@@ -301,18 +324,17 @@
 
   (h/command "magic" {{id :id} :chat}
              (when (= id admin-chat)
-               ;(lab1fix db "P33312" 3)
-               ;(c/assoc-at! db [:schedule :lab1 "P33312" :fixed] (first (c/get-at! db [:schedule :lab1 "P33312" :history])))
-               ;(drop-lab1-history db "P33312")
-               ;(lab1pass db "P33312")
+               ;;(lab1fix db "P33111" 2)
+               ;;(lab1fix db "P33101" 3)
+               ;;(lab1fix db "P33302" 3)
 
-               (println (c/get-at! db [:schedule :lab1 "P33312"]))
-               ;(println :desc (c/get-at! db [:schedule :lab1 "P33312"]))
-               ;(lab1fix db "P33112" 1)
-               ;(drop-lab1-feedback db "P33312")
-               ;(lab1-drop-from-queue db admin-chat)
-               ;(t/send-text token admin-chat (c/get-at! db [492965339]))
-               ;(drop-lab1-review db 434532551 "Извините, случайно одобрил (отозвал). Можете перегрузить описание указав первой строкой название доклада")
+               ;;(lab1pass db "P33111")
+               ;;(lab1pass db "P33101")
+               ;;(lab1pass db "P33302")
+
+               ;;(lab1fix db "thursday" 3)
+
+               ;;(lab1pass db "thursday")
                (t/send-text token id "magic happen...")))
 
   (d/dialog "lab1status" db {{id :id} :from text :text}
