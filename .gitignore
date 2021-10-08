@@ -1,3 +1,10 @@
+*.jar
+*.class
+.lein-deps-sum
+.lein-repl-history
+.lein-plugins/
+.lein-failures
+.nrepl-port
 .calva
 target/
 data/
@@ -5,3 +12,6 @@ data/
 .lsp
 .nrepl-port
 .clj-kondo
+test-codax
+default-codax
+*.tar.gz

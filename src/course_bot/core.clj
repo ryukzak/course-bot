@@ -1,17 +1,17 @@
 (ns course-bot.core
   (:require [course-bot.dialog :as d])
+  (:require [course-bot.talk :as b])
   (:require [codax.core :as c])
   (:require [clj-http.client :as http])
   (:require [clojure.string :as str])
-  (:require [clojure.test :refer [is with-test]])
+  (:require [clojure.test :refer [is with-test deftest]])
   (:require [morse.handlers :as h]
             [morse.api :as t]
             [morse.polling :as p])
-  (:use [clojure.pprint])
+  (:require [clojure.pprint :refer [pprint]])
   (:gen-class))
 
-; (def db (c/open-database! (or (System/getenv "DATA_STORE") "course_database")))
-(def db (c/open-database! "/data/csa"))
+(def db (c/open-database! (or (System/getenv "BOT_DATABASE") "default-codax")))
 (def token (System/getenv "BOT_TOKEN"))
 
 (def group-list #{"P33102" "P33111" "P33301" "P33101" "P33312" "P33302" "P33112" "thursday"})
@@ -35,31 +35,6 @@
                               :as           :json
                               :form-params  body})]
      (-> resp :body))))
-
-;; (send-message token id {:text "bla-bla"})
-
-(defn drop-lab1-review [db id msg]
-  (c/assoc-at! db [id :lab1 :on-review?] nil)
-  (c/assoc-at! db [id :lab1 :approved?] nil)
-  (when msg
-    (t/send-text token id msg)
-    (t/send-text token admin-chat (str "Студенту было отправлено:" "\n\n" msg))))
-
-(def drop-lab1-msg "Увы, но пришлось сбросить ваше согласование по лабораторной работе №1. Можете перезалить описание, но первой строкой пустить название вашего доклада. Глядя на него должно быть видно, что вы такой один в своей группе.")
-
-(defn lab1-drop-from-queue
-  ([db id] (lab1-drop-from-queue db id nil))
-  ([db id msg]
-   (let [group (c/get-at! db [id :group])
-         q (c/get-at! db [:schedule :lab1 group :queue])
-         q-new (filter #(not= id %) q)]
-     (c/assoc-at! db [:schedule :lab1 group :queue] q-new)
-     (c/assoc-at! db [id :lab1 :in-queue?] nil)
-     (when msg
-       (t/send-text token id msg)
-       (t/send-text token admin-chat (str "Студенту было отправлено:" "\n\n" msg))))))
-
-;(drop-lab1-review db admin-chat)
 
 (defn lab1-state [on-review? approved?]
   (case [on-review? approved?]
@@ -93,19 +68,6 @@
                            :keyboard
                            [[{:text "yes"} {:text "no"}]]}}))
 
-;; (defn send-msg-and-drop-keyboard [token id msg]
-;;   (send-message token id {:text msg
-;;                           :reply_markup
-;;                           {:one_time_keyboard true
-;;                            :keyboard
-;;                            [[{:text "yes"} {:text "no"}]]}}))
-
-
-;; (defn send-keyboard [token id msg & args]
-;;   (send-message token id {:text msg :reply_markup {:keyboard args}}))
-
-;; (send-keyboard token id "Approve: " [{:text "approve"} {:text "decline"}])
-
 (defn send-lab1-status
   ([db token id] (send-lab1-status db token id nil))
   ([db token id only-group]
@@ -120,16 +82,17 @@
                              (str "Группа: " group
                                   "\n"
                                   (str/join "\n"
-                                                       (map #(str "- " (apply lab1-status-str %))
-                                                            (sort-by (fn [[id {{on-review? :on-review? approved? :approved?} :lab1}]] (lab1-state on-review? approved?)) records)))))))))))
+                                            (map #(str "- " (apply lab1-status-str %))
+                                                 (sort-by (fn [[id {{on-review? :on-review? approved? :approved?} :lab1}]]
+                                                            (lab1-state on-review? approved?)) records)))))))))))
 
 (defn send-lab1-schedule-list [token id group lst]
   (t/send-text token id
                (str "Группа: " group
                     "\n"
                     (str/join "\n"
-                                         (map (fn [[i stud-id]] (str (+ 1 i) ". " (lab1-status db stud-id)))
-                                              (zipmap (range) lst))))))
+                              (map (fn [[i stud-id]] (str (+ 1 i) ". " (lab1-status db stud-id)))
+                                   (zipmap (range) lst))))))
 
 (defn lab1fix [db group n]
   (let [desc (c/get-at! db [:schedule :lab1 group])
@@ -178,44 +141,128 @@
         (pprint record)
         (c/assoc-at! db [:schedule :lab1 group :history] (cons record (:history desc)))
         (c/assoc-at! db [:schedule :lab1 group :fixed] nil)
-        (c/assoc-at! db [:schedule :lab1 group :feedback] nil)
-        )
+        (c/assoc-at! db [:schedule :lab1 group :feedback] nil))
       (println "lab1pass FAIL:" desc))))
 
-(defn drop-lab1-feedback [db group]
-  (c/assoc-at! db [:schedule :lab1 group :feedback] nil))
-
-(defn drop-lab1-history [db group]
-  (c/assoc-at! db [:schedule :lab1 group :history] nil))
-
-(defn send-whoami [db token id]
+(defn send-whoami! [db token id]
   (let [{name :name group :group} (c/get-at! db [id])]
     (t/send-text token id (str "Ваше имя: " name ". Ваша группа: " group " (примечание: группа четверга это отдельная группа). Ваш телеграмм id: " id))))
 
-(defn drop-lab1-schedule-for! [db id]
-  (let [lab1 (c/get-at! db [:schedule :lab1])
-        upd (into {}
-                   (map (fn [[gr info]]
-                          [gr (assoc info
-                                     :fixed (filter #(not= % id) (:fixed info))
-                                     :queue (filter #(not= % id) (:queue info)))])
-                        lab1))]
-    (c/assoc-at! db [:schedule :lab1] upd)))
-
-(defn drop-lab1-review! [db token id msg]
-  (c/assoc-at! db [id :lab1 :on-review?] nil)
-  (c/assoc-at! db [id :lab1 :approved?] nil)
-  (c/assoc-at! db [id :lab1 :in-queue?] nil)
-  (when msg
-    (t/send-text token id msg)
-    (t/send-text token admin-chat (str "Студенту было отправлено:" "\n\n" msg))))
+;; for drop student
 
 (def drop-lab1-msg "Увы, но пришлось сбросить ваше согласование по лабораторной работе №1.")
 
-(defn drop-lab1-for! [db token id]
-  (drop-lab1-schedule-for! db id)
-  (drop-lab1-review! db token id drop-lab1-msg))
+(defn drop-lab1-schedule-for [tx id]
+  (let [lab1 (c/get-at tx [:schedule :lab1])
+        upd (into {}
+                  (map (fn [[gr info]]
+                         [gr (assoc info
+                                    :fixed (filter #(not= % id) (:fixed info))
+                                    :queue (filter #(not= % id) (:queue info)))])
+                       lab1))]
+    (c/assoc-at tx [:schedule :lab1] upd)))
 
+(defn drop-lab1-review [tx token id msg]
+  (when msg
+    (t/send-text token id msg)
+    (t/send-text token admin-chat (str "Студенту было отправлено:" "\n\n" msg)))
+  (-> tx
+      (c/assoc-at [id :lab1 :on-review?] nil)
+      (c/assoc-at [id :lab1 :approved?] nil)
+      (c/assoc-at [id :lab1 :in-queue?] nil)))
+
+(defn drop-lab1-for [tx token id]
+  (-> tx
+      (drop-lab1-schedule-for id)
+      (drop-lab1-review token id drop-lab1-msg)))
+
+(defn send-whoami [tx token id me]
+  (let [me (or me id)
+        {name :name group :group} (c/get-at tx [me])]
+    (t/send-text token id (str "Ваше имя: " name ". Ваша группа: " group " (примечание: группа четверга это отдельная группа). Ваш телеграмм id: " me))))
+
+(defn assert-admin [tx token id]
+  (when-not (= id admin-chat)
+    (t/send-text token id "У вас нет таких прав.")
+    (b/stop-talk tx)))
+
+(def dropstudent-talk
+  (b/talk db "dropstudent"
+          :start
+          (fn [tx {{id :id} :chat text :text}]
+            (assert-admin tx token id)
+            (let [args (b/command-args text)]
+              (if (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
+                (let [stud-id (Integer/parseInt (first args))
+                      stud (c/get-at tx [stud-id])]
+                  (when-not stud
+                    (t/send-text token id "Нет такого пользователя.")
+                    (b/stop-talk tx))
+                  (send-whoami tx token id stud-id)
+                  (send-yes-no-kbd token id "Сбросим этого студента?")
+                  (-> tx
+                      (c/assoc-at [admin-chat :admin :drop-student] stud-id)
+                      (b/change-branch :approve)))
+                (do
+                  (t/send-text token id "Ошибка ввода, нужно сообщение вроде: /dropstudent 12345")
+                  (b/wait tx)))))
+
+          :approve
+          (fn [tx {{id :id} :from text :text}]
+            (cond
+              (= text "yes") (let [stud-id (c/get-at tx [admin-chat :admin :drop-student])]
+                               (t/send-text token id "Сбросили.")
+                               (-> tx
+                                   (drop-lab1-for token stud-id)
+                                   (c/assoc-at [stud-id :allow-restart] true)
+                                   (c/assoc-at [admin-chat :admin :drop-student] nil)
+                                   (b/stop-talk)))
+              (= text "no") (do
+                              (t/send-text token id "Пускай пока остается.")
+                              (-> tx
+                                  (c/assoc-at [admin-chat :admin :drop-student] nil)
+                                  (b/stop-talk)))
+              :else (do (t/send-text token id "What?")
+                        (b/wait tx))))))
+
+
+
+(deftest dropstudent-talk-test
+  (let [out (atom "")
+        test-db (c/open-database! "test-codax")]
+    (c/assoc-at! test-db [admin-chat] {:name "Admin" :group "ROOT"})
+    (c/assoc-at! test-db [1] {:name "Stud" :group "STUD" :lab1 {:approved? true}})
+    (with-redefs [t/send-text (fn [_token id msg] (swap! out (constantly msg)) (println id msg))
+                  send-yes-no-kbd (fn [_token id msg] (swap! out (constantly msg)) (println id "yes-or-no" msg))
+                  db test-db]
+
+      (dropstudent-talk {:message {:chat {:id admin-chat} :text "/dropstudent 42"}})
+      (is (= @out "Нет такого пользователя."))
+
+      (dropstudent-talk {:message {:chat {:id 1} :text "/dropstudent 1"}})
+      (is (= @out "У вас нет таких прав."))
+
+      (dropstudent-talk {:message {:chat {:id admin-chat} :text "/dropstudent 1"}})
+      (is (= @out "Сбросим этого студента?"))
+      (is (= (c/get-at! test-db [admin-chat]) {:name "Admin", :group "ROOT", :admin {:drop-student 1}}))
+
+      (dropstudent-talk {:message {:chat {:id admin-chat} :text "blabla"}})
+      (is (= @out "What?"))
+
+      (dropstudent-talk {:message {:chat {:id admin-chat} :text "no"}})
+      (is (= @out "Пускай пока остается."))
+      (is (= (c/get-at! test-db [1]) {:name "Stud" :group "STUD" :lab1 {:approved? true}}))
+      (is (= (c/get-at! test-db [admin-chat]) {:name "Admin", :group "ROOT", :admin {:drop-student nil}}))
+
+      (dropstudent-talk {:message {:chat {:id admin-chat} :text "/dropstudent 1"}})
+      (is (= @out "Сбросим этого студента?"))
+      (is (= (c/get-at! test-db [admin-chat]) {:name "Admin", :group "ROOT", :admin {:drop-student 1}}))
+
+      (dropstudent-talk {:message {:chat {:id admin-chat} :text "yes"}})
+      (is (str/starts-with? @out "Студенту было отправлено"))
+      (is (= (c/get-at! test-db [1]) {:name "Stud", :group "STUD", :lab1 {:approved? nil, :on-review? nil, :in-queue? nil}, :allow-restart true})))))
+
+(declare bot-api id chat text)
 (h/defhandler bot-api
   (d/dialog "start" db {{id :id :as chat} :chat}
             :guard (let [info (c/get-at! db [id])]
@@ -239,11 +286,11 @@
                               ;; TODO: проверка, менял ли студент группу.
                               (c/assoc-at! db [id :group] text)
                               (let [{name :name group :group} (c/get-at! db [id])]
-                                (send-whoami db token id)
+                                (send-whoami! db token id)
                                 (t/send-text token id "Если вы где-то ошиблись - выполните команду /start повторно. Помощь -- /help.")))))
 
   (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
-  (h/command "whoami" {{id :id} :chat} (send-whoami db token id))
+  (h/command "whoami" {{id :id} :chat} (send-whoami! db token id))
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
@@ -310,7 +357,7 @@
              (->> (c/get-at! db [:schedule :lab1])
                   (map (fn [[group desc]]
                          (when (:fixed desc) (send-lab1-schedule-list token id group (:fixed desc)))))))
-             (t/send-text token id "Всё что было я прислал."))
+            (t/send-text token id "Всё что было я прислал."))
 
   (d/dialog "lab1feedback" db {{id :id :as chat} :chat}
             :guard (let [group (c/get-at! db [id :group])
@@ -341,8 +388,12 @@
                                     (cons [id (str (new java.util.Date)) text] feedback)))
                      (t/send-text token id "Записал, если что-то напутали -- загрузите еще раз.")))
 
+  dropstudent-talk
+
   (h/command "magic" {{id :id} :chat}
              (when (= id admin-chat)
+               ;(pprint (c/get-at! db [889101382]))
+               ;(pprint (c/get-at! db [admin-chat :admin]))
                ;;(lab1fix db "P33102" 2)
                ;;(lab1fix db "P33301" 3)
                ;;(lab1fix db "P33312" 2)
@@ -434,20 +485,6 @@
                                         "lab1reportnext - доклады наследующий раз (по группам)\n"
                                         "lab1feedback - оценить доклады с занятия\n"
                                         "dump - что бот знает про меня?\n"))))
-
-;; (h/defhandler bot-api
-;;   (d/dialog "start" db {{id :id :as chat} :chat}
-;;             (t/send-text token id "yes or no?")
-;;             (:yes-no {{id :id :as chat} :chat}
-;;                      :input-error (t/send-text token id "Wront input, repeat please")
-;;                      (do (t/send-text token id "Your input: yes; Put text")
-;;                          (:listen {{id :id :as chat} :chat} (t/send-text token id "input after yes")))
-;;                      (do (t/send-text token id "Your input: no; Put text")
-;;                          (:listen {{id :id :as chat} :chat} (t/send-text token id "input after no"))))))
-
-;; (def channel (p/start token bot-api))
-;; (p/stop channel)
-
 
 (defn -main
   "I don't do a whole lot ... yet."
