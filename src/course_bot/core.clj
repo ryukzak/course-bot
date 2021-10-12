@@ -7,7 +7,8 @@
   (:require [morse.handlers :as h]
             [morse.api :as t]
             [morse.polling :as p])
-  (:use [clojure.pprint]))
+  (:use [clojure.pprint])
+  (:gen-class))
 
 ; (def db (c/open-database! (or (System/getenv "DATA_STORE") "course_database")))
 (def db (c/open-database! "/data/csa"))
