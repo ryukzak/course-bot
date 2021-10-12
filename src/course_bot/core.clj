@@ -3,6 +3,7 @@
   (:require [codax.core :as c])
   (:require [clj-http.client :as http])
   (:require [clojure.string :as str])
+  (:require [clojure.test :refer [is with-test]])
   (:require [morse.handlers :as h]
             [morse.api :as t]
             [morse.polling :as p])
@@ -141,28 +142,43 @@
     (c/assoc-at! db [:schedule :lab1 group :fixed] next)
     (c/assoc-at! db [:schedule :lab1 group :queue] other)))
 
-(defn lab1-score [feedback]
-  (let [scores (->> feedback
-                    (map (fn [[id _dt score]] [id (str/replace score #" |\t|\n" "")]))
-                    reverse
-                    (into (hash-map))
-                    (map second)
-                    (filter #(= 3 (count %))))
-        n (float (count scores))]
-    (map (fn [i] (Math/round (/ (apply + (map #(- 5 (str/index-of % (str i))) scores)) n))) (range 1 4))))
+
+(defn round [x] (/ (Math/round (* x 10.0)) 10.0))
+
+(with-test
+  (defn lab1-score [report-count feedback]
+    (let [re (re-pattern (str "[^" (str/join "" (range 1 (+ 1 report-count))) "]"))
+          scores (->> feedback
+                      (map (fn [[id _dt score]] [id (str/replace score re "")]))
+                      reverse
+                      (into (hash-map))
+                      (map second)
+                      (filter #(= report-count (count %))))
+          n (float (count scores))]
+      (println scores)
+      (map (fn [i] (round (/ (apply + (map #(- 5 (str/index-of % (str i))) scores)) n)))
+           (take report-count (concat '(1 2 3) (repeat 3))))))
+
+  (is (= (lab1-score 2 [[1 "dt" "no"] [2 "dt" "12"]]) '(5.0 4.0)))
+  (is (= (lab1-score 2 [[1 "dt" "12"] [1 "dt" "21"]]) '(5.0 4.0)))
+  (is (= (lab1-score 2 [[1 "dt" "12"] [2 "dt" "213"]]) '(4.5 4.5)))
+  (is (= (lab1-score 2 [[1 "dt" "12"] [1 "dt" "21"]]) '(5.0 4.0)))
+  (is (= (lab1-score 2 [[1 "dt" "12"] [2 "dt" "21"]]) '(4.5 4.5)))
+  (is (= (lab1-score 4 [[1 "dt" "1234"] [2 "dt" "1234"]]) '(5.0 4.0 3.0 3.0))))
 
 (defn lab1pass [db group]
   (let [desc (c/get-at! db [:schedule :lab1 group])
         fixed (:fixed desc)
         feedback (:feedback desc)
-        record {:reports fixed :feedback feedback :user-scores (lab1-score feedback)}]
+        record {:reports fixed :feedback feedback :user-scores (lab1-score (count fixed) feedback)}]
     (if fixed
       (do
-        (println "lab1pass" group record)
-        (doall (map println (reverse feedback)))
+        (println "> " group)
+        (pprint record)
         (c/assoc-at! db [:schedule :lab1 group :history] (cons record (:history desc)))
         (c/assoc-at! db [:schedule :lab1 group :fixed] nil)
-        (c/assoc-at! db [:schedule :lab1 group :feedback] nil))
+        (c/assoc-at! db [:schedule :lab1 group :feedback] nil)
+        )
       (println "lab1pass FAIL:" desc))))
 
 (defn drop-lab1-feedback [db group]
@@ -314,6 +330,8 @@
                                        "Я буду вынужден сохранить информацию о том, кто как головал, что бы не было дублей, "
                                        "но публичной будет только сводная характеристика (либо кто-то сделает доклад об этом косяке)."
                                        "\n\n"
+                                       "Если вы считаете что все доклады были ужасны либо совершенно прекрасны -- напишите словами, постараюсь учесть в ручном режиме."
+                                       "\n\n"
                                        "Ваша оценка:"))
             (:listen {{id :id :as chat} :chat text :text}
                      (let [group (c/get-at! db [id :group])
@@ -324,6 +342,16 @@
 
   (h/command "magic" {{id :id} :chat}
              (when (= id admin-chat)
+               ;;(lab1fix db "P33102" 2)
+               ;;(lab1fix db "P33301" 3)
+               ;;(lab1fix db "P33312" 2)
+               ;;(lab1fix db "P33112" 2)
+
+               ;;(lab1pass db "P33102")                                                                                                                                                                                                
+               ;;(lab1pass db "P33301")                                                                                                                                                                                                
+               ;;(lab1pass db "P33312")                                                                                                                                                                                                
+               ;;(lab1pass db "P33112") 
+
                ;;(lab1fix db "P33111" 2)
                ;;(lab1fix db "P33101" 3)
                ;;(lab1fix db "P33302" 3)
@@ -335,6 +363,12 @@
                ;;(lab1fix db "thursday" 3)
 
                ;;(lab1pass db "thursday")
+
+               ;(drop-lab1-for! db token 671848510)
+               ;(c/assoc-at! db [249575093 :allow-restart] true)
+               ;(drop-lab1-for! db token 249575093)
+               ;(c/assoc-at! db [671848510 :group] "P33301")
+               ;(pprint (c/get-at! db [249575093]))
                (t/send-text token id "magic happen...")))
 
   (d/dialog "lab1status" db {{id :id} :from text :text}
