@@ -61,7 +61,7 @@
 
 ;; Re-exports
 
-(def send-text t/send-text)
+(intern 'course-bot.talk 'send-text t/send-text)
 
 ;; Morse helpers
 

@@ -20,11 +20,7 @@
 (defn save-chat-info [id chat]
   (doall (map (fn [[key value]] (c/assoc-at! db [id :chat key] value)) chat)))
 
-
-
-
 ;; for drop student
-
 
 (defn assert-admin [tx token id]
   (when-not (= id admin-chat)

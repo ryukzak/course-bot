@@ -13,7 +13,8 @@
         dropstudent-talk (dropstudent-talk test-db "TOKEN" assert-admin admin-chat)]
     (c/assoc-at! test-db [admin-chat] {:name "Admin" :group "ROOT"})
     (c/assoc-at! test-db [1] {:name "Stud" :group "STUD" :lab1 {:approved? true}})
-    (with-redefs [t/send-text (fn [_token id msg] (swap! out (constantly msg)) (println id msg))
+    (with-redefs [t/send-text (fn foo ([token id _ msg] (foo token id msg))
+                                  ([_token id msg] (swap! out (constantly msg)) (println id msg)))
                   b/send-yes-no-kbd (fn [_token id msg] (swap! out (constantly msg)) (println id "yes-or-no" msg))
                   db test-db]
 
