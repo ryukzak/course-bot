@@ -1,13 +1,14 @@
 (ns course-bot.core
-  (:require [course-bot.dialog :as d])
-  (:require [course-bot.talk :as b])
   (:require [codax.core :as c])
-  (:require [clj-http.client :as http])
-  (:require [clojure.string :as str])
+  (:require [course-bot.dialog :as d]
+            [course-bot.talk :as b]
+            [course-bot.csa.general :as g]
+            [course-bot.csa.lab1 :as lab1])
   (:require [morse.handlers :as h]
             [morse.api :as t]
             [morse.polling :as p])
-  (:require [clojure.pprint :refer [pprint]])
+  (:require [clojure.string :as str]
+            [clojure.pprint :refer [pprint]])
   (:gen-class))
 
 (def db (c/open-database! (or (System/getenv "BOT_DATABASE") "default-codax")))
@@ -16,189 +17,19 @@
 (def group-list #{"P33102" "P33111" "P33301" "P33101" "P33312" "P33302" "P33112" "thursday"})
 (def admin-chat 70151255)
 
-(defn get-lab1-for-review [db]
-  (first (filter (fn [[sid info]] (and (some-> info :lab1 :on-review?)
-                                       (not (some-> info :lab1 :approved?))))
-                 (c/get-at! db []))))
-
 (defn save-chat-info [id chat]
   (doall (map (fn [[key value]] (c/assoc-at! db [id :chat key] value)) chat)))
 
-(defn lab1-state [on-review? approved?]
-  (case [on-review? approved?]
-    [false true] "OK"
-    [true true] "OK" ;; FIXME: should not happens
-    [true false] "WAIT"
-    [true nil] "WAIT"
-    [nil nil] "Not sub"
-    [false false] "ISSUE"
-    (str [on-review? approved?])))
 
-(defn lab1-status-str [id desc]
-  (let [{{on-review? :on-review? approved? :approved? desc :description} :lab1
-         name :name
-         group :group
-         {username :username} :chat} desc]
-    (str name " (" id ", @" username ") "
-         (lab1-state on-review? approved?)
-         (when approved?
-           (str "\n"
-                "  - " (first (str/split-lines desc)))))))
 
-(defn lab1-status
-  ([db id] (lab1-status-str id (c/get-at! db [id]))))
-
-(defn send-lab1-status
-  ([db token id] (send-lab1-status db token id nil))
-  ([db token id only-group]
-   (doall
-    (->> (c/get-at! db [])
-         (group-by (fn [[id desc]] (:group desc)))
-         (filter (fn [[group _records]] (and (some? group) (or (nil? only-group) (= only-group group)))))
-         (map (fn [[group records]]
-                [group (filter (fn [[id desc]] (some? (some-> desc :lab1 :on-review?))) records)]))
-         (map (fn [[group records]]
-                (t/send-text token id
-                             (str "Группа: " group
-                                  "\n"
-                                  (str/join "\n"
-                                            (map #(str "- " (apply lab1-status-str %))
-                                                 (sort-by (fn [[id {{on-review? :on-review? approved? :approved?} :lab1}]]
-                                                            (lab1-state on-review? approved?)) records)))))))))))
-
-(defn send-lab1-schedule-list [token id group lst]
-  (t/send-text token id
-               (str "Группа: " group
-                    "\n"
-                    (str/join "\n"
-                              (map (fn [[i stud-id]] (str (+ 1 i) ". " (lab1-status db stud-id)))
-                                   (zipmap (range) lst))))))
-
-(defn lab1fix [db group n]
-  (let [desc (c/get-at! db [:schedule :lab1 group])
-        next (take n (:queue desc))
-        other (drop n (:queue desc))]
-    (when-not (empty? (:fixed desc))
-      (throw (Exception. "Already fixed!")))
-    (println "lab1fix " group n)
-    (println :history (cons next (:history desc)))
-    (println :queue other)
-    (c/assoc-at! db [:schedule :lab1 group :fixed] next)
-    (c/assoc-at! db [:schedule :lab1 group :queue] other)))
-
-(defn round [x] (/ (Math/round (* x 10.0)) 10.0))
-
-(defn lab1-score [report-count feedback]
-  (let [re (re-pattern (str "[^" (str/join "" (range 1 (+ 1 report-count))) "]"))
-        scores (->> feedback
-                    (map (fn [[id _dt score]] [id (str/replace score re "")]))
-                    reverse
-                    (into (hash-map))
-                    (map second)
-                    (filter #(= (count (dedupe (sort %))) (count %)))
-                    (filter #(= report-count (count %))))
-        n (float (count scores))]
-    (println scores)
-    (map (fn [i] (round (/ (apply + (map #(- 5 (str/index-of % (str i))) scores)) n)))
-         (take report-count (concat '(1 2 3) (repeat 3))))))
-
-(defn lab1pass [db group]
-  (let [desc (c/get-at! db [:schedule :lab1 group])
-        fixed (:fixed desc)
-        feedback (:feedback desc)
-        record {:reports fixed :feedback feedback :user-scores (lab1-score (count fixed) feedback)}]
-    (if fixed
-      (do
-        (println "> " group)
-        (pprint record)
-        (c/assoc-at! db [:schedule :lab1 group :history] (cons record (:history desc)))
-        (c/assoc-at! db [:schedule :lab1 group :fixed] nil)
-        (c/assoc-at! db [:schedule :lab1 group :feedback] nil))
-      (println "lab1pass FAIL:" desc))))
-
-(defn send-whoami! [db token id]
-  (let [{name :name group :group} (c/get-at! db [id])]
-    (t/send-text token id (str "Ваше имя: " name ". Ваша группа: " group " (примечание: группа четверга это отдельная группа). Ваш телеграмм id: " id))))
 
 ;; for drop student
 
-(def drop-lab1-msg "Увы, но пришлось сбросить ваше согласование по лабораторной работе №1.")
-
-(defn drop-lab1-schedule-for [tx id]
-  (let [lab1 (c/get-at tx [:schedule :lab1])
-        upd (into {}
-                  (map (fn [[gr info]]
-                         [gr (assoc info
-                                    :fixed (filter #(not= % id) (:fixed info))
-                                    :queue (filter #(not= % id) (:queue info)))])
-                       lab1))]
-    (c/assoc-at tx [:schedule :lab1] upd)))
-
-(defn drop-lab1-review [tx token id msg]
-  (when msg
-    (t/send-text token id msg)
-    (t/send-text token admin-chat (str "Студенту было отправлено:" "\n\n" msg)))
-  (-> tx
-      (c/assoc-at [id :lab1 :on-review?] nil)
-      (c/assoc-at [id :lab1 :approved?] nil)
-      (c/assoc-at [id :lab1 :in-queue?] nil)))
-
-(defn drop-lab1-for [tx token id]
-  (-> tx
-      (drop-lab1-schedule-for id)
-      (drop-lab1-review token id drop-lab1-msg)))
-
-(defn send-whoami [tx token id me]
-  (let [me (or me id)
-        {name :name group :group} (c/get-at tx [me])]
-    (t/send-text token id (str "Ваше имя: " name ". Ваша группа: " group " (примечание: группа четверга это отдельная группа). Ваш телеграмм id: " me))))
 
 (defn assert-admin [tx token id]
   (when-not (= id admin-chat)
     (t/send-text token id "У вас нет таких прав.")
     (b/stop-talk tx)))
-
-(def dropstudent-talk
-  (b/talk db "dropstudent"
-          :start
-          (fn [tx {{id :id} :chat text :text}]
-            (assert-admin tx token id)
-            (let [args (b/command-args text)]
-              (if (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
-                (let [stud-id (Integer/parseInt (first args))
-                      stud (c/get-at tx [stud-id])]
-                  (when-not stud
-                    (t/send-text token id "Нет такого пользователя.")
-                    (b/stop-talk tx))
-                  (send-whoami tx token id stud-id)
-                  (b/send-yes-no-kbd token id "Сбросим этого студента?")
-                  (-> tx
-                      (c/assoc-at [admin-chat :admin :drop-student] stud-id)
-                      (b/change-branch :approve)))
-                (do
-                  (t/send-text token id "Ошибка ввода, нужно сообщение вроде: /dropstudent 12345")
-                  (b/wait tx)))))
-
-          :approve
-          (fn [tx {{id :id} :from text :text}]
-            (cond
-              (= text "yes") (let [stud-id (c/get-at tx [admin-chat :admin :drop-student])]
-                               (t/send-text token id "Сбросили.")
-                               (-> tx
-                                   (drop-lab1-for token stud-id)
-                                   (c/assoc-at [stud-id :allow-restart] true)
-                                   (c/assoc-at [admin-chat :admin :drop-student] nil)
-                                   (b/stop-talk)))
-              (= text "no") (do
-                              (t/send-text token id "Пускай пока остается.")
-                              (-> tx
-                                  (c/assoc-at [admin-chat :admin :drop-student] nil)
-                                  (b/stop-talk)))
-              :else (do (t/send-text token id "What?")
-                        (b/wait tx))))))
-
-
-
 
 (declare bot-api id chat text)
 (h/defhandler bot-api
@@ -224,11 +55,11 @@
                               ;; TODO: проверка, менял ли студент группу.
                               (c/assoc-at! db [id :group] text)
                               (let [{name :name group :group} (c/get-at! db [id])]
-                                (send-whoami! db token id)
+                                (g/send-whoami! db token id)
                                 (t/send-text token id "Если вы где-то ошиблись - выполните команду /start повторно. Помощь -- /help.")))))
 
   (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
-  (h/command "whoami" {{id :id} :chat} (send-whoami! db token id))
+  (h/command "whoami" {{id :id} :chat} (g/send-whoami! db token id))
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
@@ -269,7 +100,7 @@
             (let [group-id (c/get-at! db [id :group])
                   q (c/get-at! db [:schedule :lab1 group-id :queue])
                   q-text #(->> %
-                               (map (fn [id] (lab1-status db id)))
+                               (map (fn [id] (lab1/status-for-stud db id)))
                                (str/join "\n"))
                   ps (str "Будьте внимательны, только первые три пункта будут на ближайшем занятии. "
                           "\n\n"
@@ -288,13 +119,14 @@
   (d/dialog "lab1reportqueue" db {{id :id} :from text :text}
             (doall
              (->> (c/get-at! db [:schedule :lab1])
-                  (map (fn [[group desc]] (send-lab1-schedule-list token id group (:queue desc)))))))
+                  (map (fn [[group desc]] (lab1/send-schedule-list db token id group (:queue desc)))))))
 
   (d/dialog "lab1reportnext" db {{id :id} :from text :text}
             (doall
              (->> (c/get-at! db [:schedule :lab1])
                   (map (fn [[group desc]]
-                         (when (:fixed desc) (send-lab1-schedule-list token id group (:fixed desc)))))))
+                         (when-let [fixed (:fixed desc)]
+                           (lab1/send-schedule-list db token id group fixed))))))
             (t/send-text token id "Всё что было я прислал."))
 
   (d/dialog "lab1feedback" db {{id :id :as chat} :chat}
@@ -305,7 +137,7 @@
                        (t/send-text token id "Голосование либо не запущено, либо уже завершено.")))
             (let [group (c/get-at! db [id :group])
                   fixed (c/get-at! db [:schedule :lab1 group :fixed])]
-              (send-lab1-schedule-list token id group fixed))
+              (lab1/send-schedule-list db token id group fixed))
             (t/send-text token id (str "По идее, вы только что были на лабораторном занятии и ознакомились с тремя докладами (если список "
                                        "не корректный -- сообщите об этом преподавателю)."
                                        "\n\n"
@@ -326,56 +158,54 @@
                                     (cons [id (str (new java.util.Date)) text] feedback)))
                      (t/send-text token id "Записал, если что-то напутали -- загрузите еще раз.")))
 
-  dropstudent-talk
+  (lab1/dropstudent-talk db token assert-admin admin-chat)
 
   (h/command "magic" {{id :id} :chat}
              (when (= id admin-chat)
                ;(pprint (c/get-at! db [889101382]))
                ;(pprint (c/get-at! db [admin-chat :admin]))
-               ;;(lab1fix db "P33102" 2)
-               ;;(lab1fix db "P33301" 3)
-               ;;(lab1fix db "P33312" 2)
-               ;;(lab1fix db "P33112" 2)
+               ;;(lab1/fix db "P33102" 2)
+               ;;(lab1/fix db "P33301" 3)
+               ;;(lab1/fix db "P33312" 2)
+               ;;(lab1/fix db "P33112" 2)
 
-               ;;(lab1pass db "P33102")                                                                                                                                                                                                
-               ;;(lab1pass db "P33301")                                                                                                                                                                                                
-               ;;(lab1pass db "P33312")                                                                                                                                                                                                
-               ;;(lab1pass db "P33112") 
+               ;;(lab1/pass db "P33102")                                                                                                                                                                                                
+               ;;(lab1/pass db "P33301")                                                                                                                                                                                                
+               ;;(lab1/pass db "P33312")                                                                                                                                                                                                
+               ;;(lab1/pass db "P33112") 
 
-               ;;(lab1fix db "P33111" 2)
-               ;;(lab1fix db "P33101" 3)
-               ;;(lab1fix db "P33302" 3)
+               ;;(lab1/fix db "P33111" 2)
+               ;;(lab1/fix db "P33101" 3)
+               ;;(lab1/fix db "P33302" 3)
 
-               ;;(lab1pass db "P33111")
-               ;;(lab1pass db "P33101")
-               ;;(lab1pass db "P33302")
+               ;;(lab1/pass db "P33111")
+               ;;(lab1/pass db "P33101")
+               ;;(lab1/pass db "P33302")
 
-               ;;(lab1fix db "thursday" 3)
+               ;;(lab1/fix db "thursday" 3)
 
-               ;;(lab1pass db "thursday")
+               ;;(lab1/pass db "thursday")
 
-               ;(drop-lab1-for! db token 671848510)
                ;(c/assoc-at! db [249575093 :allow-restart] true)
-               ;(drop-lab1-for! db token 249575093)
                ;(c/assoc-at! db [671848510 :group] "P33301")
                ;(pprint (c/get-at! db [249575093]))
                (t/send-text token id "magic happen...")))
 
   (d/dialog "lab1status" db {{id :id} :from text :text}
             :guard (if (= id admin-chat) nil :break)
-            (send-lab1-status db token id))
+            (lab1/send-status db token id))
 
   (d/dialog "lab1next" db {{id :id} :from text :text}
             :guard (if (= id admin-chat)
-                     (if (nil? (get-lab1-for-review db))
+                     (if (nil? (lab1/get-next-for-review! db))
                        (t/send-text token id "Все просмотрено.")
                        nil)
                      :break)
-            (let [[stud desc] (if true (get-lab1-for-review db) [admin-chat (c/get-at! db admin-chat)])]
-              (send-lab1-status db token id (:group desc))
+            (let [[stud desc] (if true (lab1/get-next-for-review! db) [admin-chat (c/get-at! db admin-chat)])]
+              (lab1/send-status db token id (:group desc))
               (t/send-text token id (str "Было пирслано следующее на согласование (группа " (:group desc) "): "
                                          "\n\n"
-                                         (lab1-status-str id desc)
+                                         (lab1/status-str id desc)
                                          "\n\n"
                                          "Тема: " (-> desc :lab1 :description str/split-lines first)))
               (t/send-text token id (-> desc :lab1 :description))
@@ -391,7 +221,7 @@
                        (t/send-text token stud "Ваше описание инцидента для лабораторной работы №1 одобрили, начинайте готовить доклад.")
                        (t/send-text token id (str "Отправили студенту одобрение."
                                                   "\n\n"
-                                                  (lab1-status db stud)
+                                                  (lab1/status-for-stud db stud)
                                                   "\n\n"
                                                   "Еще /lab1next?")))
                      (do
@@ -410,7 +240,7 @@
                                                          "))
                                   (t/send-text token id (str "Замечания отправлено студенту."
                                                              "\n\n"
-                                                             (lab1-status db stud)
+                                                             (lab1/status-for-stud db stud)
                                                              "\n\n"
                                                              "Ещё /lab1next")))))))
 

@@ -4,7 +4,7 @@
   (:require [morse.handlers :as h]
             [morse.api :as t]
             [clj-http.client :as http]))
-  
+
 ;; Talk flow
 
 (defn change-branch [tx name]

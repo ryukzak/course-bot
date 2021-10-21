@@ -3,14 +3,10 @@
   (:require [morse.handlers :as h])
   (:gen-class))
 
+
 (defn set-chat-dialog-state [db id state]
   ;; (println "set new state: " (c/get-at! db [id :dialog-state]))
   (c/assoc-at! db [id :dialog-state] state))
-
-(defn drop-chat-dialog-state [db id]
-  ;; (println "set new state: " (c/get-at! db [id :dialog-state]))
-  (c/assoc-at! db [id :dialog-state] nil)
-  true)
 
 (defn get-chat-dialog-state [db id]
   ;; (println "current state: " (c/get-at! db [id :dialog-state]))
