@@ -4,7 +4,6 @@
   (:require [codax.core :as c])
   (:require [clj-http.client :as http])
   (:require [clojure.string :as str])
-  (:require [clojure.test :refer [is with-test deftest]])
   (:require [morse.handlers :as h]
             [morse.api :as t]
             [morse.polling :as p])
@@ -25,17 +24,6 @@
 (defn save-chat-info [id chat]
   (doall (map (fn [[key value]] (c/assoc-at! db [id :chat key] value)) chat)))
 
-(defn send-message
-  "Sends json to the chat"
-  ([token chat-id data] (send-message token chat-id {} data))
-  ([token chat-id options data]
-   (let [url  (str t/base-url token "/sendMessage")
-         body (merge {:chat_id chat-id} options data)
-         resp (http/post url {:content-type :json
-                              :as           :json
-                              :form-params  body})]
-     (-> resp :body))))
-
 (defn lab1-state [on-review? approved?]
   (case [on-review? approved?]
     [false true] "OK"
@@ -55,18 +43,10 @@
          (lab1-state on-review? approved?)
          (when approved?
            (str "\n"
-                "  > " (first (str/split-lines desc)))))))
+                "  - " (first (str/split-lines desc)))))))
 
 (defn lab1-status
   ([db id] (lab1-status-str id (c/get-at! db [id]))))
-
-(defn send-yes-no-kbd [token id msg]
-  (send-message token id {:text msg
-                          :reply_markup
-                          {:one_time_keyboard true
-                           :resize_keyboard true
-                           :keyboard
-                           [[{:text "yes"} {:text "no"}]]}}))
 
 (defn send-lab1-status
   ([db token id] (send-lab1-status db token id nil))
@@ -106,29 +86,21 @@
     (c/assoc-at! db [:schedule :lab1 group :fixed] next)
     (c/assoc-at! db [:schedule :lab1 group :queue] other)))
 
-
 (defn round [x] (/ (Math/round (* x 10.0)) 10.0))
 
-(with-test
-  (defn lab1-score [report-count feedback]
-    (let [re (re-pattern (str "[^" (str/join "" (range 1 (+ 1 report-count))) "]"))
-          scores (->> feedback
-                      (map (fn [[id _dt score]] [id (str/replace score re "")]))
-                      reverse
-                      (into (hash-map))
-                      (map second)
-                      (filter #(= report-count (count %))))
-          n (float (count scores))]
-      (println scores)
-      (map (fn [i] (round (/ (apply + (map #(- 5 (str/index-of % (str i))) scores)) n)))
-           (take report-count (concat '(1 2 3) (repeat 3))))))
-
-  (is (= (lab1-score 2 [[1 "dt" "no"] [2 "dt" "12"]]) '(5.0 4.0)))
-  (is (= (lab1-score 2 [[1 "dt" "12"] [1 "dt" "21"]]) '(5.0 4.0)))
-  (is (= (lab1-score 2 [[1 "dt" "12"] [2 "dt" "213"]]) '(4.5 4.5)))
-  (is (= (lab1-score 2 [[1 "dt" "12"] [1 "dt" "21"]]) '(5.0 4.0)))
-  (is (= (lab1-score 2 [[1 "dt" "12"] [2 "dt" "21"]]) '(4.5 4.5)))
-  (is (= (lab1-score 4 [[1 "dt" "1234"] [2 "dt" "1234"]]) '(5.0 4.0 3.0 3.0))))
+(defn lab1-score [report-count feedback]
+  (let [re (re-pattern (str "[^" (str/join "" (range 1 (+ 1 report-count))) "]"))
+        scores (->> feedback
+                    (map (fn [[id _dt score]] [id (str/replace score re "")]))
+                    reverse
+                    (into (hash-map))
+                    (map second)
+                    (filter #(= (count (dedupe (sort %))) (count %)))
+                    (filter #(= report-count (count %))))
+        n (float (count scores))]
+    (println scores)
+    (map (fn [i] (round (/ (apply + (map #(- 5 (str/index-of % (str i))) scores)) n)))
+         (take report-count (concat '(1 2 3) (repeat 3))))))
 
 (defn lab1pass [db group]
   (let [desc (c/get-at! db [:schedule :lab1 group])
@@ -199,7 +171,7 @@
                     (t/send-text token id "Нет такого пользователя.")
                     (b/stop-talk tx))
                   (send-whoami tx token id stud-id)
-                  (send-yes-no-kbd token id "Сбросим этого студента?")
+                  (b/send-yes-no-kbd token id "Сбросим этого студента?")
                   (-> tx
                       (c/assoc-at [admin-chat :admin :drop-student] stud-id)
                       (b/change-branch :approve)))
@@ -227,40 +199,6 @@
 
 
 
-(deftest dropstudent-talk-test
-  (let [out (atom "")
-        test-db (c/open-database! "test-codax")]
-    (c/assoc-at! test-db [admin-chat] {:name "Admin" :group "ROOT"})
-    (c/assoc-at! test-db [1] {:name "Stud" :group "STUD" :lab1 {:approved? true}})
-    (with-redefs [t/send-text (fn [_token id msg] (swap! out (constantly msg)) (println id msg))
-                  send-yes-no-kbd (fn [_token id msg] (swap! out (constantly msg)) (println id "yes-or-no" msg))
-                  db test-db]
-
-      (dropstudent-talk {:message {:chat {:id admin-chat} :text "/dropstudent 42"}})
-      (is (= @out "Нет такого пользователя."))
-
-      (dropstudent-talk {:message {:chat {:id 1} :text "/dropstudent 1"}})
-      (is (= @out "У вас нет таких прав."))
-
-      (dropstudent-talk {:message {:chat {:id admin-chat} :text "/dropstudent 1"}})
-      (is (= @out "Сбросим этого студента?"))
-      (is (= (c/get-at! test-db [admin-chat]) {:name "Admin", :group "ROOT", :admin {:drop-student 1}}))
-
-      (dropstudent-talk {:message {:chat {:id admin-chat} :text "blabla"}})
-      (is (= @out "What?"))
-
-      (dropstudent-talk {:message {:chat {:id admin-chat} :text "no"}})
-      (is (= @out "Пускай пока остается."))
-      (is (= (c/get-at! test-db [1]) {:name "Stud" :group "STUD" :lab1 {:approved? true}}))
-      (is (= (c/get-at! test-db [admin-chat]) {:name "Admin", :group "ROOT", :admin {:drop-student nil}}))
-
-      (dropstudent-talk {:message {:chat {:id admin-chat} :text "/dropstudent 1"}})
-      (is (= @out "Сбросим этого студента?"))
-      (is (= (c/get-at! test-db [admin-chat]) {:name "Admin", :group "ROOT", :admin {:drop-student 1}}))
-
-      (dropstudent-talk {:message {:chat {:id admin-chat} :text "yes"}})
-      (is (str/starts-with? @out "Студенту было отправлено"))
-      (is (= (c/get-at! test-db [1]) {:name "Stud", :group "STUD", :lab1 {:approved? nil, :on-review? nil, :in-queue? nil}, :allow-restart true})))))
 
 (declare bot-api id chat text)
 (h/defhandler bot-api
@@ -313,9 +251,9 @@
                      (c/assoc-at! db [id :lab1 :description] text)
                      (t/send-text token id "Ваше описание инцидента для Лабораторной работы №1:")
                      (t/send-text token id (c/get-at! db [id :lab1 :description]))
-                     (send-yes-no-kbd token id "Все верно, могу отправлять преподавателю (текст нельзя будет изменить)?")
+                     (b/send-yes-no-kbd token id "Все верно, могу отправлять преподавателю (текст нельзя будет изменить)?")
                      (:yes-no {{id :id :as chat} :chat}
-                              :input-error (send-yes-no-kbd token id "Непонял, скажите yes или no (там вроде клавиатура должна быть).")
+                              :input-error (b/send-yes-no-kbd token id "Непонял, скажите yes или no (там вроде клавиатура должна быть).")
                               (do (t/send-text token id "Отлично, передам все преподавателю.")
                                   (c/assoc-at! db [id :lab1 :on-review?] true))
                               (t/send-text token id "Нет проблем, выполните команду /lab1 повторно."))))
@@ -442,9 +380,9 @@
                                          "Тема: " (-> desc :lab1 :description str/split-lines first)))
               (t/send-text token id (-> desc :lab1 :description))
               (c/assoc-at! db [admin-chat :admin :lab1 :on-approve] stud)
-              (send-yes-no-kbd token id "Все нормально?"))
+              (b/send-yes-no-kbd token id "Все нормально?"))
             (:yes-no {{id :id :as chat} :chat}
-                     :input-error (send-yes-no-kbd token id "Непонял, скажите yes или no (там вроде клавиатура должна быть).")
+                     :input-error (b/send-yes-no-kbd token id "Непонял, скажите yes или no (там вроде клавиатура должна быть).")
                      (let [stud (c/get-at! db [admin-chat :admin :lab1 :on-approve])]
                        (c/assoc-at! db [admin-chat :admin :lab1 :on-approve] nil)
                        (c/assoc-at! db [stud :lab1 :approved?] true)

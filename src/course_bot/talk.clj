@@ -1,9 +1,12 @@
 (ns course-bot.talk
   (:require [codax.core :as c])
   (:require [clojure.string :as str])
-  (:require [clojure.test :refer [is deftest]])
-  (:require [morse.handlers :as h]))
+  (:require [morse.handlers :as h]
+            [morse.api :as t]
+            [clj-http.client :as http]))
   
+;; Talk flow
+
 (defn change-branch [tx name]
   (throw (ex-info "Change branch" {:next-branch name :tx tx})))
 
@@ -56,13 +59,27 @@
                      (throw e#))))))
            @res#)))))
 
-(deftest test-talk-return-value
-  (let [test-db (c/open-database! "test-codax")
-        test-talk1 (talk test-db "cmd" :start (fn [tx _msg] (wait tx)))
-        test-talk2 (talk test-db "cmd" :start (fn [_tx _msg] :ok))
-        test-talk3 (talk test-db "cmd" :start (fn [_tx _msg] nil))]
-    (is (= :ok (test-talk1 {:message {:text "/cmd"}})))
-    (is (= nil (test-talk1 {:message {:text "bla-bla"}})))
-    ;; handler should return nil value to pass
-    (is (thrown? clojure.lang.ExceptionInfo (test-talk2 {:message {:text "/cmd"}})))
-    (is (= nil (test-talk3 {:message {:text "/cmd"}})))))
+;; Re-exports
+
+(def send-text t/send-text)
+
+;; Morse helpers
+
+(defn send-message
+  "Sends json to the chat"
+  ([token chat-id data] (send-message token chat-id {} data))
+  ([token chat-id options data]
+   (let [url  (str t/base-url token "/sendMessage")
+         body (merge {:chat_id chat-id} options data)
+         resp (http/post url {:content-type :json
+                              :as           :json
+                              :form-params  body})]
+     (-> resp :body))))
+
+(defn send-yes-no-kbd [token id msg]
+  (send-message token id {:text msg
+                          :reply_markup
+                          {:one_time_keyboard true
+                           :resize_keyboard true
+                           :keyboard
+                           [[{:text "yes"} {:text "no"}]]}}))
