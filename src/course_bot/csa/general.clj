@@ -15,5 +15,5 @@
   ([db token id] (send-whoami! db token id nil))
   ([db token id me]
   (declare tx)
-  (c/with-read-transaction [tx db]
+  (c/with-read-transaction [db tx]
     (send-whoami tx token id me))))
