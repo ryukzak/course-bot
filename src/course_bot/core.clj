@@ -2,6 +2,7 @@
   (:require [codax.core :as c])
   (:require [course-bot.dialog :as d]
             [course-bot.talk :as b]
+            [course-bot.quiz :as q]
             [course-bot.csa.general :as g]
             [course-bot.csa.lab1 :as lab1])
   (:require [morse.handlers :as h]
@@ -56,6 +57,10 @@
 
   (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
   (h/command "whoami" {{id :id} :chat} (g/send-whoami! db token id))
+
+  (q/startquiz-talk db token assert-admin)
+  (q/stopquiz-talk db token assert-admin)
+  (q/quiz-talk db token admin-chat)
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
