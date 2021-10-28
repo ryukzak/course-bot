@@ -7,6 +7,8 @@
   (:require [clojure.pprint :refer [pprint]]))
 
 (def quiz (read-string (try (slurp (or (System/getenv "QUIZ") "test-quiz.edn")) (catch Exception _ "nil"))))
+(println "Quiz: " (:name quiz))
+
 ;; (def quiz (read-string (try (slurp (System/getenv "BOT_TOKEN")) (catch Exception _ "nil"))))
 ;; (def quiz
 ;;   {:name "bla-bla"
@@ -57,6 +59,7 @@
 (defn result-stat [results]
   (->> results
        vals
+       (filter #(= (count %) (count (-> quiz :questions))))
        (apply mapv vector)
        (map-indexed (fn [index anss]
                       (->>
