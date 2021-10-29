@@ -95,8 +95,9 @@
                                                                                 (map-indexed (fn [idx item] (str (+ 1 idx) ". " (:ask item) " -- "))))
                                                                            (result-stat results)))
                                                        "нет ответов")))
-                        (c/assoc-at tx [:quiz :current] nil))
-                "no" (do (t/send-text token id "In a next time. The quiz is still in progres.") (t/stop-talk tx)))))))
+                        (-> tx (c/assoc-at [:quiz :current] nil) t/stop-talk))
+                "no" (do (t/send-text token id "In a next time. The quiz is still in progres.") (t/stop-talk tx))
+                (t/send-text token id "What?"))))))
 
 (defn question-str [i]
   (-> quiz
