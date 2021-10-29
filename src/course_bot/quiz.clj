@@ -9,20 +9,8 @@
 (def quiz (read-string (try (slurp (or (System/getenv "QUIZ") "test-quiz.edn")) (catch Exception _ "nil"))))
 (println "Quiz: " (:name quiz))
 
-;; (def quiz (read-string (try (slurp (System/getenv "BOT_TOKEN")) (catch Exception _ "nil"))))
-;; (def quiz
-;;   {:name "bla-bla"
-;;    :questions [{:ask "Bla-bla?"
-;;                 :options [{:text "bla1" :is-correct true}
-;;                           {:text "bla2"}
-;;                           {:text "bla3"}]}
-;;                {:ask "qwert?"
-;;                 :options [{:text "asdf1"}
-;;                           {:text "asdf2" :is-correct true}]}]})
-
 (defn assert-and-get-quiz [tx token id expected]
   (let [current-quiz (c/get-at tx [:quiz :current])]
-    (println 'assert-and-get-quiz (str current-quiz) (str expected))
     (when (nil? quiz)
       (t/send-text token id "Конфигурация теста не задана, к администратору.")
       (t/stop-talk tx))
@@ -69,6 +57,20 @@
                        (map #(/ (count %) (count anss)))
                        (str/join "; "))))))
 
+(defn stud-results-inner [results id]
+  (let [options (map :options (:questions quiz))
+        bools (map (fn [opts ans] (-> opts
+                                      (get (- ans 1))
+                                      (get :correct false)))
+                   options
+                   (map #(Integer/parseInt %) (get results id)))
+        scores (map #(if % 1 0) bools)]
+    [bools (reduce + scores) (count options)]))
+
+(defn stud-results [results id]
+  (let [[details cur max] (stud-results-inner results id)]
+    (str cur "/" max " (" (str/join ", " details) ")")))
+
 (defn stopquiz-talk [db token assert-admin]
   (t/talk db "stopquiz"
           :start
@@ -88,13 +90,22 @@
               (case text
                 "yes" (let [results (c/get-at tx [:quiz-results (:name quiz)])]
                         (t/send-text token id (str "The quiz '" current-quiz "' was stopped"))
-                        (t/send-text token id (str "Статистика по ответам: \n\n"
-                                                   (if results
-                                                       (str/join "\n" (map str
-                                                                           (->> (-> quiz :questions)
-                                                                                (map-indexed (fn [idx item] (str (+ 1 idx) ". " (:ask item) " -- "))))
-                                                                           (result-stat results)))
-                                                       "нет ответов")))
+                        (t/send-text token id
+                                     (str "Статистика по ответам: \n\n"
+                                          (if results
+                                            (str/join "\n" (map str
+                                                                (->> (-> quiz :questions)
+                                                                     (map-indexed (fn [idx item] (str (+ 1 idx) ". " (:ask item) "\n"
+                                                                                                      (->> (:options item)
+                                                                                                           (map #(str "  - " (:text %)))
+                                                                                                           (str/join "\n"))
+                                                                                                      "\n  -- "))))
+                                                                (result-stat results)))
+                                            "нет ответов")))
+                        (doall (map (fn [stud-id]
+                                      (->
+                                       (stud-results results stud-id)
+                                       (#(t/send-text token stud-id (str "Ваш результат: " %))))) (keys results)))
                         (-> tx (c/assoc-at [:quiz :current] nil) t/stop-talk))
                 "no" (do (t/send-text token id "In a next time. The quiz is still in progres.") (t/stop-talk tx))
                 (t/send-text token id "What?"))))))
@@ -116,7 +127,6 @@
   (t/talk db "quiz"
           :start
           (fn [tx {{id :id} :chat}]
-            (println :start)
             (let [current-quiz (assert-and-get-quiz tx token id (:name quiz))
                   results (c/get-at tx [:quiz-results current-quiz id])]
               (when-not (nil? results)
@@ -129,7 +139,6 @@
               (t/change-branch tx :quiz-approve)))
           :quiz-approve
           (fn [tx {{id :id} :chat text :text}]
-            (println :quiz-approve)
             (assert-and-get-quiz tx token id nil)
             (case text
               "yes" (do (t/send-text token id "Отвечайте цифрой. Ваш первый вопрос:")
@@ -140,7 +149,6 @@
               (t/send-yes-no-kbd token id (str "Что (yes/no)?"))))
           :quiz-step
           (fn [tx {{id :id} :chat text :text}]
-            (println :quiz-step)
             (let [current-quiz (assert-and-get-quiz tx token id (:name quiz))
                   results (c/get-at tx [:quiz-results current-quiz id])
                   new-results (concat results (list text))
@@ -152,11 +160,9 @@
                   (t/send-text token id (str "Запомнили ваш ответ: " text))
                   (if next-question
                     (do
-                      (println :with-next-question)
                       (t/send-text token id next-question)
                       (c/assoc-at tx [:quiz-results current-quiz id] new-results))
                     (do
-                      (println :without-next-question)
                       (t/send-text token id "Спасибо, тест пройден, результат будет доступен позже.")
                       (t/send-text token admin-chat (str "Пришел ответ: " (str/join ", " new-results)))
                       (-> tx
