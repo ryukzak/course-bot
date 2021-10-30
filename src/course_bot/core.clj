@@ -3,6 +3,7 @@
   (:require [course-bot.dialog :as d]
             [course-bot.talk :as b]
             [course-bot.quiz :as q]
+            [course-bot.essay :as e]
             [course-bot.csa.general :as g]
             [course-bot.csa.lab1 :as lab1])
   (:require [morse.handlers :as h]
@@ -61,6 +62,8 @@
   (q/startquiz-talk db token assert-admin)
   (q/stopquiz-talk db token assert-admin)
   (q/quiz-talk db token admin-chat)
+
+  (e/essay-talk db token "essay1")
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
