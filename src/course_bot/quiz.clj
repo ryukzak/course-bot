@@ -67,10 +67,6 @@
         scores (map #(if % 1 0) bools)]
     [bools (reduce + scores) (count options)]))
 
-(defn stud-results [results id]
-  (let [[details cur max] (stud-results-inner results id)]
-    (str cur "/" max " (" (str/join ", " details) ")")))
-
 (defn stopquiz-talk [db token assert-admin]
   (t/talk db "stopquiz"
           :start
@@ -88,7 +84,12 @@
           (fn [tx {{id :id} :chat text :text}]
             (let [current-quiz (c/get-at tx [:quiz :current])]
               (case text
-                "yes" (let [results (c/get-at tx [:quiz-results (:name quiz)])]
+                "yes" (let [results (c/get-at tx [:quiz-results (:name quiz)])
+                            per-studs (map (fn [stud-id]
+                                             (let [[details cur max] (stud-results-inner results stud-id)
+                                                   info (str cur "/" max " (" (str/join ", " details) ")")]
+                                               [stud-id cur info]))
+                                           (keys results))]
                         (t/send-text token id (str "The quiz '" current-quiz "' was stopped"))
                         (t/send-text token id
                                      (str "Статистика по ответам: \n\n"
@@ -102,11 +103,12 @@
                                                                                                       "\n  -- "))))
                                                                 (result-stat results)))
                                             "нет ответов")))
-                        (doall (map (fn [stud-id]
-                                      (->
-                                       (stud-results results stud-id)
-                                       (#(t/send-text token stud-id (str "Ваш результат: " %))))) (keys results)))
-                        (-> tx (c/assoc-at [:quiz :current] nil) t/stop-talk))
+                        (doall (map (fn [[stud-id _cur info]] (t/send-text token stud-id (str "Ваш результат: " info)))
+                                    per-studs))
+                        (-> (reduce (fn [tx [stud-id cur _info]] (c/assoc-at tx [id :quiz (:name quiz)] cur))
+                                    tx per-studs)
+                            (c/assoc-at [:quiz :current] nil)
+                            t/stop-talk))
                 "no" (do (t/send-text token id "In a next time. The quiz is still in progres.") (t/stop-talk tx))
                 (t/send-text token id "What?"))))))
 
@@ -164,7 +166,7 @@
                       (c/assoc-at tx [:quiz-results current-quiz id] new-results))
                     (do
                       (t/send-text token id "Спасибо, тест пройден, результат будет доступен позже.")
-                      (t/send-text token admin-chat (str "Пришел ответ: " (str/join ", " new-results)))
+                      (t/send-text token admin-chat (str "Вы дали такие ответы: " (str/join ", " new-results)))
                       (-> tx
                           (c/assoc-at [:quiz-results current-quiz id] (concat results (list text)))
                           t/stop-talk))))
