@@ -128,6 +128,7 @@
   (d/dialog "lab1reportnext" db {{id :id} :from text :text}
             (doall
              (->> (c/get-at! db [:schedule :lab1])
+                  (filter (fn [[_group desc]] (some-> desc :fixed count (> 0))))
                   (map (fn [[group desc]]
                          (when-let [fixed (:fixed desc)]
                            (lab1/send-schedule-list db token id group fixed))))))

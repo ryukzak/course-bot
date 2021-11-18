@@ -55,17 +55,20 @@
                                                  (sort-by (fn [[_id {{on-review? :on-review? approved? :approved?} :lab1}]]
                                                             (state-str on-review? approved?)) records)))))))))))
 
-(defn send-schedule-list [db token id group lst]
-  (t/send-text token id
-               (str "Группа: " group
-                    "\n"
-                    (str/join "\n"
-                              (map (fn [[i stud-id]] (str (+ 1 i) ". " (status-for-stud db stud-id)))
-                                   (zipmap (range) lst))))))
+(def group-description (read-string (try (slurp (System/getenv "GROUP_DESC")) (catch Exception _ "nil"))))
 
+(defn send-schedule-list [db token id group lst]
+  (println group (get group-description group))
+  (t/send-text token id
+               (str (or (get group-description group) (str "Группа: " group))
+                    "\n"
+                    (if (empty? lst)
+                      "Нет заявок"
+                      (str/join "\n"
+                                (map (fn [[i stud-id]] (str (+ 1 i) ". " (status-for-stud db stud-id)))
+                                     (zipmap (range) lst)))))))
 
 ;; Drop lab1 and student.
-
 
 (defn drop-lab1-schedule-for [tx id]
   (let [lab1 (c/get-at tx [:schedule :lab1])
