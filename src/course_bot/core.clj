@@ -66,6 +66,7 @@
   (e/essay-talk db token "essay1")
   (e/assign-essay-talk db token "essay1" assert-admin)
   (e/essay-review-talk db token "essay1")
+  (e/essay-status-talk db token "essay1")
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]

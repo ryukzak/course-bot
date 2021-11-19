@@ -183,3 +183,18 @@
               :else
               (do (t/send-yes-no-kbd token id "Непонял. yes или no?")
                   (t/wait tx))))))
+
+(defn essay-status-talk [db token essay-code]
+  (t/talk db essay-code
+          :start
+          (fn [tx {{id :id} :chat}]
+            (let [essays (get-essays tx essay-code)]
+              (t/send-text token id
+                           "Всего эссе: " (count essays) "\n"
+                           "Человек сделало ревью: " (->> essays
+                                                          vals
+                                                          (map #(-> % :essays (get essay-code) :my-reviews))
+                                                          (filter some?)
+                                                          count) "\n"))
+
+            (t/stop-talk tx))))
