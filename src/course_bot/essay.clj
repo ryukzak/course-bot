@@ -201,10 +201,17 @@
               (t/send-text token id
                            (str
                             "Всего эссе: " (count essays) "\n"
-                            "Человек сделало ревью: " (->> essays
-                                                           vals
-                                                           (map #(-> % :essays (get essay-code) :my-reviews))
-                                                           (filter some?)
-                                                           count))))
+                            "Человек сделало ревью: "
+                            (->> essays
+                                 vals
+                                 (map #(-> % :essays (get essay-code) :my-reviews))
+                                 (filter some?)
+                                 count) "\n"
+                            "Есть комплект ревью на: "
+                            (->> essays
+                                 vals
+                                 (map #(-> % :essays (get essay-code) :received-review))
+                                 (filter #(= 3 (count %)))
+                                 count) " эссе.")))
 
             (t/stop-talk tx))))
