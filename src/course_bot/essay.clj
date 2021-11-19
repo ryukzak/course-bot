@@ -140,7 +140,11 @@
           :get-feedback
           (fn foo ([tx msg] (foo tx msg {}))
             ([tx {{id :id} :chat text :text} {reviews :reviews}]
+             (when (and (seq reviews) (empty? (filter :index reviews)))
+               (t/send-text token id "Увы, но вам надо начать писать отзывы с начала (если вы это сообщение видете в очередной раз -- сообщите).")
+               (t/stop-talk tx))
              (let [assignments (my-assignement-ids tx id essay-code)
+                   assignment-texts (my-assignements tx id essay-code)
                    pos (try (Integer/parseInt (.trim (first (re-find #"^\d(\s|$)" text))))
                             (catch Exception _ nil))
                    feedback (re-find #"[^\d\s].*" text)
@@ -155,13 +159,18 @@
                      (t/wait tx))
 
                  :else
-                 (let [reviews' (cons {:pos pos :feedback feedback :author author} reviews)]
+                 (let [reviews' (cons {:pos pos :feedback feedback :author author :review-author id :index (count reviews)} reviews)]
                    (if (not= (count reviews) (- (count assignments) 1))
                      (do (t/send-text token id "ok")
                          (t/change-branch tx :get-feedback :reviews reviews'))
                      (do (t/send-text token id "Вы высказались про все эссе. Посмотрите что получилось:")
                          (t/send-text token id (str "Первое из перечисленных эссе -- лучшее.\n\n"
-                                                    (str/join "\n\n---\n\n" (map #(str (:pos %) " " (:feedback %)) (sort-by :pos reviews')))
+                                                    (str/join "\n\n---\n\n"
+                                                              (map #(str "Эссе #" (+ 1 (:index %)) ", "
+                                                                         "место: " (:pos %) ", "
+                                                                         "отзыв: " (:feedback %) " "
+                                                                         "(начало текста: " (let [essay (-> assignment-texts (nth (:index %)))]
+                                                                                              (subs essay 0 (min (count essay) 40))) "...)") (sort-by :pos reviews')))
                                                     "\n\nПоследнее эссе -- худшее."))
                          (t/send-yes-no-kbd token id "Всё верно?")
                          (t/change-branch tx :approve :reviews reviews'))))))))
