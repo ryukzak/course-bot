@@ -145,29 +145,34 @@
                (t/stop-talk tx))
              (let [assignments (my-assignement-ids tx id essay-code)
                    assignment-texts (my-assignements tx id essay-code)
-                   pos (try (Integer/parseInt (.trim (first (re-find #"^\d(\s|$)" text))))
-                            (catch Exception _ nil))
+                   index (try (- (Integer/parseInt (.trim (first (re-find #"^\d(\s|$)" text)))) 1)
+                              (catch Exception _ nil))
+                   pos (+ 1 (count reviews))
                    feedback (re-find #"[^\d\s].*" text)
                    author (nth assignments (count reviews))]
                (cond
-                 (or (nil? pos) (< pos 1) (> pos (count assignments)))
+                 (or (nil? index)
+                     (< index 0) (>= index (count assignments))
+                     (< pos 1) (> pos (count assignments)))
                  (do (t/send-text token id "Увы, но я не понял какое эссе вы назвали. Номер должен быть первым символом и отделён от остального текста.")
                      (t/wait tx))
 
-                 (some #{pos} (map :pos reviews))
+                 (some #{index} (map :index reviews))
                  (do (t/send-text token id "Вы уже дали ответ относительно данного Эссе.")
                      (t/wait tx))
 
                  :else
-                 (let [reviews' (cons {:pos pos :feedback feedback :author author :review-author id :index (count reviews)} reviews)]
-                   (if (not= (count reviews) (- (count assignments) 1))
+                 (let [reviews' (cons {:pos pos :index index
+                                       :author author :review-author id
+                                       :feedback feedback} reviews)]
+                   (if (not= (count reviews') (count assignments))
                      (do (t/send-text token id "ok")
                          (t/change-branch tx :get-feedback :reviews reviews'))
                      (do (t/send-text token id "Вы высказались про все эссе. Посмотрите что получилось:")
                          (t/send-text token id (str "Первое из перечисленных эссе -- лучшее.\n\n"
                                                     (str/join "\n\n---\n\n"
-                                                              (map #(str "Эссе #" (+ 1 (:index %)) ", "
-                                                                         "место: " (:pos %) ", "
+                                                              (map #(str "Место: " (:pos %) ", "
+                                                                         "эссе #" (+ 1 (:index %)) ", "
                                                                          "отзыв: " (:feedback %) " "
                                                                          "(начало текста: " (let [essay (-> assignment-texts (nth (:index %)))]
                                                                                               (subs essay 0 (min (count essay) 40))) "...)") (sort-by :pos reviews')))
