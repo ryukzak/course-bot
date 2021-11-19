@@ -44,3 +44,143 @@
                 "no" (do (t/send-text token id "Вы можете перезагрузить текст.")
                          (t/stop-talk tx))
                 (do (t/send-text token id "What? Yes or no.") tx))))))
+
+(defn get-essays [tx essay-code]
+  (->> (c/get-at tx [])
+       (filter (fn [[_k v]] (-> v :essays (get essay-code) :submitted?)))))
+
+(defn is-bad-review [essay-code id info]
+  (let [reviewers (-> info :essays (get essay-code) :request-review)]
+    (or (some #(= % id) reviewers)
+        (not (apply distinct? reviewers)))))
+
+;; (is-bad-review "essay1" 1 {:essays {"essay1" {:request-review '(1070936164 2 1)}}})
+;; (is-bad-review "essay1" 1 {:essays {"essay1" {:request-review '(1070936164 2 2)}}})
+;; (is-bad-review "essay1" 1 {:essays {"essay1" {:request-review '(1070936164 2 4)}}})
+
+(defn assign-reviews [tx essay-code n]
+  (loop [n n
+         limit (* n 1000)
+         essays (get-essays tx essay-code)]
+    (let [tmp (into {} (map (fn [[id info] review-id]
+                              [id (update-in info
+                                             [:essays essay-code :request-review]
+                                             conj review-id)])
+                            essays
+                            (shuffle (keys essays))))
+          bad-items (filter #(apply is-bad-review essay-code %) tmp)]
+      (cond
+        (= n 0) essays
+        (empty? bad-items) (recur (- n 1) (- limit 1) tmp)
+        (and (not-empty bad-items)
+             (<= limit 0)) nil ;; (throw (ex-info "LIMIT" {:bad-items bad-items}))
+        :else (recur n (- limit 1) essays)))))
+
+(defn write-review-assignments [tx assignments]
+  (reduce (fn [tx' [id desc]] (c/assoc-at tx' [id] desc)) tx assignments))
+
+(defn assign-essay-reviews [tx token essay-code admin-chat]
+  (let [assignments (assign-reviews tx essay-code 3)]
+    (t/send-text token admin-chat
+                 (str "Assignment count: " (count assignments) "; "
+                      "Examples: " (some-> assignments first second :essays (get essay-code) :request-review)))
+    (write-review-assignments tx assignments)))
+
+(defn assign-essay-talk [db token essay-code assert-admin]
+  (t/talk db (str essay-code "assign")
+          :start
+          (fn [tx {{id :id} :chat}]
+            (assert-admin tx token id)
+            (assign-essay-reviews tx token essay-code id))))
+
+(defn my-assignement-ids [tx id essay-code]
+  (c/get-at tx [id :essays essay-code :request-review]))
+
+(defn my-assignements [tx id essay-code]
+  (map #(c/get-at tx [% :essays essay-code :text])
+       (my-assignement-ids tx id essay-code)))
+
+(defn essay-review-talk [db token essay-code]
+  (t/talk db (str essay-code "review")
+          :start
+          (fn [tx {{id :id} :chat}]
+            (let [assignments (my-assignements tx id essay-code)]
+              (when (empty? assignments)
+                (t/send-text token id "Вам не назначено не одно эссе. Вероятно, вы не загрузили своё.")
+                (t/stop-talk tx))
+              (when-not (nil? (c/get-at tx [id :essays essay-code :my-reviews]))
+                (t/send-text token id "Вы уже сделали ревью.")
+                (t/stop-talk tx))
+              (t/send-text token id (str "Вам на ревью пришло: " (count assignments) " эссе. Их текст сейчас отправлю ниже отдельными сообщениями."))
+              (doall (map (fn [index text]
+                            (t/send-text token id (str "Эссе #" (+ 1 index) " <<<<<<<<<<<<<<<<<<<<"))
+                            (t/send-text token id text)
+                            (t/send-text token id (str ">>>>>>>>>>>>>>>>>>>> Эссе #" (+ 1 index))))
+                          (range)
+                          assignments))
+              (t/send-text token id "Ознакомьтесь и оцените их.
+
+Для это необходимо отправить серию сообщений следующего вида: `<номер эссе> <опциональный текст который будет оправлен автору>`. Первым должно идти лучшее эссе.
+Если хотите начать дискуссию с автором -- скиньте ему свой контакт.
+
+Пример сообщений:
+
+Сообщение 1:
+2 Огонь, я сам до этого не додумался!
+
+Сообщение 2:
+1
+
+Сообщение 3:
+3 Увы, но ничего понять из эссе мне не удалось.
+
+Перед тем как сохранить ваши ответы, у вас будет возможность проверить, правильно ли я вас понял.
+")
+              (t/change-branch tx :get-feedback)))
+
+          :get-feedback
+          (fn foo ([tx msg] (foo tx msg {}))
+            ([tx {{id :id} :chat text :text} {reviews :reviews}]
+             (let [assignments (my-assignement-ids tx id essay-code)
+                   pos (try (Integer/parseInt (.trim (first (re-find #"^\d(\s|$)" text))))
+                            (catch Exception _ nil))
+                   feedback (re-find #"[^\d\s].*" text)
+                   author (nth assignments (count reviews))]
+               (cond
+                 (or (nil? pos) (< pos 1) (> pos (count assignments)))
+                 (do (t/send-text token id "Увы, но я не понял какое эссе вы назвали. Номер должен быть первым символом и отделён от остального текста.")
+                     (t/wait tx))
+
+                 (some #{pos} (map :pos reviews))
+                 (do (t/send-text token id "Вы уже дали ответ относительно данного Эссе.")
+                     (t/wait tx))
+
+                 :else
+                 (let [reviews' (cons {:pos pos :feedback feedback :author author} reviews)]
+                   (if (not= (count reviews) (- (count assignments) 1))
+                     (do (t/send-text token id "ok")
+                         (t/change-branch tx :get-feedback :reviews reviews'))
+                     (do (t/send-text token id "Вы высказались про все эссе. Посмотрите что получилось:")
+                         (t/send-text token id (str "Первое из перечисленных эссе -- лучшее.\n\n"
+                                                    (str/join "\n\n---\n\n" (map #(str (:pos %) " " (:feedback %)) (sort-by :pos reviews')))
+                                                    "\n\nПоследнее эссе -- худшее."))
+                         (t/send-yes-no-kbd token id "Всё верно?")
+                         (t/change-branch tx :approve :reviews reviews'))))))))
+
+          :approve
+          (fn [tx {{id :id} :chat text :text} {reviews :reviews}]
+            (cond
+              (= text "yes")
+              (do (t/send-text token id "Ваш отзыв был сохранён, как накопим побольше -- разошлём авторам.")
+                  (-> (reduce (fn [tx' review] (c/update-at tx' [(:author review) :essays essay-code :received-review] conj review))
+                              tx reviews)
+                      (c/assoc-at [id :essays essay-code :my-reviews] reviews)
+                      t/stop-talk))
+
+              (= text "no")
+              (do (t/send-text token id "Загрузите свой отзыв снова.")
+                  (t/stop-talk tx))
+
+              :else
+              (do (t/send-yes-no-kbd token id "Непонял. yes или no?")
+                  (t/wait tx))))))

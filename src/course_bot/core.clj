@@ -56,7 +56,7 @@
                                 (g/send-whoami! db token id)
                                 (t/send-text token id "Если вы где-то ошиблись - выполните команду /start повторно. Помощь -- /help.")))))
 
-  (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
+  ;; (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
   (h/command "whoami" {{id :id} :chat} (g/send-whoami! db token id))
 
   (q/startquiz-talk db token assert-admin)
@@ -64,6 +64,8 @@
   (q/quiz-talk db token admin-chat)
 
   (e/essay-talk db token "essay1")
+  (e/assign-essay-talk db token "essay1" assert-admin)
+  (e/essay-review-talk db token "essay1")
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
