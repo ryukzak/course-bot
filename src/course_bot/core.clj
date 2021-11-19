@@ -243,8 +243,7 @@
                                                                "\n\n"
                                                                text
                                                                "\n\n"
-                                                               "Попробуйте снова.
-                                                         "))
+                                                               "Попробуйте снова."))
                                   (t/send-text token id (str "Замечания отправлено студенту."
                                                              "\n\n"
                                                              (lab1/status-for-stud db stud)

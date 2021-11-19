@@ -1,10 +1,7 @@
 (ns course-bot.essay
   (:require [course-bot.talk :as t])
   (:require [codax.core :as c])
-  (:require [clojure.string :as str])
-  (:require [morse.handlers :as h]
-            [morse.polling :as p])
-  (:require [clojure.pprint :refer [pprint]]))
+  (:require [clojure.string :as str]))
 
 (defn essay-talk [db token essay-code]
   (t/talk db essay-code
@@ -16,6 +13,7 @@
                 (t/stop-talk tx))
               (t/send-text token id (str "Отправьте текст эссе '" essay-code "' одним сообщением."))
               (t/change-branch tx :submit)))
+
           :submit
           (fn [tx {{id :id} :chat text :text}]
             (let [{submitted? :submitted?} (c/get-at tx [id :essays essay-code])]
@@ -29,6 +27,7 @@
               (-> tx
                   (c/assoc-at [id :essays essay-code :text] text)
                   (t/change-branch :approve))))
+
           :approve
           (fn [tx {{id :id} :chat text :text}]
             (let [{submitted? :submitted?
