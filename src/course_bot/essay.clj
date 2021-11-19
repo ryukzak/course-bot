@@ -194,16 +194,17 @@
                   (t/wait tx))))))
 
 (defn essay-status-talk [db token essay-code]
-  (t/talk db essay-code
+  (t/talk db (str essay-code "status")
           :start
           (fn [tx {{id :id} :chat}]
             (let [essays (get-essays tx essay-code)]
               (t/send-text token id
-                           "Всего эссе: " (count essays) "\n"
-                           "Человек сделало ревью: " (->> essays
-                                                          vals
-                                                          (map #(-> % :essays (get essay-code) :my-reviews))
-                                                          (filter some?)
-                                                          count) "\n"))
+                           (str
+                            "Всего эссе: " (count essays) "\n"
+                            "Человек сделало ревью: " (->> essays
+                                                           vals
+                                                           (map #(-> % :essays (get essay-code) :my-reviews))
+                                                           (filter some?)
+                                                           count))))
 
             (t/stop-talk tx))))
