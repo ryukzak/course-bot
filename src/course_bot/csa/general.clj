@@ -17,3 +17,7 @@
   (declare tx)
   (c/with-read-transaction [db tx]
     (send-whoami tx token id me))))
+
+(defn studs-by-group [db group]
+  (->> (c/get-at! db [])
+       (filter #(-> % second :group (= group)))))

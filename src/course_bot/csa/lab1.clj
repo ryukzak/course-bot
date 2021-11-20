@@ -57,8 +57,17 @@
 
 (def group-description (read-string (try (slurp (System/getenv "GROUP_DESC")) (catch Exception _ "nil"))))
 
+(defn lab1-group-stat [db group]
+  (let [studs (g/studs-by-group db group)
+        approved (->> studs (filter #(-> % second :lab1 :approved?)))
+        done (->> (c/get-at! db [:schedule :lab1 group :history])
+                  (map :reports)
+                  (apply concat))]
+    (str "Всего студентов в группе (по информации бота): " (count studs) "; "
+         "Согласовало тем: " (count approved) "; "
+         "Сделало докладов: " (count done))))
+
 (defn send-schedule-list [db token id group lst]
-  (println group (get group-description group))
   (t/send-text token id
                (str (or (get group-description group) (str "Группа: " group))
                     "\n"
@@ -66,7 +75,10 @@
                       "Нет заявок"
                       (str/join "\n"
                                 (map (fn [[i stud-id]] (str (+ 1 i) ". " (status-for-stud db stud-id)))
-                                     (zipmap (range) lst)))))))
+                                     (zipmap (range) lst))))
+                    "\n\n"
+
+                    (lab1-group-stat db group))))
 
 ;; Drop lab1 and student.
 
