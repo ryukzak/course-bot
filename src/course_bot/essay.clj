@@ -168,17 +168,21 @@
                    (if (not= (count reviews') (count assignments))
                      (do (t/send-text token id "ok")
                          (t/change-branch tx :get-feedback :reviews reviews'))
-                     (do (t/send-text token id "Вы высказались про все эссе. Посмотрите что получилось:")
-                         (t/send-text token id (str "Первое из перечисленных эссе -- лучшее.\n\n"
-                                                    (str/join "\n\n---\n\n"
-                                                              (map #(str "Место: " (:pos %) ", "
-                                                                         "эссе #" (+ 1 (:index %)) ", "
-                                                                         "отзыв: " (:feedback %) " "
-                                                                         "(начало текста: " (let [essay (-> assignment-texts (nth (:index %)))]
-                                                                                              (subs essay 0 (min (count essay) 40))) "...)") (sort-by :pos reviews')))
-                                                    "\n\nПоследнее эссе -- худшее."))
-                         (t/send-yes-no-kbd token id "Всё верно?")
-                         (t/change-branch tx :approve :reviews reviews'))))))))
+                     (let [conclusion (str "Первое из перечисленных эссе -- лучшее.\n\n"
+                                           (str/join "\n\n---\n\n"
+                                                     (map #(str "Место: " (:pos %) ", "
+                                                                "эссе #" (+ 1 (:index %)) ", "
+                                                                "отзыв: " (:feedback %) " "
+                                                                "(начало текста: " (let [essay (-> assignment-texts (nth (:index %)))]
+                                                                                     (subs essay 0 (min (count essay) 40))) "...)")
+                                                          (sort-by :pos reviews')))
+                                           "\n\nПоследнее эссе -- худшее.")]
+                       (t/send-text token id "Вы высказались про все эссе. Посмотрите что получилось:")
+                       (t/send-text token id conclusion)
+                       (t/send-yes-no-kbd token id "Всё верно?")
+                       (t/change-branch tx :approve
+                                        :reviews reviews'
+                                        :conclusion conclusion))))))))
 
           :approve
           (fn [tx {{id :id} :chat text :text} {reviews :reviews}]
@@ -219,4 +223,19 @@
                                  (filter #(= 3 (count %)))
                                  count) " эссе.")))
 
+            (t/stop-talk tx))))
+
+(defn my-reviews [tx essay-code id]
+  (let [reviews (c/get-at tx [id :essays essay-code :received-review])]
+    (if (< (count reviews) 3)
+      (list "Слишком мало отзывов, ждём пока будут все.")
+      (->> reviews
+           (map #(str "Как за вас проголовали: " (:pos %)
+                      (when-let [fb (:feedback %)] (str "\nОтзыв: " fb))))))))
+
+(defn essay-results-talk [db token essay-code]
+  (t/talk db (str essay-code "results")
+          :start
+          (fn [tx {{id :id} :chat}]
+            (doall (map #(t/send-text token id %) (my-reviews tx essay-code id)))
             (t/stop-talk tx))))

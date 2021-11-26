@@ -30,7 +30,7 @@ lab1feedback - оценить доклады с занятия
 essay1 - загрузить первое эссе
 essay1review - сделать ревью на первое эссе
 essay1status - посмотреть сколько ревью собрано на первое эссе
-essay1 - загрузить первое эссе
+essay1results - результаты рассмотрения моего эссе
 essay2 - загрузить второе эссе
 ")
 
@@ -82,6 +82,7 @@ essay2 - загрузить второе эссе
   (e/assign-essay-talk db token "essay1" assert-admin)
   (e/essay-review-talk db token "essay1")
   (e/essay-status-talk db token "essay1")
+  (e/essay-results-talk db token "essay1")
 
   (e/essay-talk db token "essay2")
 
