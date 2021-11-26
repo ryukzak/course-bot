@@ -19,6 +19,21 @@
 (def group-list #{"P33102" "P33111" "P33301" "P33101" "P33312" "P33302" "P33112" "thursday"})
 (def admin-chat 70151255)
 
+(def help-msg
+  "start - регистрация
+whoami - какая у меня группа
+lab1 - отправка описания инцидента на согласование
+lab1benext - заявиться докладчиком на ближайшее занятие
+lab1reportqueue - очередь докладов на ближайшие занятия (по группам)
+lab1reportnext - доклады наследующий раз (по группам)
+lab1feedback - оценить доклады с занятия
+essay1 - загрузить первое эссе
+essay1review - сделать ревью на первое эссе
+essay1status - посмотреть сколько ревью собрано на первое эссе
+essay1 - загрузить первое эссе
+essay2 - загрузить второе эссе
+")
+
 (defn save-chat-info [id chat]
   (doall (map (fn [[key value]] (c/assoc-at! db [id :chat key] value)) chat)))
 
@@ -67,6 +82,8 @@
   (e/assign-essay-talk db token "essay1" assert-admin)
   (e/essay-review-talk db token "essay1")
   (e/essay-status-talk db token "essay1")
+
+  (e/essay-talk db token "essay2")
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
@@ -252,16 +269,8 @@
                                                              "Ещё /lab1next")))))))
 
   (h/command "help" {{id :id} :chat}
-             (t/send-text token id (str "start - регистрация\n"
-                                        "whoami - какая у меня группа\n"
-                                        "lab1 - отправка описания инцидента на согласование\n"
-                                        "lab1benext - заявиться докладчиком на ближайшее занятие\n"
-                                        "lab1reportqueue - очередь докладов на ближайшие занятия (по группам)\n"
-                                        "lab1reportnext - доклады наследующий раз (по группам)\n"
-                                        "lab1feedback - оценить доклады с занятия\n"
-                                        "essay1 - загрузить первое эссе\n"
-                                        "essay1review - сделать ревью на первое эссе\n"
-                                        "essay1status - посмотреть сколько ревью собрано на первое эссе \n"))))
+             (t/send-text token id help-msg)))
+
 
 (defn -main
   "I don't do a whole lot ... yet."
