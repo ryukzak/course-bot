@@ -99,6 +99,19 @@
   (map #(c/get-at tx [% :essays essay-code :text])
        (my-assignement-ids tx id essay-code)))
 
+(defn str-reviews [tx essay-code id reviews]
+  (let [assignment-texts (my-assignements tx id essay-code)]
+    (str "Первое из перечисленных эссе -- лучшее.\n\n"
+         (str/join "\n\n---\n\n"
+                   (map #(str "Место: " (:pos %) ", "
+                              "эссе #" (+ 1 (:index %)) ", "
+                              "отзыв: " (:feedback %) " "
+                              "\n(начало текста: " (let [essay (-> assignment-texts (nth (:index %)))]
+                                                     (subs essay 0 (min (count essay) 40))) "...)"
+                              "\n" (c/get-at tx [(:author %)]))
+                        (sort-by :pos reviews)))
+         "\n\nПоследнее эссе -- худшее.")))
+
 (defn essay-review-talk [db token essay-code]
   (t/talk db (str essay-code "review")
           :start
@@ -144,7 +157,6 @@
                (t/send-text token id "Увы, но вам надо начать писать отзывы с начала (если вы это сообщение видете в очередной раз -- сообщите).")
                (t/stop-talk tx))
              (let [assignments (my-assignement-ids tx id essay-code)
-                   assignment-texts (my-assignements tx id essay-code)
                    index (try (- (Integer/parseInt (.trim (first (re-find #"^\d(\s|$)" text)))) 1)
                               (catch Exception _ nil))
                    pos (+ 1 (count reviews))
@@ -168,15 +180,7 @@
                    (if (not= (count reviews') (count assignments))
                      (do (t/send-text token id "ok")
                          (t/change-branch tx :get-feedback :reviews reviews'))
-                     (let [conclusion (str "Первое из перечисленных эссе -- лучшее.\n\n"
-                                           (str/join "\n\n---\n\n"
-                                                     (map #(str "Место: " (:pos %) ", "
-                                                                "эссе #" (+ 1 (:index %)) ", "
-                                                                "отзыв: " (:feedback %) " "
-                                                                "(начало текста: " (let [essay (-> assignment-texts (nth (:index %)))]
-                                                                                     (subs essay 0 (min (count essay) 40))) "...)")
-                                                          (sort-by :pos reviews')))
-                                           "\n\nПоследнее эссе -- худшее.")]
+                     (let [conclusion (str-reviews tx essay-code id reviews')]
                        (t/send-text token id "Вы высказались про все эссе. Посмотрите что получилось:")
                        (t/send-text token id conclusion)
                        (t/send-yes-no-kbd token id "Всё верно?")
