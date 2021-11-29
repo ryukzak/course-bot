@@ -216,9 +216,7 @@
                             "Всего эссе: " (count essays) "\n"
                             "Человек сделало ревью: "
                             (->> essays
-                                 vals
-                                 (map #(-> % :essays (get essay-code) :my-reviews))
-                                 (filter some?)
+                                 (filter #(-> % second :essays (get "essay1") :my-reviews count (> 0)))
                                  count) "\n"
                             "Есть комплект ревью на: "
                             (->> essays
@@ -247,11 +245,9 @@
                      (map #(-> % second :essays (get essay-code) :my-reviews))
                      (apply concat)
                      (filter #(-> % :essay-author (= id))))]
-    (if (< (count reviews) 3)
-      (list "Слишком мало отзывов, ждём пока будут все.")
-      (->> reviews
-           (map #(str "Как за вас проголовали: " (:pos %)
-                      (when-let [fb (:feedback %)] (str "\nОтзыв: " fb))))))))
+    (->> reviews
+         (map #(str "Как за вас проголовали: " (:pos %)
+                    (when-let [fb (:feedback %)] (str "\nОтзыв: " fb)))))))
 
 (defn essay-results-talk [db token essay-code]
   (t/talk db (str essay-code "results")
