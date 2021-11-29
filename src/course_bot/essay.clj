@@ -229,8 +229,24 @@
 
             (t/stop-talk tx))))
 
+(defn with-essay-author [tx essay-code reviewer-id reviews]
+  (let [assignment-texts (my-assignement-ids tx reviewer-id essay-code)]
+    (map #(assoc % :essay-author (-> assignment-texts (nth (:index %)))) reviews)))
+
+(defn assign-essay-author [tx essay-code]
+  (->> (get-essays tx essay-code)
+       (map (fn [[id desc]]
+              [id (update-in desc [:essays essay-code :my-reviews]
+                             #(with-essay-author tx essay-code id %))]))
+
+       ((fn [pairs]
+          (reduce (fn [tx' [id desc]] (c/assoc-at tx' [id] desc)) tx pairs)))))
+
 (defn my-reviews [tx essay-code id]
-  (let [reviews (c/get-at tx [id :essays essay-code :received-review])]
+  (let [reviews (->> (c/get-at tx [])
+                     (map #(-> % second :essays (get essay-code) :my-reviews))
+                     (apply concat)
+                     (filter #(-> % :essay-author (= id))))]
     (if (< (count reviews) 3)
       (list "Слишком мало отзывов, ждём пока будут все.")
       (->> reviews
@@ -241,5 +257,6 @@
   (t/talk db (str essay-code "results")
           :start
           (fn [tx {{id :id} :chat}]
-            (doall (map #(t/send-text token id %) (my-reviews tx essay-code id)))
+            (doall (map #(t/send-text token id %)
+                        (my-reviews tx essay-code id)))
             (t/stop-talk tx))))
