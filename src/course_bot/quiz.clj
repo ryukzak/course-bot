@@ -54,7 +54,7 @@
                        (-> quiz :questions (get index) :options)
                        (map-indexed (fn [opt-index _text]
                                       (filter #(= % (str (+ 1 opt-index))) anss)))
-                       (map #(/ (count %) (count anss)))
+                       ;(map #(/ (count %) (count anss)))
                        (str/join "; "))))))
 
 (defn stud-results-inner [results id]
