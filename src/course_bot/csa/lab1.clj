@@ -176,10 +176,9 @@
 (defn pass [db group]
   (let [desc (c/get-at! db [:schedule :lab1 group])
         fixed (:fixed desc)
-        feedback (:feedback desc)
-        record {:reports fixed :feedback feedback :user-scores (lab1-score (count fixed) feedback)}]
-    (if fixed
-      (do
+        feedback (:feedback desc)]
+    (if (or (nil? fixed) (not (empty? fixed)))
+      (let [record {:reports fixed :feedback feedback :user-scores (lab1-score (count fixed) feedback)}]
         (println "> " group)
         (pprint record)
         (c/assoc-at! db [:schedule :lab1 group :history] (cons record (:history desc)))
