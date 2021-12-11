@@ -161,7 +161,7 @@
                               (catch Exception _ nil))
                    pos (+ 1 (count reviews))
                    feedback (re-find #"[^\d\s].*" text)
-                   author (nth assignments (count reviews))]
+                   author (nth assignments index)]
                (cond
                  (or (nil? index)
                      (< index 0) (>= index (count assignments))
