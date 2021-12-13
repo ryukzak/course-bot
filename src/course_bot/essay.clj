@@ -220,7 +220,7 @@
                             "Всего эссе: " (count essays) "\n"
                             "Человек сделало ревью: "
                             (->> essays
-                                 (filter #(-> % second :essays (get "essay1") :my-reviews count (> 0)))
+                                 (filter #(-> % second :essays (get essay-code) :my-reviews count (> 0)))
                                  count) "\n"
                             "Есть комплект ревью на: "
                             (->> essays
