@@ -107,8 +107,7 @@
                               "эссе #" (+ 1 (:index %)) ", "
                               "отзыв: " (:feedback %) " "
                               "\n(начало текста: " (let [essay (-> assignment-texts (nth (:index %)))]
-                                                     (subs essay 0 (min (count essay) 40))) "...)"
-                              "\n" (c/get-at tx [(:author %)]))
+                                                     (subs essay 0 (min (count essay) 40))) "...)")
                         (sort-by :pos reviews)))
          "\n\nПоследнее эссе -- худшее.")))
 
