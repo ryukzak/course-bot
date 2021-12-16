@@ -17,9 +17,11 @@
   (throw (ex-info "Wait talk" {:tx tx})))
 
 (defn set-talk-branch [tx id talk branch kwargs]
-  (c/assoc-at tx [id :talk] {:current-talk talk
-                             :current-branch branch
-                             :kwargs (apply hash-map kwargs)}))
+  (->
+   (c/assoc-at [id :dialog-state] nil)
+   (c/assoc-at [id :talk] {:current-talk talk
+                           :current-branch branch
+                           :kwargs (apply hash-map kwargs)})))
 
 (defn command-args [text] (str/split (str/replace-first text #"^/\w+\s+" "") #"\s+"))
 
