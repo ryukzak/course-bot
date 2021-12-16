@@ -17,7 +17,7 @@
   (throw (ex-info "Wait talk" {:tx tx})))
 
 (defn set-talk-branch [tx id talk branch kwargs]
-  (->
+  (-> tx
    (c/assoc-at [id :dialog-state] nil)
    (c/assoc-at [id :talk] {:current-talk talk
                            :current-branch branch
