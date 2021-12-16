@@ -77,7 +77,7 @@ essay2 - загрузить второе эссе
 
   (h/command "grouplists" {{id :id} :chat}
              (c/with-read-transaction [db tx]
-               (g/send-group-lists tx token admin-chat)))
+               (g/send-group-lists tx token id)))
 
   (q/startquiz-talk db token assert-admin)
   (q/stopquiz-talk db token assert-admin)
