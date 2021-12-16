@@ -22,6 +22,7 @@
 (def help-msg
   "start - регистрация
 whoami - какая у меня группа
+grouplists - списки групп по мнению ботов
 lab1 - отправка описания инцидента на согласование
 lab1benext - заявиться докладчиком на ближайшее занятие
 lab1reportqueue - очередь докладов на ближайшие занятия (по группам)
@@ -73,6 +74,10 @@ essay2 - загрузить второе эссе
 
   ;; (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
   (h/command "whoami" {{id :id} :chat} (g/send-whoami! db token id))
+
+  (h/command "grouplists" {{id :id} :chat}
+             (c/with-read-transaction [db tx]
+               (g/send-group-lists tx token admin-chat)))
 
   (q/startquiz-talk db token assert-admin)
   (q/stopquiz-talk db token assert-admin)

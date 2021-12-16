@@ -1,5 +1,6 @@
 (ns course-bot.csa.general
   (:require [codax.core :as c])
+  (:require [clojure.string :as str])
   (:require [course-bot.talk :as t]))
 
 (defn send-whoami
@@ -21,3 +22,17 @@
 (defn studs-by-group [db group]
   (->> (c/get-at! db [])
        (filter #(-> % second :group (= group)))))
+
+(defn send-group-lists
+  ([tx token id]
+   (doall
+    (->> (c/get-at tx [])
+         (group-by (fn [[_id desc]] (:group desc)))
+         (map (fn [[group records]]
+                (let [studs (->> records
+                                 (map second)
+                                 (sort-by :name)
+                                 (map (fn [i x] (str (+ 1 i) ") " (:name x) " (@" (-> x :chat :username) ", " (-> x :chat :id) ")"))
+                                      (range)))
+                      msg (str "Группа: " group "\n" (str/join "\n" studs))]
+                  (t/send-text token id msg))))))))
