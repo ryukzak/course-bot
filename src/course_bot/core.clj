@@ -285,7 +285,12 @@ essay2 - загрузить второе эссе
                                                              "Ещё /lab1next")))))))
 
   (h/command "help" {{id :id} :chat}
-             (t/send-text token id help-msg)))
+             (t/send-text token id help-msg))
+
+  ;; (h/message {{id :id} :chat :as message}
+  ;;     (println "Intercepted message: " message)
+  ;;     (t/send-text token id "I don't do a whole lot ... yet."))
+  )
 
 
 (defn -main
