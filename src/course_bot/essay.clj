@@ -244,11 +244,15 @@
           (reduce (fn [tx' [id desc]] (c/assoc-at tx' [id] desc)) tx pairs)))))
 
 (defn my-reviews [tx essay-code id]
-  (let [reviews (->> (c/get-at tx [])
-                     (map #(-> % second :essays (get essay-code) :my-reviews))
-                     (apply concat)
-                     (filter #(-> % :essay-author (= id))))]
-    (->> reviews
+  (if (= essay-code "essay1")
+    (let [reviews (->> (c/get-at tx [])
+                       (map #(-> % second :essays (get essay-code) :my-reviews))
+                       (apply concat)
+                       (filter #(-> % :essay-author (= id))))]
+      (->> reviews
+           (map #(str "Как за вас проголовали: " (:pos %)
+                      (when-let [fb (:feedback %)] (str "\nОтзыв: " fb))))) )
+    (->> (c/get-at tx [id :essays essay-code :received-review])
          (map #(str "Как за вас проголовали: " (:pos %)
                     (when-let [fb (:feedback %)] (str "\nОтзыв: " fb)))))))
 
