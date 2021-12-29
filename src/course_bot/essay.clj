@@ -260,6 +260,7 @@
   (t/talk db (str essay-code "results")
           :start
           (fn [tx {{id :id} :chat}]
-            (doall (map #(t/send-text token id %)
-                        (my-reviews tx essay-code id)))
+            (let [reviews (my-reviews tx essay-code id)]
+              (doall (map #(t/send-text token id %) reviews))
+              (t/send-text token id (str "Это были все ваши отзывы в количестве: " (count reviews) " шт.")))
             (t/stop-talk tx))))
