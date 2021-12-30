@@ -4,10 +4,27 @@
   (:require [clojure.string :as str])
   (:require [morse.handlers :as h]
             [morse.polling :as p])
+  (:require [clojure.java.io :as io])
   (:require [clojure.pprint :refer [pprint]]))
 
 (def quiz (read-string (try (slurp (or (System/getenv "QUIZ") "test-quiz.edn")) (catch Exception _ "nil"))))
+
 (println "Quiz: " (:name quiz))
+
+(def all-quiz
+  (apply hash-map
+         (apply concat
+                (->> (try (let [path (System/getenv "QUIZ_PATH")]
+                            (if (empty? "")
+                              []
+                              (file-seq (io/file path))))
+                          (catch Exception _ []))
+                     (filter #(and (.isFile %) (str/ends-with? (.getName %) ".edn")))
+                     (map #(read-string (slurp %)))
+                     (filter #(-> % :name seq))
+                     (map #(list (:name %) %))))))
+
+(println "All quiz: " (str/join ", " (map :name all-quiz)) "[" (count all-quiz) "]")
 
 (defn assert-and-get-quiz [tx token id expected]
   (let [current-quiz (c/get-at tx [:quiz :current])]
@@ -57,13 +74,13 @@
                        (map #(str (count %)))
                        (str/join "; "))))))
 
-(defn stud-results-inner [results id]
+(defn stud-results-inner [ans id quiz]
   (let [options (map :options (:questions quiz))
         bools (map (fn [opts ans] (-> opts
                                       (get (- ans 1))
                                       (get :correct false)))
                    options
-                   (map #(Integer/parseInt %) (get results id)))
+                   (map #(Integer/parseInt %) ans))
         scores (map #(if % 1 0) bools)]
     [bools (reduce + scores) (count options)]))
 
@@ -86,7 +103,7 @@
               (case text
                 "yes" (let [results (c/get-at tx [:quiz-results (:name quiz)])
                             per-studs (map (fn [stud-id]
-                                             (let [[details cur max] (stud-results-inner results stud-id)
+                                             (let [[details cur max] (stud-results-inner (get results stud-id) stud-id quiz)
                                                    info (str cur "/" max " (" (str/join ", " details) ")")]
                                                [stud-id cur info]))
                                            (keys results))]
