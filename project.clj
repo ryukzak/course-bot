@@ -5,7 +5,8 @@
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/core.match "1.0.0"]
                  [codax "1.3.1"]
-                 [morse "0.4.3"]]
+                 [morse "0.4.3"]
+                 [org.clojure/data.csv "1.0.0"]]
   :main ^:skip-aot course-bot.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
