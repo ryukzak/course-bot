@@ -15,16 +15,15 @@
   (apply hash-map
          (apply concat
                 (->> (try (let [path (System/getenv "QUIZ_PATH")]
-                            (if (empty? "")
-                              []
-                              (file-seq (io/file path))))
-                          (catch Exception _ []))
+                            (if (empty? path) []
+                                (file-seq (io/file path))))
+                          (catch Exception _ '()))
                      (filter #(and (.isFile %) (str/ends-with? (.getName %) ".edn")))
                      (map #(read-string (slurp %)))
                      (filter #(-> % :name seq))
                      (map #(list (:name %) %))))))
 
-(println "All quiz: " (str/join ", " (map :name all-quiz)) "[" (count all-quiz) "]")
+(println "All quiz:\n" (str/join "\n" (map #(-> % second :name) all-quiz)) "\n[" (count all-quiz) "]")
 
 (defn assert-and-get-quiz [tx token id expected]
   (let [current-quiz (c/get-at tx [:quiz :current])]
