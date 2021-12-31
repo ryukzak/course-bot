@@ -170,10 +170,10 @@ essay2 - загрузить второе эссе
   (e/essay-results-talk db token "essay2")
 
   (e/essay-talk db token "essay3")
-  ;(e/assign-essay-talk db token "essay3" assert-admin)
-  ;(e/essay-review-talk db token "essay3")
+  (e/assign-essay-talk db token "essay3" assert-admin)
+  (e/essay-review-talk db token "essay3")
   (e/essay-status-talk db token "essay3")
-  ;(e/essay-results-talk db token "essay3")
+  (e/essay-results-talk db token "essay3")
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
