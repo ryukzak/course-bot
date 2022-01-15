@@ -171,18 +171,21 @@ essay3results - результаты рассмотрения моего тре�
   (e/essay-review-talk db token "essay1")
   (e/essay-status-talk db token "essay1")
   (e/essay-results-talk db token "essay1")
+  (e/essays-without-review-talk db token "essay1" assert-admin)
 
   (e/essay-talk db token "essay2")
   (e/assign-essay-talk db token "essay2" assert-admin)
   (e/essay-review-talk db token "essay2")
   (e/essay-status-talk db token "essay2")
   (e/essay-results-talk db token "essay2")
+  (e/essays-without-review-talk db token "essay2" assert-admin)
 
   (e/essay-talk db token "essay3")
   (e/assign-essay-talk db token "essay3" assert-admin)
   (e/essay-review-talk db token "essay3")
   (e/essay-status-talk db token "essay3")
   (e/essay-results-talk db token "essay3")
+  (e/essays-without-review-talk db token "essay3" assert-admin)
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]

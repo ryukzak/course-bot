@@ -264,3 +264,19 @@
               (doall (map #(t/send-text token id %) reviews))
               (t/send-text token id (str "Это были все ваши отзывы в количестве: " (count reviews) " шт.")))
             (t/stop-talk tx))))
+
+(defn essays-without-review [tx essay-code]
+  (->> (get-essays tx essay-code)
+       (filter #(-> (my-reviews tx essay-code (first %)) empty?))
+       (map (fn [[id info]] (hash-map :author (:name info)
+                                      :text (-> info :essays (get essay-code) :text)
+                                      :on-review (-> info :essays (get essay-code) :request-review empty? not))))))
+
+(defn essays-without-review-talk [db token essay-code assert-admin]
+  (t/talk db (str essay-code "missreview")
+          :start
+          (fn [tx {{id :id} :chat}]
+            (assert-admin tx token id)
+            (doall (->> (essays-without-review tx essay-code)
+                        (map #(do (t/send-text token id (str (:author %) " " (:on-review %)))
+                                  (t/send-text token id (:text %)))))))))
