@@ -4,9 +4,9 @@
 
   (:require [clojure.java.io :as io])
   (:require [course-bot.dialog :as d]
-            [course-bot.talk :as b]
-            [course-bot.quiz :as q]
-            [course-bot.essay :as e]
+            [course-bot.talk :as talk]
+            [course-bot.quiz :as quiz]
+            [course-bot.essay :as essay]
             [course-bot.csa.general :as g]
             [course-bot.csa.lab1 :as lab1])
   (:require [morse.handlers :as h]
@@ -55,17 +55,17 @@ essay3results - результаты рассмотрения моего тре�
 (defn assert-admin [tx token id]
   (when-not (= id admin-chat)
     (t/send-text token id "У вас нет таких прав.")
-    (b/stop-talk tx)))
+    (talk/stop-talk tx)))
 
 (defn quiz-result [db id name]
   (let [ans (c/get-at! db [:quiz-results name id])
-        quiz (get q/all-quiz name)
-        [bool correct max] (q/stud-results-inner ans id quiz)]
+        quiz (get quiz/all-quiz name)
+        [bool correct max] (quiz/stud-results-inner ans id quiz)]
     (Math/round (* 100.0 (/ correct max)))))
 
 (defn essay-result [db id name]
   (c/with-read-transaction [db tx]
-    (let [scores (->> (e/my-reviews tx name id)
+    (let [scores (->> (essay/my-reviews tx name id)
                       (map #(subs % 24 25))
                       (map #(Integer/parseInt %))
                       (map #(- 6 %)))]
@@ -152,40 +152,45 @@ essay3results - результаты рассмотрения моего тре�
                               ;; TODO: проверка, менял ли студент группу.
                               (c/assoc-at! db [id :group] text)
                               (let [{name :name group :group} (c/get-at! db [id])]
-                                (g/send-whoami! db token id)
+                                (declare tx)
+                                (c/with-read-transaction [db tx]
+                                  (send-whoami tx token id))
                                 (t/send-text token id "Если вы где-то ошиблись - выполните команду /start повторно. Помощь -- /help.")))))
 
   ;; (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
-  (h/command "whoami" {{id :id} :chat} (g/send-whoami! db token id))
+  (h/command "whoami" {{id :id} :chat} 
+    (declare tx)
+    (c/with-read-transaction [db tx]
+      (send-whoami tx token id)))
 
   (h/command "grouplists" {{id :id} :chat}
              (c/with-read-transaction [db tx]
                (g/send-group-lists tx token id)))
 
-  (q/startquiz-talk db token assert-admin)
-  (q/stopquiz-talk db token assert-admin)
-  (q/quiz-talk db token admin-chat)
+  (quiz/startquiz-talk db token assert-admin)
+  (quiz/stopquiz-talk db token assert-admin)
+  (quiz/quiz-talk db token admin-chat)
 
-  (e/essay-talk db token "essay1")
-  (e/assign-essay-talk db token "essay1" assert-admin)
-  (e/essay-review-talk db token "essay1")
-  (e/essay-status-talk db token "essay1")
-  (e/essay-results-talk db token "essay1")
-  (e/essays-without-review-talk db token "essay1" assert-admin)
+  (essay/essay-talk db token "essay1")
+  (essay/assign-essay-talk db token "essay1" assert-admin)
+  (essay/essay-review-talk db token "essay1")
+  (essay/essay-status-talk db token "essay1")
+  (essay/essay-results-talk db token "essay1")
+  (essay/essays-without-review-talk db token "essay1" assert-admin)
 
-  (e/essay-talk db token "essay2")
-  (e/assign-essay-talk db token "essay2" assert-admin)
-  (e/essay-review-talk db token "essay2")
-  (e/essay-status-talk db token "essay2")
-  (e/essay-results-talk db token "essay2")
-  (e/essays-without-review-talk db token "essay2" assert-admin)
+  (essay/essay-talk db token "essay2")
+  (essay/assign-essay-talk db token "essay2" assert-admin)
+  (essay/essay-review-talk db token "essay2")
+  (essay/essay-status-talk db token "essay2")
+  (essay/essay-results-talk db token "essay2")
+  (essay/essays-without-review-talk db token "essay2" assert-admin)
 
-  (e/essay-talk db token "essay3")
-  (e/assign-essay-talk db token "essay3" assert-admin)
-  (e/essay-review-talk db token "essay3")
-  (e/essay-status-talk db token "essay3")
-  (e/essay-results-talk db token "essay3")
-  (e/essays-without-review-talk db token "essay3" assert-admin)
+  (essay/essay-talk db token "essay3")
+  (essay/assign-essay-talk db token "essay3" assert-admin)
+  (essay/essay-review-talk db token "essay3")
+  (essay/essay-status-talk db token "essay3")
+  (essay/essay-results-talk db token "essay3")
+  (essay/essays-without-review-talk db token "essay3" assert-admin)
 
   (d/dialog "lab1" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
@@ -208,9 +213,9 @@ essay3results - результаты рассмотрения моего тре�
                      (c/assoc-at! db [id :lab1 :description] text)
                      (t/send-text token id "Ваше описание инцидента для Лабораторной работы №1:")
                      (t/send-text token id (c/get-at! db [id :lab1 :description]))
-                     (b/send-yes-no-kbd token id "Все верно, могу отправлять преподавателю (текст нельзя будет изменить)?")
+                     (talk/send-yes-no-kbd token id "Все верно, могу отправлять преподавателю (текст нельзя будет изменить)?")
                      (:yes-no {{id :id :as chat} :chat}
-                              :input-error (b/send-yes-no-kbd token id "Непонял, скажите yes или no (там вроде клавиатура должна быть).")
+                              :input-error (talk/send-yes-no-kbd token id "Непонял, скажите yes или no (там вроде клавиатура должна быть).")
                               (do (t/send-text token id "Отлично, передам все преподавателю.")
                                   (c/assoc-at! db [id :lab1 :on-review?] true))
                               (t/send-text token id "Нет проблем, выполните команду /lab1 повторно."))))
@@ -342,9 +347,9 @@ essay3results - результаты рассмотрения моего тре�
                                          "Тема: " (-> desc :lab1 :description str/split-lines first)))
               (t/send-text token id (-> desc :lab1 :description))
               (c/assoc-at! db [admin-chat :admin :lab1 :on-approve] stud)
-              (b/send-yes-no-kbd token id "Все нормально?"))
+              (talk/send-yes-no-kbd token id "Все нормально?"))
             (:yes-no {{id :id :as chat} :chat}
-                     :input-error (b/send-yes-no-kbd token id "Непонял, скажите yes или no (там вроде клавиатура должна быть).")
+                     :input-error (talk/send-yes-no-kbd token id "Непонял, скажите yes или no (там вроде клавиатура должна быть).")
                      (let [stud (c/get-at! db [admin-chat :admin :lab1 :on-approve])]
                        (c/assoc-at! db [admin-chat :admin :lab1 :on-approve] nil)
                        (c/assoc-at! db [stud :lab1 :approved?] true)
