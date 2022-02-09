@@ -47,8 +47,6 @@ essay3status - посмотреть сколько ревью собрано н�
 essay3results - результаты рассмотрения моего третьего эссе
 ")
 
-(defn save-chat-info [id chat]
-  (doall (map (fn [[key value]] (c/assoc-at! db [id :chat key] value)) chat)))
 
 ;; for drop student
 
@@ -125,41 +123,10 @@ essay3results - результаты рассмотрения моего тре�
 
 (declare bot-api id chat text)
 (h/defhandler bot-api
-  (d/dialog "start" db {{id :id :as chat} :chat}
-            :guard (let [info (c/get-at! db [id])]
-                     (cond
-                       (nil? info) nil
-                       (:allow-restart info) nil
-                       :else (t/send-text token id "Что бы изменить информацию о вас -- сообщите об этом преподавателю.")))
-            (save-chat-info id chat)
-            (t/send-text token id (str "Привет, я бот курса \"Архитектура компьютера\". "
-                                       "Через меня будут организовано выполнение лабораторных работ."
-                                       "\n\n"
-                                       "Представьтесь пожалуйста, мне нужно знать как вносить вас в ведомости (ФИО):"))
-            (c/assoc-at! db [id :reg-date] (str (new java.util.Date)))
-            (:listen {{id :id} :from text :text}
-                     (c/assoc-at! db [id :name] text)
-                     (t/send-text token id "Из какой вы группы?")
-                     (:listen {{id :id} :from text :text}
-                              :guard (when-not (contains? group-list text)
-                                       (t/send-text token id (str "Увы, но я не знаю такой группы. Мне сказали что должна быть одна из: "
-                                                                  (str/join " " group-list))))
-                              ;; TODO: проверка, менял ли студент группу.
-                              (c/assoc-at! db [id :group] text)
-                              (let [{name :name group :group} (c/get-at! db [id])]
-                                (declare tx)
-                                (c/with-read-transaction [db tx]
-                                  (general/send-whoami tx token id))
-                                (t/send-text token id "Если вы где-то ошиблись - выполните команду /start повторно. Помощь -- /help.")))))
-
-  ;; (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
-
-  (general/whoami-talk db token)
-  (general/listgroups-talk db token)
-
-  (h/command "grouplists" {{id :id} :chat}
-             (c/with-read-transaction [db tx]
-               (general/send-group-lists tx token id)))
+  (general/start-talk db general/chat-token)
+  (general/restart-talk db general/chat-token general/assert-admin)
+  (general/whoami-talk db general/chat-token)
+  (general/listgroups-talk db general/chat-token)
 
   (quiz/startquiz-talk db token assert-admin)
   (quiz/stopquiz-talk db token assert-admin)

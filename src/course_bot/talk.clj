@@ -16,6 +16,8 @@
 (defn wait [tx]
   (throw (ex-info "Wait talk" {:tx tx})))
 
+(defn repeat-branch [tx] (wait tx))
+
 (defn set-talk-branch [tx id talk branch kwargs]
   (-> tx
    (c/assoc-at [id :dialog-state] nil)
@@ -75,8 +77,10 @@
                      (throw e#))))))
            @res#)))))
 
+(defmacro def-talk [& args] `(talk ~@args))
+
 (defn def-command [db name foo]
-    (talk db name :start foo))
+    (def-talk db name :start foo))
 
 ;; Re-exports
 
