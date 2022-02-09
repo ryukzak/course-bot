@@ -75,6 +75,9 @@
                      (throw e#))))))
            @res#)))))
 
+(defn def-command [db name foo]
+    (talk db name :start foo))
+
 ;; Re-exports
 
 (intern 'course-bot.talk 'send-text t/send-text)
