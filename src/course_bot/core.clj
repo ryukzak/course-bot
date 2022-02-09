@@ -7,7 +7,7 @@
             [course-bot.talk :as talk]
             [course-bot.quiz :as quiz]
             [course-bot.essay :as essay]
-            [course-bot.csa.general :as g]
+            [course-bot.csa.general :as group]
             [course-bot.csa.lab1 :as lab1])
   (:require [morse.handlers :as h]
             [morse.api :as t]
@@ -154,18 +154,18 @@ essay3results - результаты рассмотрения моего тре�
                               (let [{name :name group :group} (c/get-at! db [id])]
                                 (declare tx)
                                 (c/with-read-transaction [db tx]
-                                  (send-whoami tx token id))
+                                  (group/send-whoami tx token id))
                                 (t/send-text token id "Если вы где-то ошиблись - выполните команду /start повторно. Помощь -- /help.")))))
 
   ;; (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
   (h/command "whoami" {{id :id} :chat} 
     (declare tx)
     (c/with-read-transaction [db tx]
-      (send-whoami tx token id)))
+      (group/send-whoami tx token id)))
 
   (h/command "grouplists" {{id :id} :chat}
              (c/with-read-transaction [db tx]
-               (g/send-group-lists tx token id)))
+               (group/send-group-lists tx token id)))
 
   (quiz/startquiz-talk db token assert-admin)
   (quiz/stopquiz-talk db token assert-admin)
