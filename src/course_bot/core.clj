@@ -47,80 +47,6 @@ essay3status - посмотреть сколько ревью собрано н�
 essay3results - результаты рассмотрения моего третьего эссе
 ")
 
-
-;; for drop student
-
-(defn quiz-result [db id name]
-  (let [ans (c/get-at! db [:quiz-results name id])
-        quiz (get quiz/all-quiz name)
-        [bool correct max] (quiz/stud-results-inner ans id quiz)]
-    (Math/round (* 100.0 (/ correct max)))))
-
-(defn essay-result [db id name]
-  (c/with-read-transaction [db tx]
-    (let [scores (->> (essay/my-reviews tx name id)
-                      (map #(subs % 24 25))
-                      (map #(Integer/parseInt %))
-                      (map #(- 6 %)))]
-      (if (empty? scores) "-"
-          (-> (/ (apply + scores) (count scores))
-              float
-              Math/round)))))
-
-(defn essay-review [db id name]
-  (boolean (seq (c/get-at! db [id :essays name :my-reviews]))))
-
-(defn send-report [db token id]
-  (let [tests [:t-1-2 :t-3-4 :t-5-6 :t-7-8 :t-9-10 :t-11-12 :t-13-14-15]
-        rows (->> (c/get-at! db [])
-                  (filter #(-> % second :name))
-                  (filter #(-> % (not= "yes")))
-                  (map (fn [[id e]]
-                         {:name (-> e :name)
-                          :group (-> e :group)
-                          :t-1-2 (quiz-result db id "Лекция-1-2")
-                          :t-3-4 (quiz-result db id "Лекция-3-4")
-                          :t-5-6 (quiz-result db id "Лекции 5-6. Раздел 'Hardware и Software'")
-                          :t-7-8 (quiz-result db id "Лекция-7-8")
-                          :t-9-10 (quiz-result db id "Лекция-9-10. Системы команд. Процессор фон Неймана. Стековый процессор")
-                          :t-11-12 (quiz-result db id "Архитектура компьютера - Лекции 11-12, разделы: Память,иерархияпамяти; Устройство памяти с произвольным доступом; Кеширование")
-                          :t-13-14-15 (quiz-result db id "Архитектура компьютера - Лекции 13-14-15, разделы: Ввод-вывод, Параллелизм")
-                          :e-1-result (essay-result db id "essay1")
-                          :e-1-review (essay-review db id "essay1")
-                          :e-2-result (essay-result db id "essay2")
-                          :e-2-review (essay-review db id "essay2")
-                          :e-3-result (essay-result db id "essay3")
-                          :e-3-review (essay-review db id "essay3")
-                          :id (-> e :chat :id)}))
-                  (map (fn [row] (assoc row :test-summary
-                                        (->> tests
-                                             (map #(% row))
-                                             (map #(if (>= % 50) 1 0))
-                                             (apply +)
-                                             (#(-> (/ % (count tests)) float (* 100) Math/round))))))
-                  (map (fn [row] (assoc row :test-pass
-                                        (if (>= (:test-summary row) 50) 1 0))))
-
-                  (map (fn [row] (assoc row :essay-review
-                                        (->> [:e-1-review :e-2-review :e-3-review]
-                                             (map #(% row))
-                                             (map #(if % 1 0))
-                                             (apply +))))))
-
-        columns [:group :name
-                 :test-summary :test-pass
-                 :e-1-result  :e-2-result  :e-3-result
-                 :essay-review
-                 ;; :id
-                 :e-1-review :e-2-review :e-3-review
-                 :t-1-2 :t-3-4 :t-5-6 :t-7-8 :t-9-10 :t-11-12 :t-13-14-15]
-        data (cons columns
-                   (map (fn [row] (map #(% row) columns)) rows))]
-
-    (with-open [writer (io/writer "out-file.csv")]
-      (csv/write-csv writer data))
-    (t/send-document token id (io/file "out-file.csv"))))
-
 (declare bot-api id chat text)
 (h/defhandler bot-api
   (general/start-talk db general/chat-token)
@@ -128,8 +54,10 @@ essay3results - результаты рассмотрения моего тре�
   (general/whoami-talk db general/chat-token)
   (general/listgroups-talk db general/chat-token)
 
-  (quiz/startquiz-talk db token assert-admin)
-  (quiz/stopquiz-talk db token assert-admin)
+  (report/report-talk db general/chat-token general/assert-admin)
+
+  (quiz/startquiz-talk db general/chat-token general/assert-admin)
+  (quiz/stopquiz-talk db general/chat-token general/assert-admin)
   (quiz/quiz-talk db token admin-chat)
 
   (essay/essay-talk db token "essay1")
@@ -180,6 +108,8 @@ essay3results - результаты рассмотрения моего тре�
                               (do (t/send-text token id "Отлично, передам все преподавателю.")
                                   (c/assoc-at! db [id :lab1 :on-review?] true))
                               (t/send-text token id "Нет проблем, выполните команду /lab1 повторно."))))
+
+  (lab1/dropstudent-talk db token assert-admin admin-chat)
 
   (d/dialog "lab1benext" db {{id :id} :from text :text}
             :guard (let [lab1 (c/get-at! db [id :lab1])]
@@ -251,8 +181,6 @@ essay3results - результаты рассмотрения моего тре�
                                     (cons [id (str (new java.util.Date)) text] feedback)))
                      (t/send-text token id "Записал, если что-то напутали -- загрузите еще раз.")))
 
-  (lab1/dropstudent-talk db token assert-admin admin-chat)
-
   (h/command "magic" {{id :id} :chat}
              (when (= id admin-chat)
                ;(pprint (c/get-at! db [889101382]))
@@ -283,11 +211,6 @@ essay3results - результаты рассмотрения моего тре�
                ;(c/assoc-at! db [671848510 :group] "P33301")
                ;(pprint (c/get-at! db [249575093]))
                (t/send-text token id "magic happen...")))
-
-  (h/command "report" {{id :id} :chat}
-             (when (= id admin-chat)
-               (send-report db token id)
-               (t/send-text token id "report sended...")))
 
   (d/dialog "lab1status" db {{id :id} :from text :text}
             :guard (if (= id admin-chat) nil :break)

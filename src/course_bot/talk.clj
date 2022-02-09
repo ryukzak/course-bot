@@ -85,6 +85,7 @@
 ;; Re-exports
 
 (intern 'course-bot.talk 'send-text t/send-text)
+(intern 'course-bot.talk 'send-document t/send-document)
 
 ;; Morse helpers
 

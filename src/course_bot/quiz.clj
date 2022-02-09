@@ -14,7 +14,7 @@
 (def all-quiz
   (apply hash-map
          (apply concat
-                (->> (try (let [path (System/getenv "QUIZ_PATH")]
+                (->> (try (let [path (or (System/getenv "QUIZ_PATH") "../csa-tests")]
                             (if (empty? path) []
                                 (file-seq (io/file path))))
                           (catch Exception _ '()))
