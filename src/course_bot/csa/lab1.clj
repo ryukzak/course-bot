@@ -1,7 +1,7 @@
 (ns course-bot.csa.lab1
   (:require [course-bot.dialog :as d])
   (:require [course-bot.talk :as b])
-  (:require [course-bot.csa.general :as g])
+  (:require [course-bot.general :as general])
   (:require [codax.core :as c])
   (:require [clojure.string :as str])
   (:require [morse.handlers :as h]
@@ -58,7 +58,7 @@
 (def group-description (read-string (try (slurp (System/getenv "GROUP_DESC")) (catch Exception _ "nil"))))
 
 (defn lab1-group-stat [db group]
-  (let [studs (g/studs-by-group db group)
+  (let [studs (c/with-read-transaction [db tx] (general/students-from-group tx group))
         approved (->> studs (filter #(-> % second :lab1 :approved?)))
         done (->> (c/get-at! db [:schedule :lab1 group :history])
                   (map :reports)
@@ -69,7 +69,7 @@
 
 (defn send-schedule-list [db token id group lst]
   (t/send-text token id
-               (str (or (get group-description group) (str "Группа: " group))
+               (str (or (:description (get group-description group)) (str "Группа: " group))
                     "\n"
                     (if (empty? lst)
                       "Нет заявок"
@@ -118,7 +118,7 @@
                   (when-not stud
                     (t/send-text token id "Нет такого пользователя.")
                     (b/stop-talk tx))
-                  (g/send-whoami tx token id stud-id)
+                  (general/send-whoami tx token id stud-id)
                   (b/send-yes-no-kbd token id "Сбросим этого студента?")
                   (-> tx
                       (c/assoc-at [admin-id :admin :drop-student] stud-id)

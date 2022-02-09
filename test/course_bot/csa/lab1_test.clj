@@ -22,7 +22,7 @@
       (is (= @out "Нет такого пользователя."))
 
       (dropstudent-talk {:message {:chat {:id 1} :text "/dropstudent 1"}})
-      (is (= @out "У вас нет таких прав."))
+      (is (= @out "That action require admin rights."))
 
       (dropstudent-talk {:message {:chat {:id admin-chat} :text "/dropstudent 1"}})
       (is (= @out "Сбросим этого студента?"))

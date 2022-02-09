@@ -7,7 +7,7 @@
             [course-bot.talk :as talk]
             [course-bot.quiz :as quiz]
             [course-bot.essay :as essay]
-            [course-bot.csa.general :as group]
+            [course-bot.general :as general]
             [course-bot.csa.lab1 :as lab1])
   (:require [morse.handlers :as h]
             [morse.api :as t]
@@ -16,11 +16,11 @@
             [clojure.pprint :refer [pprint]])
   (:gen-class))
 
-(def db (c/open-database! (or (System/getenv "BOT_DATABASE") "default-codax")))
-(def token (System/getenv "BOT_TOKEN"))
-
-(def group-list #{"P33102" "P33111" "P33301" "P33101" "P33312" "P33302" "P33112" "thursday"})
-(def admin-chat 70151255)
+(def db (c/open-database! (or (System/getenv "BOT_DATABASE") "course-data/csa")))
+(def token general/chat-token)
+(def group-list general/group-list)
+(def admin-chat general/admin-chat)
+(def assert-admin general/assert-admin)
 
 (def help-msg
   "start - регистрация
@@ -51,11 +51,6 @@ essay3results - результаты рассмотрения моего тре�
   (doall (map (fn [[key value]] (c/assoc-at! db [id :chat key] value)) chat)))
 
 ;; for drop student
-
-(defn assert-admin [tx token id]
-  (when-not (= id admin-chat)
-    (t/send-text token id "У вас нет таких прав.")
-    (talk/stop-talk tx)))
 
 (defn quiz-result [db id name]
   (let [ans (c/get-at! db [:quiz-results name id])
@@ -154,18 +149,18 @@ essay3results - результаты рассмотрения моего тре�
                               (let [{name :name group :group} (c/get-at! db [id])]
                                 (declare tx)
                                 (c/with-read-transaction [db tx]
-                                  (group/send-whoami tx token id))
+                                  (general/send-whoami tx token id))
                                 (t/send-text token id "Если вы где-то ошиблись - выполните команду /start повторно. Помощь -- /help.")))))
 
   ;; (h/command "dump" {{id :id} :chat} (t/send-text token id (str "Всё, что мы о вас знаем:\n\n:" (c/get-at! db [id]))))
-  (h/command "whoami" {{id :id} :chat} 
-    (declare tx)
-    (c/with-read-transaction [db tx]
-      (group/send-whoami tx token id)))
+  (h/command "whoami" {{id :id} :chat}
+             (declare tx)
+             (c/with-read-transaction [db tx]
+               (general/send-whoami tx token id)))
 
   (h/command "grouplists" {{id :id} :chat}
              (c/with-read-transaction [db tx]
-               (group/send-group-lists tx token id)))
+               (general/send-group-lists tx token id)))
 
   (quiz/startquiz-talk db token assert-admin)
   (quiz/stopquiz-talk db token assert-admin)
@@ -301,10 +296,10 @@ essay3results - результаты рассмотрения моего тре�
                ;;(lab1/fix db "P33312" 2)
                ;;(lab1/fix db "P33112" 2)
 
-               ;;(lab1/pass db "P33102")                                                                                                                                                                                                
-               ;;(lab1/pass db "P33301")                                                                                                                                                                                                
-               ;;(lab1/pass db "P33312")                                                                                                                                                                                                
-               ;;(lab1/pass db "P33112") 
+               ;;(lab1/pass db "P33102")
+               ;;(lab1/pass db "P33301")
+               ;;(lab1/pass db "P33312")
+               ;;(lab1/pass db "P33112")
 
                ;;(lab1/fix db "P33111" 2)
                ;;(lab1/fix db "P33101" 3)
@@ -387,7 +382,6 @@ essay3results - результаты рассмотрения моего тре�
   ;;     (println "Intercepted message: " message)
   ;;     (t/send-text token id "I don't do a whole lot ... yet."))
   )
-
 
 (defn -main
   "I don't do a whole lot ... yet."
