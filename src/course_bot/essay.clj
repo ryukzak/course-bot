@@ -251,7 +251,7 @@
                        (filter #(-> % :essay-author (= id))))]
       (->> reviews
            (map #(str "Как за вас проголовали: " (:pos %)
-                      (when-let [fb (:feedback %)] (str "\nОтзыв: " fb))))) )
+                      (when-let [fb (:feedback %)] (str "\nОтзыв: " fb))))))
     (->> (c/get-at tx [id :essays essay-code :received-review])
          (map #(str "Как за вас проголовали: " (:pos %)
                     (when-let [fb (:feedback %)] (str "\nОтзыв: " fb)))))))
@@ -280,3 +280,19 @@
             (doall (->> (essays-without-review tx essay-code)
                         (map #(do (t/send-text token id (str (:author %) " " (:on-review %)))
                                   (t/send-text token id (:text %)))))))))
+
+(defn collect-report
+  "Example:
+
+  (c/with-read-transaction [db tx]
+     (print (essay/collect-report tx (str 'essay1))))"
+  [tx essay-id]
+  (->> (get-essays tx essay-id)
+       (map (fn [[id desc]]
+              (-> desc
+                  :essays
+                  (get essay-id)
+                  (#(str "====================================\n"
+                         "Оценка: " (->> % :received-review (map :pos) (apply +)) " (чем меньше, тем лучше)\n"
+                         (:text %))))))
+       (str/join "\n\n\n")))
