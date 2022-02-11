@@ -182,7 +182,7 @@
                                        :feedback feedback} reviews)]
                    (if (not= (count reviews') (count assignments))
                      (do (t/send-text token id "ok")
-                         (t/change-branch tx :get-feedback :reviews reviews'))
+                         (t/change-branch tx :get-feedback {:reviews reviews'}))
                      (let [conclusion (str-reviews tx essay-code id reviews')]
                        (t/send-text token id "Вы высказались про все эссе. Посмотрите что получилось:")
                        (t/send-text token id conclusion)

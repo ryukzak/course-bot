@@ -8,8 +8,10 @@
 
 ;; Talk flow
 
-(defn change-branch [tx name & kwargs]
-  (throw (ex-info "Change branch" {:next-branch name :tx tx :kwargs kwargs})))
+(defn change-branch
+  ([tx name] (change-branch tx name {}))
+  ([tx name state]
+   (throw (ex-info "Change branch" {:next-branch name :tx tx :state state}))))
 
 (defn stop-talk [tx]
   (throw (ex-info "Stop talk" {:tx tx})))
@@ -19,12 +21,12 @@
 
 (defn repeat-branch [tx] (wait tx))
 
-(defn set-talk-branch [tx id talk branch kwargs]
+(defn set-talk-branch [tx id talk branch state]
   (-> tx
       (c/assoc-at [id :dialog-state] nil)
       (c/assoc-at [id :talk] {:current-talk talk
                               :current-branch branch
-                              :kwargs (apply hash-map kwargs)})))
+                              :state state})))
 
 (defn command-args [text] (str/split (str/replace-first text #"^/\w+\s+" "") #"\s+"))
 
@@ -37,7 +39,7 @@
   (let [branches (apply hash-map body)
         current-branch-var `current-branch#
         current-talk-var `current-talk#
-        kwargs `kwargs#
+        state `state#
         msg-var `msg#
         tx-var `tx#]
     `(fn talk-top# [update#]
@@ -48,7 +50,7 @@
                    ~msg-var (:message update#)
                    {~current-talk-var :current-talk
                     ~current-branch-var :current-branch
-                    ~kwargs :kwargs} (c/get-at ~tx-var [id# :talk])]
+                    ~state :state} (c/get-at ~tx-var [id# :talk])]
                (try
                  (let [tmp# (cond
                               (h/command? update# ~name)
@@ -61,9 +63,9 @@
                                             (filter #(not= :start (first %)))
                                             (map (fn [[branch body]]
                                                    [`(and (= ~current-talk-var ~name) (= ~current-branch-var ~branch))
-                                                    `(if (nil? ~kwargs)
+                                                    `(if (nil? ~state)
                                                        (~body ~tx-var ~msg-var)
-                                                       (~body ~tx-var ~msg-var ~kwargs))])))))]
+                                                       (~body ~tx-var ~msg-var ~state))])))))]
                    (swap! res# (constantly tmp#))
                    (if (nil? @res#) ~tx-var @res#))
                  (catch clojure.lang.ExceptionInfo e#
@@ -72,7 +74,7 @@
                      "Change branch" (set-talk-branch (-> e# ex-data :tx)
                                                       id# ~name
                                                       (-> e# ex-data :next-branch)
-                                                      (-> e# ex-data :kwargs))
+                                                      (-> e# ex-data :state))
                      "Stop talk" (set-talk-branch (-> e# ex-data :tx) id# nil nil nil)
                      "Wait talk" (-> e# ex-data :tx)
                      (throw e#))))))

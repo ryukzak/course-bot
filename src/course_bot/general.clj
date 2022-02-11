@@ -69,7 +69,7 @@
     :get-name
     (fn [tx {{id :id} :from text :text}]
       (talk/send-text token id (str "What is your group (" (str/join ", " (sort group-list)) ")?"))
-      (talk/change-branch tx :get-group :name text))
+      (talk/change-branch tx :get-group {:name text}))
 
     :get-group
     (fn [tx {{id :id :as chat} :from text :text} {name :name}]
@@ -102,7 +102,7 @@
             (send-whoami tx token id stud-id)
             (talk/send-yes-no-kbd token id "Restart this student?")
             (-> tx
-                (talk/change-branch :approve :restart-stud stud-id)))
+                (talk/change-branch :approve {:restart-stud stud-id})))
           (do
             (talk/send-text token id "Wrong input. Expect: /restart 12345")
             (talk/stop-talk tx)))))
