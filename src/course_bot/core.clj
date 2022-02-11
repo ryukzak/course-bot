@@ -8,7 +8,8 @@
             [course-bot.quiz :as quiz]
             [course-bot.essay :as essay]
             [course-bot.general :as general]
-            [course-bot.csa.lab1 :as lab1])
+            [course-bot.csa.lab1 :as lab1]
+            [course-bot.report :as report])
   (:require [morse.handlers :as h]
             [morse.api :as t]
             [morse.polling :as p])
@@ -271,6 +272,9 @@ essay3results - результаты рассмотрения моего тре�
   ;;     (println "Intercepted message: " message)
   ;;     (t/send-text token id "I don't do a whole lot ... yet."))
   )
+
+(c/with-read-transaction [db tx]
+  (c/get-at tx [admin-chat]))
 
 (defn -main
   "I don't do a whole lot ... yet."

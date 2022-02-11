@@ -26,7 +26,9 @@
 
 (defn whoami-talk [db token]
   (talk/def-command db "whoami"
-    (fn [tx {{id :id} :chat}] (send-whoami tx token id))))
+    (fn [tx {{id :id} :from}]
+      (send-whoami tx token id)
+      (talk/stop-talk tx))))
 
 (defn students-from-group [tx group]
   (->> (codax/get-at tx [])
@@ -56,28 +58,23 @@
 (defn start-talk [db token]
   (talk/def-talk db "start"
     :start
-    (fn [tx {{id :id} :chat}]
+    (fn [tx {{id :id} :from}]
       (let [info (c/get-at tx [id])]
-        (when (and (some? info) (not (:allow-restart info)))
-          (talk/send-text token id "You are already registered, to change your unform the teacher and send 'whoami'.")
+        (when (and (some? (:name info)) (not (:allow-restart info)))
+          (talk/send-text token id "You are already registered, to change your unform the teacher and send /whoami.")
           (talk/stop-talk tx))
-
-        (talk/send-text token id (str "Привет, я бот курса \"Архитектура компьютера\". "
-                                      "Через меня будут организовано выполнение лабораторных работ."
-                                      "\n\n"
-                                      "Представьтесь пожалуйста, мне нужно знать как вносить вас в ведомости (ФИО):"))
-
+        (talk/send-text token id (str "Hi, I'm a bot for your course. I will help you with your works. What is your name?"))
         (talk/change-branch tx :get-name)))
 
     :get-name
     (fn [tx {{id :id} :from text :text}]
-      (talk/send-text token id (str "What is your group (" (str/join ", " group-list) ")?"))
+      (talk/send-text token id (str "What is your group (" (str/join ", " (sort group-list)) ")?"))
       (talk/change-branch tx :get-group :name text))
 
     :get-group
     (fn [tx {{id :id :as chat} :from text :text} {name :name}]
       (when-not (contains? group-list text)
-        (talk/send-text token id (str "I don't know this group. Repeat please (" (str/join ", " group-list) "):"))
+        (talk/send-text token id (str "I don't know this group. Repeat please (" (str/join ", " (sort group-list)) "):"))
         (talk/repeat-branch tx))
       (let [tx (-> tx
                    (codax/assoc-at [id :chat] chat)
@@ -93,13 +90,13 @@
 (defn restart-talk [db token assert-admin]
   (talk/def-talk db "restart"
     :start
-    (fn [tx {{id :id} :chat text :text}]
+    (fn [tx {{id :id} :from text :text}]
       (assert-admin tx token id)
       (let [args (talk/command-args text)]
         (if (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
           (let [stud-id (Integer/parseInt (first args))
                 stud (codax/get-at tx [stud-id])]
-            (when-not stud
+            (when (nil? (:name stud))
               (talk/send-text token id "User with specific telegram id not found.")
               (talk/stop-talk tx))
             (send-whoami tx token id stud-id)
@@ -114,10 +111,11 @@
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
       (cond
         (= text "yes") (do (talk/send-text token id (str "Restarted: " stud-id))
+                           (talk/send-text token stud-id (str "You can use /start once more."))
                            (-> tx
                                (codax/assoc-at [stud-id :allow-restart] true)
                                (talk/stop-talk)))
         (= text "no") (do (talk/send-text token id "Not restarted.")
                           (talk/stop-talk tx))
-        :else (do (talk/send-text token id "What?")
+        :else (do (talk/send-text token id "Please yes or no?")
                   (talk/repeat-branch tx))))))

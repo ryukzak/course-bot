@@ -3,7 +3,8 @@
   (:require [clojure.string :as str])
   (:require [morse.handlers :as h]
             [morse.api :as t]
-            [clj-http.client :as http]))
+            [clj-http.client :as http])
+  (:require [clojure.test :as test]))
 
 ;; Talk flow
 
@@ -20,10 +21,10 @@
 
 (defn set-talk-branch [tx id talk branch kwargs]
   (-> tx
-   (c/assoc-at [id :dialog-state] nil)
-   (c/assoc-at [id :talk] {:current-talk talk
-                           :current-branch branch
-                           :kwargs (apply hash-map kwargs)})))
+      (c/assoc-at [id :dialog-state] nil)
+      (c/assoc-at [id :talk] {:current-talk talk
+                              :current-branch branch
+                              :kwargs (apply hash-map kwargs)})))
 
 (defn command-args [text] (str/split (str/replace-first text #"^/\w+\s+" "") #"\s+"))
 
@@ -80,7 +81,7 @@
 (defmacro def-talk [& args] `(talk ~@args))
 
 (defn def-command [db name foo]
-    (def-talk db name :start foo))
+  (def-talk db name :start foo))
 
 ;; Re-exports
 
@@ -107,3 +108,21 @@
                            :resize_keyboard true
                            :keyboard
                            [[{:text "yes"} {:text "no"}]]}}))
+
+;; tests
+
+(defmacro deftest [name args & body]
+  (let [test-db "test-databases/example-database"
+        [db *chat] args]
+    `(test/deftest ~name
+       (codax/destroy-database! ~test-db)
+       (let [~*chat (atom (list))
+             ~db (codax/open-database! ~test-db)]
+         (with-redefs [talk/send-text (fn [token# id# msg#] (swap! ~*chat conj {:id id# :msg msg#}))
+                       talk/send-yes-no-kbd (fn [token# id# msg#] (swap! ~*chat conj {:id id# :msg msg#}))]
+           ~@body)
+         (codax/destroy-database! ~test-db)))))
+
+(defn msg
+  ([msg] {:message {:from {:id 1} :text msg}})
+  ([id msg] {:message {:from {:id id} :text msg}}))

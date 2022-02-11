@@ -4,6 +4,6 @@
   ([filename] (read-config filename true))
   ([filename skip]
    (read-string (try
-                  (slurp (str (or (System/getenv "CONF_PATH") "../csa-tests") "/" filename))
+                  (slurp (str (or (System/getenv "CONF_PATH") "conf-example") "/" filename))
                   (catch Exception e
                     (if skip "nil" (throw e)))))))
