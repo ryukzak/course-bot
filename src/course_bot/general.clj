@@ -16,6 +16,13 @@
     (talk/send-text token id "That action require admin rights.")
     (talk/stop-talk tx)))
 
+(defn get-registered [tx token id]
+  (let [info (c/get-at tx [id])]
+    (if-not (-> info :name some?)
+      (do (talk/send-text token id "Not registered. Do /start")
+          (talk/stop-talk tx))
+      info)))
+
 (defn send-whoami
   ([tx token id] (send-whoami tx token id id))
   ([tx token id about]

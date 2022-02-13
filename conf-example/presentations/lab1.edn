@@ -1,0 +1,4 @@
+{:name "Lab #1"
+ :descrition-request "Please, send your a presentation description in one messages for approve by the teacher."
+ :groups {"ext" {:schedule [{:datetime "2022.01.01 12:00"}
+                              {:datetime "2022.02.02 12:00"}]}}}

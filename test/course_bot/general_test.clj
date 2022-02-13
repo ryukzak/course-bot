@@ -1,8 +1,10 @@
 (ns course-bot.general-test
   (:require [course-bot.general :as general]
-            [codax.core :as codax]
             [course-bot.talk :as talk]
+            [codax.core :as codax]
             [clojure.test :refer :all]))
+
+(declare start-talk-test restart-talk-test)
 
 (talk/deftest start-talk-test [db *chat]
   (let [start-talk (general/start-talk db "TOKEN")]

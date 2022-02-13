@@ -120,7 +120,9 @@
        (codax/destroy-database! ~test-db)
        (let [~*chat (atom (list))
              ~db (codax/open-database! ~test-db)]
-         (with-redefs [talk/send-text (fn [token# id# msg#] (swap! ~*chat conj {:id id# :msg msg#}))
+         (with-redefs [talk/send-text (fn [token# id# msg#]
+                                        (assert (= "TOKEN" token#))
+                                        (swap! ~*chat conj {:id id# :msg msg#}))
                        talk/send-yes-no-kbd (fn [token# id# msg#] (swap! ~*chat conj {:id id# :msg msg#}))]
            ~@body)
          (codax/destroy-database! ~test-db)))))
