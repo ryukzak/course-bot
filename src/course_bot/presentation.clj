@@ -7,7 +7,7 @@
 
 (def configs (misc/read-configs "presentations"))
 
-(defn assert-pres [tx token id pres-id]
+(defn config [tx token id pres-id]
   (let [res (-> configs (get pres-id))]
     (when (nil? res)
       (talk/send-text token id (str "Presentation config not provided for: " pres-id ". Inform admin."))
@@ -21,7 +21,8 @@
   (let [pres-group (codax/get-at tx [id :pres pres-id :group])]
     (when (-> pres-group nil?)
       (talk/send-text token id (str "You should specify your group for presentation by /" pres-id "setgroup"))
-      (talk/stop-talk tx))))
+      (talk/stop-talk tx))
+    pres-group))
 
 (defn setgroup-talk [db token pres-id]
   (talk/def-talk db (str pres-id "setgroup")
@@ -54,17 +55,19 @@
       (let [info (general/get-registered tx token id)
             pres (-> info :pres (get pres-id))
             pres-group (group tx token id pres-id)
-            conf (assert-pres tx token id pres-id)]
+            conf (config tx token id pres-id)]
 
         (when (:approved? pres)
-          (talk/send-text token id "Already submitted and approved, need to /" pres-id "/schedule")
+          (talk/send-text token id "Already submitted and approved, maybe you need schedule it? /" pres-id "schedule")
           (talk/stop-talk tx))
 
         (when (:on-review? pres)
           (talk/send-text token id "On review, you will be informed when it finished.")
           (talk/stop-talk tx))
 
-        (talk/send-text token id "Please, provide description for your presentation (in one message):")
+        (talk/send-text token id
+                        (or (-> configs (get pres-id) :description-request)
+                            "Please, provide description for your presentation (in one message):"))
         (talk/change-branch tx :recieve-description)))
 
     :recieve-description
@@ -93,6 +96,8 @@
                                      (not (some-> info :pres (get pres-id) :approved?)))))
        first))
 
+(defn topic [desc] (-> desc str/split-lines first))
+
 (defn check-talk [db token pres-id assert-admin]
   (talk/def-talk db (str pres-id "check")
     :start
@@ -106,7 +111,7 @@
               desc (-> info :pres (get pres-id) :description)]
           (talk/send-text token id (str "Было пирслано следующее на согласование (группа " (-> info :group) "): "
                                         "\n\n"
-                                        "Topic: " (-> desc str/split-lines first)))
+                                        "Topic: " (topic desc)))
           (talk/send-text token id desc)
           (talk/send-yes-no-kbd token id "Approve (yes or no)?")
           (talk/change-branch tx :approve {:stud-id stud-id}))))
@@ -135,38 +140,73 @@
           (codax/assoc-at [stud-id :pres pres-id :on-review?] false)
           talk/stop-talk))))
 
+(defn today [] (.getTime (new java.util.Date)))
+
+(defn schedule
+  ([pres-id group only-new]
+   (schedule pres-id group only-new (today)))
+  ([pres-id group time-offset now]
+   (->> (-> configs (get pres-id) :groups (get group) :schedule)
+        (filter #(or (nil? time-offset)
+                     (let [time (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") (:datetime %)))]
+                       (<= time-offset (/ (- time now) (* 1000 60 60 24)))))))))
+
+(def for-schedule 0)
+
+(def for-agenda -1)
+
 (defn schedule-talk [db token pres-id]
   (talk/def-talk db (str pres-id "schedule")
     :start
     (fn [tx {{id :id} :from}]
       (let [info (general/get-registered tx token id)
-            pres (-> info :pres (get pres-id))]
-        (when (:approved? pres)
-          (talk/send-text token id "Already submitted and approved, need to /" pres-id "/schedule")
+            pres (-> info :pres (get pres-id))
+            group (group tx token id pres-id)]
+        (when-not (-> pres :approved?)
+          (talk/send-text token id (str "You should submit and receive approve before scheduling. Use /" pres-id "submit"))
           (talk/stop-talk tx))
 
-        (when (:on-review pres)
-          (talk/send-text token id "On review, you will be informed when it finished.")
+        (when (-> pres :scheduled?)
+          (talk/send-text token id (str "Already scheduled, check /" pres-id "agenda."))
           (talk/stop-talk tx))
 
-        (talk/send-text token id "Please, provide description for your presentation (in one message):")
-        (talk/change-branch tx :recieve-description)))
+        (let [future (schedule pres-id group for-schedule (today))]
+          (if (empty? future)
+            (do (talk/send-text token id "Ended")
+                (talk/stop-talk tx))
+            (do (talk/send-text token id (str "Select your option: "
+                                              (->> future (map :datetime) (str/join ", "))))
+                (talk/change-branch tx :get-date))))))
 
-    :recieve-description
+    :get-date
     (fn [tx {{id :id} :from text :text}]
-      (talk/send-text token id "Your description:")
-      (talk/send-text token id text)
-      (talk/send-yes-no-kbd token id "Do you approve it?")
-      (talk/change-branch tx :approve {:desc text}))
+      (let [group (group tx token id pres-id)
+            future (schedule pres-id group for-schedule (today))
+            dt (some #(-> % :datetime (= text)) future)]
+        (when (nil? dt)
+          (talk/send-text token id (str "Not found, allow only: "
+                                        (->> future (map :datetime) (str/join ", "))))
+          (talk/repeat-branch tx))
+        (talk/send-text token id (str "OK, you can check it by: /" pres-id "agenda"))
+        (-> tx
+            (codax/update-at [:pres pres-id group text] conj id)
+            (codax/assoc-at [id :pres pres-id :scheduled?] true)
+            talk/stop-talk)))))
 
-    :approve
-    (fn [tx {{id :id :as chat} :from text :text} {desc :desc}]
-      (cond
-        (= text "yes") (do (talk/send-text token id "Registered, the teacher will check it soon.")
-                           (-> tx
-                               (codax/assoc-at [id :pres pres-id] {:on-review? true :desc desc})
-                               talk/stop-talk))
-        (= text "no") (do (talk/send-text token id "You can do this later.")
-                          (talk/stop-talk tx))
-        :else (do (talk/send-text token id "Please, yes or no?")
-                  (talk/repeat-branch tx))))))
+(defn presentation [tx id pres-id]
+  (str
+   (topic (codax/get-at tx [id :pres pres-id :description]))
+   " (" (codax/get-at tx [id :name]) ")"))
+
+(defn agenda-talk [db token pres-id]
+  (talk/def-command db (str pres-id "agenda")
+    (fn [tx {{id :id} :from}]
+      (let [group (group tx token id pres-id)]
+        (doall
+         (map #(let [dt (:datetime %)
+                     studs (codax/get-at tx [:pres pres-id group dt])
+                     msg (str dt "\n"
+                              (str/join "\n" (map (fn [e] (str "- " (presentation tx id pres-id))) studs)))]
+                 (talk/send-text token id msg))
+              (schedule pres-id group for-agenda (today))))
+        (talk/stop-talk tx)))))

@@ -27,7 +27,9 @@
   (let [start-talk (general/start-talk db "TOKEN")
         setgroup-talk (pres/setgroup-talk db "TOKEN" "lab1")
         submit-talk (pres/submit-talk db "TOKEN" "lab1")
-        check-talk (pres/check-talk db "TOKEN" "lab1" general/assert-admin)]
+        check-talk (pres/check-talk db "TOKEN" "lab1" general/assert-admin)
+        schedule-talk (pres/schedule-talk db "TOKEN" "lab1")
+        agenda-talk (pres/agenda-talk db "TOKEN" "lab1")]
 
     (testing "register user"
       (start-talk (talk/msg "/start"))
@@ -116,6 +118,38 @@
               {:id 1 :msg "Your presentation description for lab1 approved."}]
              (->> @*chat (take 2) reverse)))
       (is (= {:description "my-presentation-2" :on-review? false :approved? true :group "ext"}
-             (codax/get-at! db [1 :pres "lab1"]))))))
+             (codax/get-at! db [1 :pres "lab1"]))))
 
-(run-tests)
+    (testing "schedule"
+      (with-redefs [pres/today (fn [] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") "2022.01.01 12:00")))]
+        (agenda-talk (talk/msg "/lab1agenda"))
+        (is (= ["2022.01.01 12:00\n"
+                "2022.02.02 12:00\n"] (->> @*chat (take 2) (map :msg) reverse)))
+
+        (schedule-talk (talk/msg "/lab1schedule"))
+        (is (= "Select your option: 2022.01.01 12:00, 2022.02.02 12:00" (-> @*chat first :msg)))
+        (schedule-talk (talk/msg "bla-bla"))
+        (is (= "Not found, allow only: 2022.01.01 12:00, 2022.02.02 12:00" (-> @*chat first :msg)))
+        (schedule-talk (talk/msg "2022.02.02 12:00"))
+        (is (= "OK, you can check it by: /lab1agenda" (-> @*chat first :msg)))
+        (is (= {:description "my-presentation-2" :on-review? false :approved? true :scheduled? true :group "ext"}
+               (codax/get-at! db [1 :pres "lab1"])))
+        (is (= {"ext" {"2022.02.02 12:00" [1]}}
+               (codax/get-at! db [:pres "lab1"])))
+
+        (schedule-talk (talk/msg "/lab1schedule"))
+        (is (= "Already scheduled, check /lab1agenda." (-> @*chat first :msg)))
+
+        (agenda-talk (talk/msg "/lab1agenda"))
+        (is (= ["2022.01.01 12:00\n"
+                "2022.02.02 12:00\n- my-presentation-2 (Bot Botovich)"] (->> @*chat (take 2) (map :msg) reverse)))))))
+
+(deftest schedule-test
+  (let [dt #(.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") %))]
+    (is (= 2 (count (pres/schedule "lab1" "ext" nil))))
+    (is (= 2 (count (pres/schedule "lab1" "ext" -1 (dt "2022.01.01 12:00")))))
+    (is (= 1 (count (pres/schedule "lab1" "ext" -1 (dt "2022.01.02 12:05")))))
+    (is (= 1 (count (pres/schedule "lab1" "ext" 0.25 (dt "2022.01.01 12:00")))))
+    (is (= 1 (count (pres/schedule "lab1" "ext" -1 (dt "2022.02.01 12:00")))))
+    (is (= 0 (count (pres/schedule "lab1" "ext" -1 (dt "2022.03.01 12:00")))))
+    (is (= 2 (count (pres/schedule "lab1" "ext" nil (dt "2022.03.01 12:00")))))))
