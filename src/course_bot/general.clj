@@ -13,7 +13,7 @@
 
 (defn assert-admin [tx token id]
   (when-not (= id admin-chat)
-    (talk/send-text token id "That action require admin rights.")
+    (talk/send-text token id "That action requires admin rights.")
     (talk/stop-talk tx)))
 
 (defn get-registered [tx token id]
@@ -68,9 +68,9 @@
     (fn [tx {{id :id} :from}]
       (let [info (c/get-at tx [id])]
         (when (and (some? (:name info)) (not (:allow-restart info)))
-          (talk/send-text token id "You are already registered, to change your unform the teacher and send /whoami.")
+          (talk/send-text token id "You are already registered. To change your information, contact the teacher and send /whoami")
           (talk/stop-talk tx))
-        (talk/send-text token id (str "Hi, I'm a bot for your course. I will help you with your works. What is your name?"))
+        (talk/send-text token id (str "Hi, I'm a bot for your course. I will help you with your work. What is your name?"))
         (talk/change-branch tx :get-name)))
 
     :get-name
@@ -81,7 +81,7 @@
     :get-group
     (fn [tx {{id :id :as chat} :from text :text} {name :name}]
       (when-not (contains? group-list text)
-        (talk/send-text token id (str "I don't know this group. Repeat please (" (str/join ", " (sort group-list)) "):"))
+        (talk/send-text token id (str "I don't know this group. Please, repeat it (" (str/join ", " (sort group-list)) "):"))
         (talk/repeat-branch tx))
       (let [tx (-> tx
                    (codax/assoc-at [id :chat] chat)

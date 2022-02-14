@@ -13,7 +13,7 @@
 
     (testing "registration"
       (start-talk (talk/msg "/start"))
-      (is (= "Hi, I'm a bot for your course. I will help you with your works. What is your name?"
+      (is (= "Hi, I'm a bot for your course. I will help you with your work. What is your name?"
              (-> @*chat first :msg)))
 
       (start-talk (talk/msg "Bot Botovich"))
@@ -21,7 +21,7 @@
              (-> @*chat first :msg)))
 
       (start-talk (talk/msg "wrong group"))
-      (is (= "I don't know this group. Repeat please (gr1, gr2):"
+      (is (= "I don't know this group. Please, repeat it (gr1, gr2):"
              (-> @*chat first :msg)))
 
       (start-talk (talk/msg "gr1"))
@@ -32,7 +32,7 @@
 
     (testing "second registration"
       (start-talk (talk/msg "/start"))
-      (is (= "You are already registered, to change your unform the teacher and send /whoami."
+      (is (= "You are already registered. To change your information, contact the teacher and send /whoami"
              (-> @*chat first :msg))))))
 
 (talk/deftest restart-talk-test [db *chat]
@@ -44,7 +44,7 @@
 
     (testing "wrong requests"
       (restart-talk (talk/msg "/restart"))
-      (is (= "That action require admin rights." (-> @*chat first :msg)))
+      (is (= "That action requires admin rights." (-> @*chat first :msg)))
 
       (restart-talk (talk/msg general/admin-chat "/restart"))
       (is (= "Wrong input. Expect: /restart 12345" (-> @*chat first :msg)))
@@ -60,7 +60,7 @@
       (is (= "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
              (-> @*chat first :msg)))
       (start-talk (talk/msg "/start"))
-      (is (= "You are already registered, to change your unform the teacher and send /whoami."
+      (is (= "You are already registered. To change your information, contact the teacher and send /whoami"
              (-> @*chat first :msg))))
 
     (testing "try but not actually restart"
@@ -80,5 +80,7 @@
                    {:msg "Restarted: 1", :id 0}) (->> @*chat (take 2))))
 
       (start-talk (talk/msg "/start"))
-      (is (= "Hi, I'm a bot for your course. I will help you with your works. What is your name?"
+      (is (= "Hi, I'm a bot for your course. I will help you with your work. What is your name?"
              (-> @*chat first :msg))))))
+
+(run-tests)

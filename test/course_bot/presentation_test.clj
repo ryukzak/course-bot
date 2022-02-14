@@ -16,7 +16,7 @@
       (start-talk (talk/msg "Bot Botovich"))
       (start-talk (talk/msg "gr1"))
       (start-talk (talk/msg "/start"))
-      (is (= "You are already registered, to change your unform the teacher and send /whoami."
+      (is (= "You are already registered. To change your information, contact the teacher and send /whoami"
              (-> @*chat first :msg))))
 
     (submit-talk-no-config (talk/msg "/noconfigsubmit"))
@@ -76,7 +76,7 @@
 
     (testing "try to check by student"
       (check-talk (talk/msg "/lab1check"))
-      (is (= "That action require admin rights." (-> @*chat first :msg))))
+      (is (= "That action requires admin rights." (-> @*chat first :msg))))
 
     (testing "check by admin and reject"
       (check-talk (talk/msg 0 "/lab1check"))
@@ -149,7 +149,7 @@
 
       (testing "drop student"
         (drop-talk (talk/msg "/lab1drop"))
-        (is (= "That action require admin rights." (-> @*chat first :msg)))
+        (is (= "That action requires admin rights." (-> @*chat first :msg)))
         (drop-talk (talk/msg 0 "/lab1drop"))
         (is (= "Wrong input: /lab1drop 12345" (-> @*chat first :msg)))
 
