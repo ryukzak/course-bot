@@ -29,7 +29,8 @@
         submit-talk (pres/submit-talk db "TOKEN" "lab1")
         check-talk (pres/check-talk db "TOKEN" "lab1" general/assert-admin)
         schedule-talk (pres/schedule-talk db "TOKEN" "lab1")
-        agenda-talk (pres/agenda-talk db "TOKEN" "lab1")]
+        agenda-talk (pres/agenda-talk db "TOKEN" "lab1")
+        drop-talk (pres/drop-talk db "TOKEN" "lab1" general/assert-admin general/admin-chat)]
 
     (testing "register user"
       (start-talk (talk/msg "/start"))
@@ -144,7 +145,34 @@
 
         (agenda-talk (talk/msg "/lab1agenda"))
         (is (= ["2022.01.01 12:00\n"
-                "2022.02.02 12:00\n- my-presentation-2 (Bot Botovich)"] (->> @*chat (take 2) (map :msg) reverse)))))))
+                "2022.02.02 12:00\n- my-presentation-2 (Bot Botovich)"] (->> @*chat (take 2) (map :msg) reverse))))
+
+      (testing "drop student"
+        (drop-talk (talk/msg "/lab1drop"))
+        (is (= "That action require admin rights." (-> @*chat first :msg)))
+        (drop-talk (talk/msg 0 "/lab1drop"))
+        (is (= "Wrong input: /lab1drop 12345" (-> @*chat first :msg)))
+
+        (drop-talk (talk/msg 0 "/lab1drop bla"))
+        (is (= "Wrong input: /lab1drop 12345" (-> @*chat first :msg)))
+
+        (drop-talk (talk/msg 0 "/lab1drop 1"))
+        (is (= ["Name: Bot Botovich; Group: gr1; Telegram ID: 1"
+                "Drop presentation config for lab1?"] (->> @*chat (take 2) (map :msg) reverse)))
+
+        (drop-talk (talk/msg 0 "bla-bla"))
+        (is (= "What?" (-> @*chat first :msg)))
+
+        (drop-talk (talk/msg 0 "no"))
+        (is (= "Not droped." (-> @*chat first :msg)))
+
+        (drop-talk (talk/msg 0 "/lab1drop 1"))
+        (drop-talk (talk/msg 0 "yes"))
+        (is (= [{:msg "Drop presentation config for lab1?", :id 0}
+                {:msg "We drop student: lab1", :id 0}
+                {:msg "We drop your state for lab1", :id 1}] (->> @*chat (take 3) reverse)))
+        (is (= nil (codax/get-at! db [1 :pres "lab1"])))
+        (is (= {"ext" {"2022.02.02 12:00" ()}} (codax/get-at! db [:pres "lab1"])))))))
 
 (deftest schedule-test
   (let [dt #(.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") %))]

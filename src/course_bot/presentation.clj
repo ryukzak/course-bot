@@ -214,3 +214,41 @@
             (codax/assoc-at [id :pres pres-id :scheduled?] true)
             talk/stop-talk)))))
 
+(defn drop-talk [db token pres-id assert-admin admin-id]
+  (talk/def-talk db (str pres-id "drop")
+    :start
+    (fn [tx {{id :id} :from text :text}]
+      (assert-admin tx token id)
+      (let [args (talk/command-args text)]
+        (if (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
+          (let [stud-id (Integer/parseInt (first args))
+                stud (codax/get-at tx [stud-id])]
+            (when-not stud
+              (talk/send-text token id "Not found.")
+              (talk/stop-talk tx))
+            (general/send-whoami tx token id stud-id)
+            (talk/send-yes-no-kbd token id (str "Drop presentation config for " pres-id "?"))
+            (talk/change-branch tx :approve {:stud-id stud-id}))
+          (do
+            (talk/send-text token id (str "Wrong input: /" pres-id "drop 12345"))
+            (talk/wait tx)))))
+
+    :approve
+    (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
+      (cond
+        (= text "yes") (let [group (group tx token stud-id pres-id)
+                             sch (codax/get-at tx [:pres pres-id group])]
+                         (talk/send-text token id (str "We drop student: " pres-id))
+                         (talk/send-text token stud-id (str "We drop your state for " pres-id))
+                         (-> tx
+                             (codax/assoc-at [stud-id :pres pres-id] nil)
+                             (codax/assoc-at [:pres pres-id group]
+                                             (into {}
+                                                   (map (fn [[dt studs]]
+                                                          [dt (filter #(not= stud-id %) studs)])
+                                                        sch)))
+                             talk/stop-talk))
+        (= text "no") (do (talk/send-text token id "Not droped.")
+                          (talk/stop-talk tx))
+        :else (do (talk/send-text token id "What?")
+                  (talk/repeat-branch tx))))))
