@@ -127,7 +127,9 @@
                 "2022.02.02 12:00\n"] (->> @*chat (take 2) (map :msg) reverse)))
 
         (schedule-talk (talk/msg "/lab1schedule"))
-        (is (= "Select your option: 2022.01.01 12:00, 2022.02.02 12:00" (-> @*chat first :msg)))
+        (is (= ["2022.01.01 12:00\n"
+                "2022.02.02 12:00\n"
+                "Select your option: 2022.01.01 12:00, 2022.02.02 12:00"] (->> @*chat (take 3) (map :msg) reverse)))
         (schedule-talk (talk/msg "bla-bla"))
         (is (= "Not found, allow only: 2022.01.01 12:00, 2022.02.02 12:00" (-> @*chat first :msg)))
         (schedule-talk (talk/msg "2022.02.02 12:00"))

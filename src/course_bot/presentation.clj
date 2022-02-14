@@ -174,7 +174,8 @@
           (if (empty? future)
             (do (talk/send-text token id "Ended")
                 (talk/stop-talk tx))
-            (do (talk/send-text token id (str "Select your option: "
+            (do (doall (map #(talk/send-text token id %) (agenda tx token id pres-id)))
+                (talk/send-text token id (str "Select your option: "
                                               (->> future (map :datetime) (str/join ", "))))
                 (talk/change-branch tx :get-date))))))
 
@@ -198,15 +199,17 @@
    (topic (codax/get-at tx [id :pres pres-id :description]))
    " (" (codax/get-at tx [id :name]) ")"))
 
+(defn agenda [tx token id pres-id]
+  (let [group (group tx token id pres-id)]
+    (map #(let [dt (:datetime %)
+                studs (codax/get-at tx [:pres pres-id group dt])]
+            (str dt "\n"
+                 (str/join "\n" (map (fn [e] (str "- " (presentation tx id pres-id))) studs))))
+
+         (schedule pres-id group for-agenda (today)))))
+
 (defn agenda-talk [db token pres-id]
   (talk/def-command db (str pres-id "agenda")
     (fn [tx {{id :id} :from}]
-      (let [group (group tx token id pres-id)]
-        (doall
-         (map #(let [dt (:datetime %)
-                     studs (codax/get-at tx [:pres pres-id group dt])
-                     msg (str dt "\n"
-                              (str/join "\n" (map (fn [e] (str "- " (presentation tx id pres-id))) studs)))]
-                 (talk/send-text token id msg))
-              (schedule pres-id group for-agenda (today))))
-        (talk/stop-talk tx)))))
+      (doall (map #(talk/send-text token id %) (agenda tx token id pres-id)))
+      (talk/stop-talk tx))))
