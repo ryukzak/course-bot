@@ -155,6 +155,26 @@
 
 (def for-agenda -1)
 
+(defn presentation [tx id pres-id]
+  (str
+   (topic (codax/get-at tx [id :pres pres-id :description]))
+   " (" (codax/get-at tx [id :name]) ")"))
+
+(defn agenda [tx token id pres-id]
+  (let [group (group tx token id pres-id)]
+    (map #(let [dt (:datetime %)
+                studs (codax/get-at tx [:pres pres-id group dt])]
+            (str dt "\n"
+                 (str/join "\n" (map (fn [e] (str "- " (presentation tx id pres-id))) studs))))
+
+         (schedule pres-id group for-agenda (today)))))
+
+(defn agenda-talk [db token pres-id]
+  (talk/def-command db (str pres-id "agenda")
+    (fn [tx {{id :id} :from}]
+      (doall (map #(talk/send-text token id %) (agenda tx token id pres-id)))
+      (talk/stop-talk tx))))
+
 (defn schedule-talk [db token pres-id]
   (talk/def-talk db (str pres-id "schedule")
     :start
@@ -194,22 +214,3 @@
             (codax/assoc-at [id :pres pres-id :scheduled?] true)
             talk/stop-talk)))))
 
-(defn presentation [tx id pres-id]
-  (str
-   (topic (codax/get-at tx [id :pres pres-id :description]))
-   " (" (codax/get-at tx [id :name]) ")"))
-
-(defn agenda [tx token id pres-id]
-  (let [group (group tx token id pres-id)]
-    (map #(let [dt (:datetime %)
-                studs (codax/get-at tx [:pres pres-id group dt])]
-            (str dt "\n"
-                 (str/join "\n" (map (fn [e] (str "- " (presentation tx id pres-id))) studs))))
-
-         (schedule pres-id group for-agenda (today)))))
-
-(defn agenda-talk [db token pres-id]
-  (talk/def-command db (str pres-id "agenda")
-    (fn [tx {{id :id} :from}]
-      (doall (map #(talk/send-text token id %) (agenda tx token id pres-id)))
-      (talk/stop-talk tx))))
