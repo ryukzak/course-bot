@@ -96,7 +96,7 @@
                                      (not (some-> info :pres (get pres-id) :approved?)))))
        first))
 
-(defn topic [desc] (-> desc str/split-lines first))
+(defn topic [desc] (if (nil? desc) nil (-> desc str/split-lines first)))
 
 (defn check-talk [db token pres-id assert-admin]
   (talk/def-talk db (str pres-id "check")
@@ -165,7 +165,7 @@
     (map #(let [dt (:datetime %)
                 studs (codax/get-at tx [:pres pres-id group dt])]
             (str dt "\n"
-                 (str/join "\n" (map (fn [e] (str "- " (presentation tx id pres-id))) studs))))
+                 (str/join "\n" (map (fn [e] (str "- " (presentation tx e pres-id))) studs))))
 
          (schedule pres-id group for-agenda (today)))))
 
