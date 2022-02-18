@@ -80,6 +80,7 @@ essay3results - результаты рассмотрения моего тре�
 
   (pres/setgroup-talk db general/chat-token "lab1")
   (pres/submit-talk db general/chat-token "lab1")
+  (pres/submissions-talk db general/chat-token "lab1")
   (pres/check-talk db general/chat-token "lab1" general/assert-admin)
   (pres/schedule-talk db general/chat-token "lab1")
   (pres/agenda-talk db general/chat-token "lab1")
