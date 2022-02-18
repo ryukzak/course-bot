@@ -169,7 +169,6 @@
                     (filter #(= (count (dedupe (sort %))) (count %)))
                     (filter #(= report-count (count %))))
         n (float (count scores))]
-    (println scores)
     (map (fn [i] (round (/ (apply + (map #(- 5 (str/index-of % (str i))) scores)) n)))
          (take report-count (concat '(1 2 3) (repeat 3))))))
 
