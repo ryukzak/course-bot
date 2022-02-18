@@ -86,8 +86,7 @@ essay3results - результаты рассмотрения моего тре�
   (pres/agenda-talk db general/chat-token "lab1")
   (pres/drop-talk db general/chat-token "lab1" general/assert-admin general/admin-chat)
 
-  (h/command "help" {{id :id} :chat}
-             (t/send-text token id help-msg))
+  (h/command "help" {{id :id} :chat} (t/send-text token id (talk/helps)))
 
   ;; (h/message {{id :id} :chat :as message}
   ;;     (println "Intercepted message: " message)

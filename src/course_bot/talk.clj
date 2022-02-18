@@ -35,55 +35,61 @@
     (when (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
       (Integer/parseInt (first args)))))
 
-(defmacro talk [db name & body]
-  (let [branches (apply hash-map body)
-        current-branch-var `current-branch#
-        current-talk-var `current-talk#
-        state `state#
-        msg-var `msg#
-        tx-var `tx#]
-    `(fn talk-top# [update#]
-       (let [res# (atom nil)]
-         (try
-           (c/with-write-transaction [~db ~tx-var]
-             (let [id# (-> update# :message :from :id)
-                   ~msg-var (:message update#)
-                   {~current-talk-var :current-talk
-                    ~current-branch-var :current-branch
-                    ~state :state} (c/get-at ~tx-var [id# :talk])]
-               (try
-                 (let [tmp# (cond
-                              (h/command? update# ~name)
-                              (~(:start branches) ~tx-var ~msg-var)
+(def *helps (atom {}))
 
-                              (str/starts-with? (-> update# :message :text) "/") nil
+(defn helps [] (->> @*helps
+                    (map (fn [[n d]] (str n " - " d)))
+                    sort
+                    (str/join "\n")))
 
-                              ~@(apply concat
-                                       (->> branches
-                                            (filter #(not= :start (first %)))
-                                            (map (fn [[branch body]]
-                                                   [`(and (= ~current-talk-var ~name) (= ~current-branch-var ~branch))
-                                                    `(if (nil? ~state)
-                                                       (~body ~tx-var ~msg-var)
-                                                       (~body ~tx-var ~msg-var ~state))])))))]
-                   (swap! res# (constantly tmp#))
-                   (if (nil? @res#) ~tx-var @res#))
-                 (catch clojure.lang.ExceptionInfo e#
-                   (swap! res# (constantly :ok))
-                   (case (ex-message e#)
-                     "Change branch" (set-talk-branch (-> e# ex-data :tx)
-                                                      id# ~name
-                                                      (-> e# ex-data :next-branch)
-                                                      (-> e# ex-data :state))
-                     "Stop talk" (set-talk-branch (-> e# ex-data :tx) id# nil nil nil)
-                     "Wait talk" (-> e# ex-data :tx)
-                     (throw e#))))))
-           @res#)))))
+(defn talk [db name & handlers]
+  (let [[help handlers] (if (string? (first handlers))
+                          [(first handlers) (rest handlers)]
+                          [nil handlers])
+        handlers (apply hash-map handlers)
+        start-handler (:start handlers)
+        handlers (into {} (filter #(not= :start (first %)) handlers))]
+    (when (and (some? help) (not (contains? @*helps name)))
+      (swap! *helps assoc name help))
+    (fn talk-top [update]
+      (let [res (atom nil)]
+        (try
+          (declare tx)
+          (c/with-write-transaction [db tx]
+            (let [id (-> update :message :from :id)
+                  msg (:message update)
+                  {current-talk :current-talk
+                   current-branch :current-branch
+                   state :state} (c/get-at tx [id :talk])]
+              (try
+                (let [tmp (cond
+                            (h/command? update name) (start-handler tx msg)
+
+                            (str/starts-with? (-> msg :text) "/") nil
+
+                            (and (= current-talk name) (contains? handlers current-branch))
+                            (if (nil? state)
+                              ((get handlers current-branch) tx msg)
+                              ((get handlers current-branch) tx msg state)))]
+                  (swap! res (constantly tmp))
+                  (if (nil? @res) tx @res))
+                (catch clojure.lang.ExceptionInfo e
+                  (swap! res (constantly :ok))
+                  (case (ex-message e)
+                    "Change branch" (set-talk-branch (-> e ex-data :tx)
+                                                     id name
+                                                     (-> e ex-data :next-branch)
+                                                     (-> e ex-data :state))
+                    "Stop talk" (set-talk-branch (-> e ex-data :tx) id nil nil nil)
+                    "Wait talk" (-> e ex-data :tx)
+                    (throw e))))))
+          @res)))))
 
 (defmacro def-talk [& args] `(talk ~@args))
 
-(defn def-command [db name foo]
-  (def-talk db name :start foo))
+(defn def-command
+  ([db name foo] (talk db name :start foo))
+  ([db name help foo] (talk db name help :start foo)))
 
 ;; Re-exports
 

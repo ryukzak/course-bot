@@ -28,6 +28,7 @@
 
 (defn setgroup-talk [db token pres-id]
   (talk/def-talk db (str pres-id "setgroup")
+    "set your presentation group"
     :start
     (fn [tx {{id :id} :from}]
       (let [pres-group (codax/get-at tx [id :pres pres-id :group])]
@@ -52,6 +53,7 @@
 
 (defn submit-talk [db token pres-id]
   (talk/def-talk db (str pres-id "submit")
+    "submit your presentation description"
     :start
     (fn [tx {{id :id} :from}]
       (let [info (general/get-registered tx token id)
@@ -102,6 +104,7 @@
 
 (defn check-talk [db token pres-id assert-admin]
   (talk/def-talk db (str pres-id "check")
+    "for teacher, check submitted presentation description"
     :start
     (fn [tx {{id :id} :from}]
       (assert-admin tx token id)
@@ -188,6 +191,7 @@
 
 (defn submissions-talk [db token pres-id]
   (talk/def-command db (str pres-id "submissions")
+    "list your group submittions and their status"
     (fn [tx {{id :id} :from}]
       (let [group (group tx token id pres-id)]
         (talk/send-text token id
@@ -205,12 +209,14 @@
 
 (defn agenda-talk [db token pres-id]
   (talk/def-command db (str pres-id "agenda")
+    "show our agenda"
     (fn [tx {{id :id} :from}]
       (doall (map #(talk/send-text token id %) (agenda tx token id pres-id)))
       (talk/stop-talk tx))))
 
 (defn schedule-talk [db token pres-id]
   (talk/def-talk db (str pres-id "schedule")
+    "select your presentation day"
     :start
     (fn [tx {{id :id} :from}]
       (let [info (general/get-registered tx token id)
@@ -250,6 +256,7 @@
 
 (defn drop-talk [db token pres-id assert-admin admin-id]
   (talk/def-talk db (str pres-id "drop")
+    "for teacher, drop presentation for specific student"
     :start
     (fn [tx {{id :id} :from text :text}]
       (assert-admin tx token id)
