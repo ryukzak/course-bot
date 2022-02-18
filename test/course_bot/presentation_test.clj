@@ -124,12 +124,12 @@
     (testing "schedule"
       (with-redefs [pres/today (fn [] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") "2022.01.01 12:00")))]
         (agenda-talk (talk/msg "/lab1agenda"))
-        (is (= ["2022.01.01 12:00\n"
-                "2022.02.02 12:00\n"] (->> @*chat (take 2) (map :msg) reverse)))
+        (is (= ["2022.01.01 12:00 (ext)\n"
+                "2022.02.02 12:00 (ext)\n"] (->> @*chat (take 2) (map :msg) reverse)))
 
         (schedule-talk (talk/msg "/lab1schedule"))
-        (is (= ["2022.01.01 12:00\n"
-                "2022.02.02 12:00\n"
+        (is (= ["2022.01.01 12:00 (ext)\n"
+                "2022.02.02 12:00 (ext)\n"
                 "Select your option: 2022.01.01 12:00, 2022.02.02 12:00"] (->> @*chat (take 3) (map :msg) reverse)))
         (schedule-talk (talk/msg "bla-bla"))
         (is (= "Not found, allow only: 2022.01.01 12:00, 2022.02.02 12:00" (-> @*chat first :msg)))
@@ -144,8 +144,8 @@
         (is (= "Already scheduled, check /lab1agenda." (-> @*chat first :msg)))
 
         (agenda-talk (talk/msg "/lab1agenda"))
-        (is (= ["2022.01.01 12:00\n"
-                "2022.02.02 12:00\n- my-presentation-2 (Bot Botovich)"] (->> @*chat (take 2) (map :msg) reverse))))
+        (is (= ["2022.01.01 12:00 (ext)\n"
+                "2022.02.02 12:00 (ext)\n- my-presentation-2 (Bot Botovich)"] (->> @*chat (take 2) (map :msg) reverse))))
 
       (testing "drop student"
         (drop-talk (talk/msg "/lab1drop"))
