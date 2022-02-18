@@ -166,6 +166,7 @@
 (defn submission-status [desc]
   (cond
     (nil? desc) "nil"
+    (and (= 1 (count desc)) (some? (:group desc))) "UNDEFINED"
     (:approved? desc) "OK"
     (:on-review? desc) "WAIT"
     (false? (:on-review? desc)) "ISSUE"

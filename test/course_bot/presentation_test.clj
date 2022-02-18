@@ -50,7 +50,11 @@
       (setgroup-talk (talk/msg "ext"))
       (is (= "Your presentation group setted: ext" (-> @*chat first :msg)))
       (setgroup-talk (talk/msg "/lab1setgroup"))
-      (is (= "Your presentation group: ext" (-> @*chat first :msg))))
+      (is (= "Your presentation group: ext" (-> @*chat first :msg)))
+
+      (submissions-talk (talk/msg "/lab1submissions"))
+      (is (= "In group: ext:\n- UNDEFINED nil (Bot Botovich)"
+             (-> @*chat first :msg))))
 
     (testing "wrong submit"
       (submit-talk (talk/msg "/lab1submit"))
