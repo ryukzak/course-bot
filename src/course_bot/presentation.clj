@@ -5,6 +5,8 @@
              [clojure.string :as str])
    (:require [course-bot.misc :as misc]))
 
+(declare submissions)
+
 (def configs (misc/read-configs "presentations"))
 
 (defn config [tx token id pres-id]
@@ -96,7 +98,7 @@
                                      (not (some-> info :pres (get pres-id) :approved?)))))
        first))
 
-(defn topic [desc] (if (nil? desc) nil (-> desc str/split-lines first)))
+(defn topic [desc] (if (nil? desc) "nil" (-> desc str/split-lines first)))
 
 (defn check-talk [db token pres-id assert-admin]
   (talk/def-talk db (str pres-id "check")
@@ -109,7 +111,8 @@
           (talk/stop-talk tx))
         (let [[stud-id info] row
               desc (-> info :pres (get pres-id) :description)]
-          (talk/send-text token id (str "Было пирслано следующее на согласование (группа " (-> info :group) "): "
+          (talk/send-text token id (submissions tx token id pres-id))
+          (talk/send-text token id (str "We receive from the student (group " (-> info :group) "): "
                                         "\n\n"
                                         "Topic: " (topic desc)))
           (talk/send-text token id desc)
@@ -159,6 +162,37 @@
   (str
    (topic (codax/get-at tx [id :pres pres-id :description]))
    " (" (codax/get-at tx [id :name]) ")"))
+
+(defn submission-status [desc]
+  (cond
+    (nil? desc) "nil"
+    (:approved? desc) "OK"
+    (:on-review? desc) "WAIT"
+    (false? (:on-review? desc)) "ISSUE"
+    :else (str "?? " desc)))
+
+(defn pres-state [stud-tuple pres-id]
+  (-> stud-tuple second :pres (get pres-id)))
+
+(defn submissions [tx token id pres-id]
+  (let [group (group tx token id pres-id)]
+    (str "In group: " group ":\n"
+         (->> (codax/get-at tx [])
+              (filter #(-> % second :group)) ;; it should be a student
+              (filter #(-> % (pres-state pres-id) :group (= group)))
+              (map #(str "- " (-> % (pres-state pres-id) submission-status)
+                         " " (presentation tx (first %) pres-id)))
+              sort
+              (str/join "\n")))))
+
+(defn submissions-talk [db token pres-id]
+  (talk/def-command db (str pres-id "submissions")
+    (fn [tx {{id :id} :from}]
+      (let [group (group tx token id pres-id)]
+        (talk/send-text token id
+                        (submissions tx token id pres-id))
+
+        (talk/stop-talk tx)))))
 
 (defn agenda [tx token id pres-id]
   (let [group (group tx token id pres-id)]

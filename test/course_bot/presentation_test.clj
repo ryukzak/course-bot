@@ -28,6 +28,7 @@
         setgroup-talk (pres/setgroup-talk db "TOKEN" "lab1")
         submit-talk (pres/submit-talk db "TOKEN" "lab1")
         check-talk (pres/check-talk db "TOKEN" "lab1" general/assert-admin)
+        submissions-talk (pres/submissions-talk db "TOKEN" "lab1")
         schedule-talk (pres/schedule-talk db "TOKEN" "lab1")
         agenda-talk (pres/agenda-talk db "TOKEN" "lab1")
         drop-talk (pres/drop-talk db "TOKEN" "lab1" general/assert-admin general/admin-chat)]
@@ -36,7 +37,10 @@
       (start-talk (talk/msg "/start"))
       (start-talk (talk/msg "Bot Botovich"))
       (start-talk (talk/msg "gr1"))
-      (is (= "Send /help for help." (-> @*chat first :msg))))
+      (is (= "Send /help for help." (-> @*chat first :msg)))
+
+      (setgroup-talk (talk/msg 0 "/lab1setgroup"))
+      (setgroup-talk (talk/msg 0 "ext")))
 
     (testing "set presentation group"
       (setgroup-talk (talk/msg "/lab1setgroup"))
@@ -71,6 +75,10 @@
       (is (= {:description "my-presentation" :on-review? true :group "ext"}
              (codax/get-at! db [1 :pres "lab1"])))
 
+      (submissions-talk (talk/msg "/lab1submissions"))
+      (is (= "In group: ext:\n- WAIT my-presentation (Bot Botovich)"
+             (-> @*chat first :msg)))
+
       (submit-talk (talk/msg "/lab1submit"))
       (is (= "On review, you will be informed when it finished." (-> @*chat first :msg))))
 
@@ -80,10 +88,11 @@
 
     (testing "check by admin and reject"
       (check-talk (talk/msg 0 "/lab1check"))
-      (is (= ["Было пирслано следующее на согласование (группа gr1): \n\nTopic: my-presentation"
+      (is (= ["In group: ext:\n- WAIT my-presentation (Bot Botovich)"
+              "We receive from the student (group gr1): \n\nTopic: my-presentation"
               "my-presentation"
               "Approve (yes or no)?"]
-             (->> @*chat (take 3) (map :msg) reverse)))
+             (->> @*chat (take 4) (map :msg) reverse)))
 
       (check-talk (talk/msg 0 "bla-bla"))
       (is (= "Please, yes or no?" (-> @*chat first :msg)))
@@ -96,7 +105,11 @@
               {:id 1 :msg "Your presentation description for lab1 declined with the following remark:\n\nYou can do it better!"}]
              (->> @*chat (take 2) reverse)))
       (is (= {:description "my-presentation" :on-review? false :group "ext"}
-             (codax/get-at! db [1 :pres "lab1"]))))
+             (codax/get-at! db [1 :pres "lab1"])))
+
+      (submissions-talk (talk/msg "/lab1submissions"))
+      (is (= "In group: ext:\n- ISSUE my-presentation (Bot Botovich)"
+             (-> @*chat first :msg))))
 
     (testing "resubmit presentation"
       (submit-talk (talk/msg "/lab1submit"))
@@ -109,17 +122,22 @@
 
     (testing "check by admin and reject"
       (check-talk (talk/msg 0 "/lab1check"))
-      (is (= ["Было пирслано следующее на согласование (группа gr1): \n\nTopic: my-presentation-2"
+      (is (= ["In group: ext:\n- WAIT my-presentation-2 (Bot Botovich)"
+              "We receive from the student (group gr1): \n\nTopic: my-presentation-2"
               "my-presentation-2"
               "Approve (yes or no)?"]
-             (->> @*chat (take 3) (map :msg) reverse)))
+             (->> @*chat (take 4) (map :msg) reverse)))
 
       (check-talk (talk/msg 0 "yes"))
       (is (= [{:id 0 :msg "OK, student will reveive his approve.\n\n/lab1check"}
               {:id 1 :msg "Your presentation description for lab1 approved."}]
              (->> @*chat (take 2) reverse)))
       (is (= {:description "my-presentation-2" :on-review? false :approved? true :group "ext"}
-             (codax/get-at! db [1 :pres "lab1"]))))
+             (codax/get-at! db [1 :pres "lab1"])))
+
+      (submissions-talk (talk/msg "/lab1submissions"))
+      (is (= "In group: ext:\n- OK my-presentation-2 (Bot Botovich)"
+             (-> @*chat first :msg))))
 
     (testing "schedule"
       (with-redefs [pres/today (fn [] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") "2022.01.01 12:00")))]
