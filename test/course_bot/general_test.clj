@@ -1,86 +1,78 @@
 (ns course-bot.general-test
   (:require [course-bot.general :as general]
             [course-bot.talk :as talk]
+            [course-bot.talk-test :as ttalk]
             [codax.core :as codax]
             [clojure.test :refer :all]))
 
 (declare start-talk-test restart-talk-test)
 
 (talk/deftest start-talk-test [db *chat]
-  (let [start-talk (general/start-talk db "TOKEN")]
-    (start-talk (talk/msg "bla-bla"))
+  (let [start-talk (ttalk/mock-talk general/start-talk db "TOKEN")]
+    (start-talk "bla-bla")
     (is (= '() @*chat))
 
     (testing "registration"
-      (start-talk (talk/msg "/start"))
-      (is (= "Hi, I'm a bot for your course. I will help you with your work. What is your name?"
-             (-> @*chat first :msg)))
+      (start-talk "/start")
+      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name?")
 
-      (start-talk (talk/msg "Bot Botovich"))
-      (is (= "What is your group (gr1, gr2)?"
-             (-> @*chat first :msg)))
+      (start-talk "Bot Botovich")
+      (ttalk/in-history *chat "What is your group (gr1, gr2)?")
 
-      (start-talk (talk/msg "wrong group"))
-      (is (= "I don't know this group. Please, repeat it (gr1, gr2):"
-             (-> @*chat first :msg)))
+      (start-talk "wrong group")
+      (ttalk/in-history *chat "I don't know this group. Please, repeat it (gr1, gr2):")
 
-      (start-talk (talk/msg "gr1"))
-      (is (= (list "Hi:"
-                   "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
-                   "Send /help for help.")
-             (->> @*chat (take 3) (map :msg) reverse))))
+      (start-talk "gr1")
+      (ttalk/in-history *chat "Hi:"
+                        "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
+                        "Send /help for help."))
 
     (testing "second registration"
-      (start-talk (talk/msg "/start"))
-      (is (= "You are already registered. To change your information, contact the teacher and send /whoami"
-             (-> @*chat first :msg))))))
+      (start-talk "/start")
+      (ttalk/in-history *chat "You are already registered. To change your information, contact the teacher and send /whoami"))))
 
 (talk/deftest restart-talk-test [db *chat]
-  (let [start-talk (general/start-talk db "TOKEN")
-        whoami-talk (general/whoami-talk db "TOKEN")
-        restart-talk (general/restart-talk db "TOKEN" general/assert-admin)]
-    (restart-talk (talk/msg "bla-bla"))
+  (let [start-talk (ttalk/mock-talk general/start-talk db "TOKEN")
+        whoami-talk (ttalk/mock-talk general/whoami-talk db "TOKEN")
+        restart-talk (ttalk/mock-talk general/restart-talk db "TOKEN" general/assert-admin)]
+    (restart-talk "bla-bla")
     (is (= '() @*chat))
 
     (testing "wrong requests"
-      (restart-talk (talk/msg "/restart"))
-      (is (= "That action requires admin rights." (-> @*chat first :msg)))
+      (restart-talk "/restart")
+      (ttalk/in-history *chat "That action requires admin rights.")
 
-      (restart-talk (talk/msg general/admin-chat "/restart"))
-      (is (= "Wrong input. Expect: /restart 12345" (-> @*chat first :msg)))
+      (restart-talk 0 "/restart")
+      (ttalk/in-history *chat 0 "Wrong input. Expect: /restart 12345")
 
-      (restart-talk (talk/msg general/admin-chat "/restart 1"))
-      (is (= "User with specific telegram id not found." (-> @*chat first :msg))))
+      (restart-talk 0 "/restart 1")
+      (ttalk/in-history *chat 0 "User with specific telegram id not found."))
 
     (testing "register user for restart"
-      (start-talk (talk/msg "/start"))
-      (start-talk (talk/msg "Bot Botovich"))
-      (start-talk (talk/msg "gr1"))
-      (whoami-talk (talk/msg "/whoami"))
-      (is (= "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
-             (-> @*chat first :msg)))
-      (start-talk (talk/msg "/start"))
-      (is (= "You are already registered. To change your information, contact the teacher and send /whoami"
-             (-> @*chat first :msg))))
+      (start-talk "/start")
+      (start-talk "Bot Botovich")
+      (start-talk "gr1")
+      (whoami-talk "/whoami")
+      (ttalk/in-history *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
+      (start-talk "/start")
+      (ttalk/in-history *chat "You are already registered. To change your information, contact the teacher and send /whoami"))
 
     (testing "try but not actually restart"
-      (restart-talk (talk/msg general/admin-chat "/restart 1"))
-      (is (= "Restart this student?" (-> @*chat first :msg)))
+      (restart-talk 0 "/restart 1")
+      (ttalk/in-history *chat 0 "Restart this student?")
 
-      (restart-talk (talk/msg general/admin-chat "emm"))
-      (is (= "Please yes or no?" (-> @*chat first :msg)))
+      (restart-talk 0 "emm")
+      (ttalk/in-history *chat 0 "Please yes or no?")
 
-      (restart-talk (talk/msg general/admin-chat "no"))
-      (is (= "Not restarted." (-> @*chat first :msg))))
+      (restart-talk 0 "no")
+      (ttalk/in-history *chat 0 "Not restarted."))
 
     (testing "restart"
-      (restart-talk (talk/msg general/admin-chat "/restart 1"))
-      (restart-talk (talk/msg general/admin-chat "yes"))
-      (is (= (list {:msg "You can use /start once more.", :id 1}
-                   {:msg "Restarted: 1", :id 0}) (->> @*chat (take 2))))
+      (restart-talk 0 "/restart 1")
+      (restart-talk 0 "yes")
+      (ttalk/in-history *chat
+                        [0 "Restarted: 1"]
+                        [1 "You can use /start once more."])
 
-      (start-talk (talk/msg "/start"))
-      (is (= "Hi, I'm a bot for your course. I will help you with your work. What is your name?"
-             (-> @*chat first :msg))))))
-
-(run-tests)
+      (start-talk "/start")
+      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name?"))))
