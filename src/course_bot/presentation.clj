@@ -154,8 +154,20 @@
   ([pres-id group time-offset now]
    (->> (-> configs (get pres-id) :groups (get group) :schedule)
         (filter #(or (nil? time-offset)
-                     (let [time (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") (:datetime %)))]
-                       (<= time-offset (/ (- time now) (* 1000 60 60 24)))))))))
+                     (let [time (misc/read-time (:datetime %))]
+                       (<= time-offset (/ (- time now) (* 1000 60 60 24))))))
+        (map #(assoc % :group group :pres-id pres-id)))))
+
+(defn schedule-detail [tx future]
+  (->> future
+       (map (fn [{group :group pres-id :pres-id dt :datetime :as row}]
+              (let [ids (codax/get-at tx [:pres pres-id group dt])
+                    studs (->> ids
+                               (map #(let [info (codax/get-at tx [%])]
+                                       {:id %
+                                        :name (-> info :name)
+                                        :topic (-> info :pres (get pres-id) :description topic)})))]
+                (assoc row :studs studs))))))
 
 (def for-schedule 0)
 
@@ -232,7 +244,7 @@
 
         (let [future (schedule pres-id group for-schedule (today))]
           (if (empty? future)
-            (do (talk/send-text token id "Ended")
+            (do (talk/send-text token id "I don't have options for you.")
                 (talk/stop-talk tx))
             (do (doall (map #(talk/send-text token id %) (agenda tx token id pres-id)))
                 (talk/send-text token id (str "Select your option: "
@@ -293,3 +305,55 @@
                           (talk/stop-talk tx))
         :else (do (talk/send-text token id "What?")
                   (talk/repeat-branch tx))))))
+
+(defn feedback-str [studs]
+  (str "Enter number of the best presentation in the list:\n\n"
+       (->> studs
+            (map-indexed #(str %1 ". " (:name %2) " (" (:topic %2) ")"))
+            (str/join "\n"))))
+
+(defn feedback-talk [db token pres-id]
+  (talk/def-talk db (str pres-id "feedback")
+    "feedback for report"
+    :start
+    (fn [tx {{id :id} :from text :text}]
+      (let [now (today)
+            group (group tx token id pres-id)
+            future  (schedule-detail tx (schedule pres-id group nil))
+            cur (some #(let [time (misc/read-time (:datetime %))
+                             offset (/ (- now time) (* 1000 60))]
+                         (when (and (<= 30 offset) (<= offset 120)) %))
+                      future)
+            dt (:datetime cur)
+            studs (:studs cur)]
+        (when (nil? studs)
+          (talk/send-text token id "Feedback collecting is over.")
+          (talk/stop-talk tx))
+        (when (some #(= id %) (codax/get-at tx [:pres pres-id group :feedback-from dt]))
+          (talk/send-text token id "Already received.")
+          (talk/stop-talk tx))
+        (talk/send-text token id (feedback-str studs))
+        (talk/change-branch tx :select {:rank [] :remain studs :group group :dt dt})))
+    :select
+    (fn [tx {{id :id} :from text :text} {rank :rank studs :remain group :group dt :dt}]
+      (let [n (if (re-matches #"^\d+$" text) (Integer/parseInt text) nil)]
+        (when (or (nil? n) (not (< n (count studs))))
+          (talk/send-text token id "Wrong input. Enter number of the best presentation in the list.")
+          (talk/wait tx))
+
+        (when (> (count studs) 1)
+          (let [best (nth studs n)
+                studs (concat (take n studs) (drop (+ n 1) studs))]
+            (talk/send-text token id (feedback-str studs))
+            (talk/change-branch tx :select {:rank (conj rank best)
+                                            :remain studs
+                                            :group group
+                                            :dt dt})))
+
+        (talk/send-text token id "Thank, your feedback saved!")
+        (-> tx
+            (codax/update-at [:pres pres-id group :feedback-from dt] conj id)
+            (codax/update-at [:pres pres-id group :feedback dt]
+                             conj {:receive-at (misc/str-time (today))
+                                   :rank (conj rank (first studs))})
+            talk/stop-talk)))))

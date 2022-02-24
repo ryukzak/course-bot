@@ -22,3 +22,7 @@
                     dt (read-string (slurp %))]
                 [name dt]))
         (into {}))))
+
+(defn read-time [s] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") s)))
+
+(defn str-time [dt] (.format (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") dt))

@@ -85,6 +85,7 @@ essay3results - результаты рассмотрения моего тре�
   (pres/schedule-talk db general/chat-token "lab1")
   (pres/agenda-talk db general/chat-token "lab1")
   (pres/drop-talk db general/chat-token "lab1" general/assert-admin general/admin-chat)
+  (pres/feedback-talk db general/chat-token "lab1")
 
   (h/command "help" {{id :id} :chat} (t/send-text token id (talk/helps)))
 
