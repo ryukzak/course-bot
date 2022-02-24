@@ -250,7 +250,7 @@
           (talk/repeat-branch tx))
         (talk/send-text token id (str "OK, you can check it by: /" pres-id "agenda"))
         (-> tx
-            (codax/update-at [:pres pres-id group text] conj id)
+            (codax/update-at [:pres pres-id group text] #(concat % [id]))
             (codax/assoc-at [id :pres pres-id :scheduled?] true)
             talk/stop-talk)))))
 
