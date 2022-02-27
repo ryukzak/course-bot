@@ -28,7 +28,9 @@
                               :current-branch branch
                               :state state})))
 
-(defn command-args [text] (str/split (str/replace-first text #"^/\w+\s+" "") #"\s+"))
+(defn command-args [text] (filter #(not (empty? %)) (str/split (str/replace-first text #"^/\w+\s*" "") #"\s+")))
+
+(defn command-text-arg [text] (str/replace-first text #"^/\w+\s*" ""))
 
 (defn id-from-arg [tx text]
   (let [args (command-args text)]

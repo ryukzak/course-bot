@@ -328,6 +328,16 @@
                                {:id 2, :name "Bob", :topic "History B"}]})}}
 
                (codax/get-at! db [:pres "lab1" "ext"])))))
+
+    (testing "evaluate command not available"
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:00"))]
+        (evaluate-talk 1 "/lab1evaluate")
+        (ttalk/in-history *chat "That action requires admin rights.")
+        (evaluate-talk 0 "/lab1evaluate 2022.01.01 12:00")
+        (ttalk/in-history *chat 0 "Enter your evaluation for:\nAlice (History A)")
+        (evaluate-talk 0 "/lab1evaluate")
+        (ttalk/in-history *chat 0 "Feedback collecting is over.")))
+
     (testing "evaluate"
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 13:05"))]
         (evaluate-talk 1 "/lab1evaluate")

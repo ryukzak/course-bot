@@ -365,13 +365,16 @@
     :start
     (fn [tx {{id :id} :from text :text}]
       (assert-admin tx token id)
-      (let [now (misc/today)
+      (let [arg (talk/command-text-arg text)
+            now (misc/today)
             group (group tx token id pres-id)
-            future  (schedule-detail tx (schedule pres-id group nil))
-            cur (some #(let [time (misc/read-time (:datetime %))
-                             offset (/ (- now time) (* 1000 60))]
-                         (when (and (<= 30 offset) (<= offset 120)) %))
-                      future)
+            future (schedule-detail tx (schedule pres-id group nil))
+            is-current-pres #(let [time (misc/read-time (:datetime %))
+                                   offset (/ (- now time) (* 1000 60))]
+                               (when (and (<= 30 offset) (<= offset 120)) %))
+            is-selected #(when (= arg (:datetime %)) %)
+            ;; should be filter, if we received several results, we should force manual check by user.
+            cur (some (if (empty? arg) is-current-pres is-selected) future)
             dt (:datetime cur)
             stud (-> cur :studs first)
             all-studs (-> cur :studs)]
