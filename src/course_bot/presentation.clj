@@ -335,7 +335,7 @@
         (talk/send-text token id (feedback-str studs))
         (talk/change-branch tx :select {:rank [] :remain studs :group group :dt dt})))
     :select
-    (fn [tx {{id :id} :from text :text} {rank :rank studs :remain group :group dt :dt}]
+    (fn [tx {{id :id} :from text :text} {rank :rank studs :remain group :group dt :dt :as state}]
       (let [n (if (re-matches #"^\d+$" text) (Integer/parseInt text) nil)]
         (when (or (nil? n) (not (< n (count studs))))
           (talk/send-text token id "Wrong input. Enter number of the best presentation in the list.")
@@ -345,10 +345,9 @@
           (let [best (nth studs n)
                 studs (concat (take n studs) (drop (+ n 1) studs))]
             (talk/send-text token id (feedback-str studs))
-            (talk/change-branch tx :select {:rank (conj rank best)
-                                            :remain studs
-                                            :group group
-                                            :dt dt})))
+            (talk/change-branch tx :select
+                                (assoc state :rank (conj rank best)
+                                       :remain studs))))
 
         (talk/send-text token id "Thank, your feedback saved!")
         (-> tx
