@@ -330,6 +330,7 @@
         (when (some #(= id %) (codax/get-at tx [:pres pres-id group :feedback-from dt]))
           (talk/send-text token id "Already received.")
           (talk/stop-talk tx))
+        (talk/send-text token id (str "Collect feedback for " pres-id " " group " " dt))
         (talk/send-text token id (feedback-str studs))
         (talk/change-branch tx :select {:rank [] :remain studs :group group :dt dt})))
     :select
@@ -377,6 +378,7 @@
         (when (nil? all-studs)
           (talk/send-text token id "Feedback collecting is over.")
           (talk/stop-talk tx))
+        (talk/send-text token id (str "Collect evaluation for " pres-id " " group " " dt))
         (talk/send-text token id (evaluate-str stud))
         (talk/change-branch tx :score {:scores [] :remain all-studs :group group :dt dt})))
 
