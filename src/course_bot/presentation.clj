@@ -356,3 +356,53 @@
                              conj {:receive-at (misc/str-time (today))
                                    :rank (conj rank (first studs))})
             talk/stop-talk)))))
+
+(defn evaluate-str [stud]
+  (str "Enter your evaluation for:\n" (:name stud) " (" (:topic stud) ")"))
+
+(defn evaluate-talk [db token pres-id assert-admin]
+  (talk/def-talk db (str pres-id "evaluate")
+    "evaluate presentation by the teacher"
+    :start
+    (fn [tx {{id :id} :from text :text}]
+      (assert-admin tx token id)
+      (let [now (today)
+            group (group tx token id pres-id)
+            future  (schedule-detail tx (schedule pres-id group nil))
+            cur (some #(let [time (misc/read-time (:datetime %))
+                             offset (/ (- now time) (* 1000 60))]
+                         (when (and (<= 30 offset) (<= offset 120)) %))
+                      future)
+            dt (:datetime cur)
+            stud (-> cur :studs first)
+            all-studs (-> cur :studs)]
+        (when (nil? all-studs)
+          (talk/send-text token id "Feedback collecting is over.")
+          (talk/stop-talk tx))
+        (talk/send-text token id (evaluate-str stud))
+        (talk/change-branch tx :score {:scores [] :remain all-studs :group group :dt dt})))
+
+    :score
+    (fn [tx {{id :id} :from text :text} {scores :scores remain :remain :as state}]
+      (let [stud (-> remain first)
+            studs (-> remain rest)
+            score {:score text :stud stud}]
+
+        (if (empty? studs)
+          (do (talk/send-text token id "Please, provide list of discussion participants (comma separated):")
+              (talk/change-branch tx :participants (assoc state
+                                                          :scores (cons score scores)
+                                                          :remain studs)))
+          (do (talk/send-text token id (evaluate-str (first studs)))
+              (talk/change-branch tx :score (assoc state
+                                                   :scores (cons score scores)
+                                                   :remain studs))))))
+
+    :participants
+    (fn [tx {{id :id} :from text :text} {scores :scores group :group dt :dt}]
+      (talk/send-text token id "Thank you, all data stored. If you make mistake, you can reupload it.")
+      (-> tx
+          (codax/assoc-at [:pres pres-id group :evaluate dt]
+                          {:participants (map #(str/trim %) (str/split text #","))
+                           :scores scores})
+          talk/stop-talk))))

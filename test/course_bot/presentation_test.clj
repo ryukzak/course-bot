@@ -209,11 +209,10 @@
         setgroup-talk (ttalk/mock-talk pres/setgroup-talk db "TOKEN" "lab1")
         submit-talk (ttalk/mock-talk pres/submit-talk db "TOKEN" "lab1")
         check-talk (ttalk/mock-talk pres/check-talk db "TOKEN" "lab1" general/assert-admin)
-        submissions-talk (ttalk/mock-talk pres/submissions-talk db "TOKEN" "lab1")
         schedule-talk (ttalk/mock-talk pres/schedule-talk db "TOKEN" "lab1")
         agenda-talk (ttalk/mock-talk pres/agenda-talk db "TOKEN" "lab1")
-        drop-talk (ttalk/mock-talk pres/drop-talk db "TOKEN" "lab1" general/assert-admin general/admin-chat)
-        feedback-talk (ttalk/mock-talk pres/feedback-talk db "TOKEN" "lab1")]
+        feedback-talk (ttalk/mock-talk pres/feedback-talk db "TOKEN" "lab1")
+        evaluate-talk (ttalk/mock-talk pres/evaluate-talk db "TOKEN" "lab1" general/assert-admin)]
 
     (testing "Setup admin"
       (setgroup-talk 0 "/lab1setgroup")
@@ -328,7 +327,29 @@
                                {:id 1, :name "Alice", :topic "History A"}
                                {:id 2, :name "Bob", :topic "History B"}]})}}
 
-               (codax/get-at! db [:pres "lab1" "ext"])))))))
+               (codax/get-at! db [:pres "lab1" "ext"])))))
+    (testing "evaluate"
+      (with-redefs [pres/today (fn [] (misc/read-time "2022.01.01 13:05"))]
+        (evaluate-talk 1 "/lab1evaluate")
+        (ttalk/in-history *chat 1 "That action requires admin rights.")
+        (evaluate-talk 0 "/lab1evaluate")
+        (ttalk/in-history *chat 0 "Enter your evaluation for:\nAlice (History A)")
+        (evaluate-talk 0 "4")
+        (ttalk/in-history *chat 0 "Enter your evaluation for:\nBob (History B)")
+        (evaluate-talk 0 "5")
+        (ttalk/in-history *chat 0 "Enter your evaluation for:\nCharly (History C)")
+        (evaluate-talk 0 "3")
+        (ttalk/in-history *chat 0 "Please, provide list of discussion participants (comma separated):")
+        (evaluate-talk 0 "Alice, Bob, Charly")
+        (ttalk/in-history *chat 0 "Thank you, all data stored. If you make mistake, you can reupload it.")
+        (is (= {"2022.01.01 12:00"
+                {:participants '("Alice" "Bob" "Charly"),
+                 :scores
+                 '({:score "3", :stud {:id 3, :name "Charly", :topic "History C"}}
+                   {:score "5", :stud {:id 2, :name "Bob", :topic "History B"}}
+                   {:score "4", :stud {:id 1, :name "Alice", :topic "History A"}})}}
+               (codax/get-at! db [:pres "lab1" "ext" :evaluate])))))))
+
 (deftest schedule-test
   (let [dt #(.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") %))]
     (is (= 2 (count (pres/schedule "lab1" "ext" nil))))
