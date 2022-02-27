@@ -139,7 +139,7 @@
       (ttalk/in-history *chat "In group: ext:\n- OK my-presentation-2 (Bot Botovich)"))
 
     (testing "schedule"
-      (with-redefs [pres/today (fn [] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") "2022.01.01 12:00")))]
+      (with-redefs [misc/today (fn [] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") "2022.01.01 12:00")))]
         (agenda-talk "/lab1agenda")
         (ttalk/in-history *chat "2022.01.01 12:00 (ext)\n"
                           "2022.02.02 12:00 (ext)\n")
@@ -219,7 +219,7 @@
       (setgroup-talk 0 "ext"))
 
     (testing "registration"
-      (with-redefs [pres/today (fn [] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") "2022.01.01 12:00")))]
+      (with-redefs [misc/today (fn [] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") "2022.01.01 12:00")))]
         (schedule-report *chat start-talk setgroup-talk submit-talk check-talk schedule-talk 1 "Alice" "History A" "2022.01.01 12:00")
         (schedule-report *chat start-talk setgroup-talk submit-talk check-talk schedule-talk 2 "Bob" "History B" "2022.01.01 12:00")
         (schedule-report *chat start-talk setgroup-talk submit-talk check-talk schedule-talk 3 "Charly" "History C" "2022.01.01 12:00")
@@ -232,20 +232,20 @@
                           "2022.02.02 12:00 (ext)\n")))
 
     (testing "feedback command not available"
-      (with-redefs [pres/today (fn [] (misc/read-time "2022.01.01 11:00"))]
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:00"))]
         (feedback-talk 1 "/lab1feedback")
         (ttalk/in-history *chat "Feedback collecting is over."))
-      (with-redefs [pres/today (fn [] (misc/read-time "2022.01.01 12:00"))]
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:00"))]
         (feedback-talk 1 "/lab1feedback")
         (ttalk/in-history *chat "Feedback collecting is over."))
-      (with-redefs [pres/today (fn [] (misc/read-time "2022.01.01 12:29"))]
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:29"))]
         (feedback-talk 1 "/lab1feedback")
         (ttalk/in-history *chat "Feedback collecting is over."))
-      (with-redefs [pres/today (fn [] (misc/read-time "2022.01.01 14:01"))]
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 14:01"))]
         (feedback-talk 1 "/lab1feedback")
         (ttalk/in-history *chat "Feedback collecting is over."))
 
-      (with-redefs [pres/today (fn [] (misc/read-time "2022.01.01 13:01"))]
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 13:01"))]
         (feedback-talk 1 "/lab1feedback")
         (ttalk/in-history *chat  (str/join "\n"
                                            ["Enter number of the best presentation in the list:\n"
@@ -276,12 +276,12 @@
                      {:id 2, :name "Bob", :topic "History B"}]})}}
                (codax/get-at! db [:pres "lab1" "ext"]))))
 
-      (with-redefs [pres/today (fn [] (misc/read-time "2022.01.01 13:02"))]
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 13:02"))]
         (feedback-talk 1 "/lab1feedback")
         (ttalk/in-history *chat "Already received.")
         (feedback-talk 1 "0"))
 
-      (with-redefs [pres/today (fn [] (misc/read-time "2022.01.01 13:02"))]
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 13:02"))]
         (feedback-talk 2 "/lab1feedback")
         (feedback-talk 2 "0")
         (feedback-talk 2 "0")
@@ -302,7 +302,7 @@
                                {:id 2, :name "Bob", :topic "History B"}]})}}
                (codax/get-at! db [:pres "lab1" "ext"]))))
 
-      (with-redefs [pres/today (fn [] (misc/read-time "2022.01.01 13:03"))]
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 13:03"))]
         (feedback-talk 3 "/lab1feedback")
         (feedback-talk 3 "2")
         (feedback-talk 3 "1")
@@ -329,7 +329,7 @@
 
                (codax/get-at! db [:pres "lab1" "ext"])))))
     (testing "evaluate"
-      (with-redefs [pres/today (fn [] (misc/read-time "2022.01.01 13:05"))]
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 13:05"))]
         (evaluate-talk 1 "/lab1evaluate")
         (ttalk/in-history *chat 1 "That action requires admin rights.")
         (evaluate-talk 0 "/lab1evaluate")

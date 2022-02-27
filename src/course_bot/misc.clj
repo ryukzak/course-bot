@@ -23,6 +23,8 @@
                 [name dt]))
         (into {}))))
 
+(defn today [] (.getTime (new java.util.Date)))
+
 (defn read-time [s] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") s)))
 
 (defn str-time [dt] (.format (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") dt))

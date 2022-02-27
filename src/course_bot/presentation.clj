@@ -146,11 +146,9 @@
           (codax/assoc-at [stud-id :pres pres-id :on-review?] false)
           talk/stop-talk))))
 
-(defn today [] (.getTime (new java.util.Date)))
-
 (defn schedule
   ([pres-id group only-new]
-   (schedule pres-id group only-new (today)))
+   (schedule pres-id group only-new (misc/today)))
   ([pres-id group time-offset now]
    (->> (-> configs (get pres-id) :groups (get group) :schedule)
         (filter #(or (nil? time-offset)
@@ -217,7 +215,7 @@
                 studs (codax/get-at tx [:pres pres-id group dt])]
             (str dt " (" group ")\n"
                  (str/join "\n" (map (fn [e] (str "- " (presentation tx e pres-id))) studs))))
-         (schedule pres-id group for-agenda (today)))))
+         (schedule pres-id group for-agenda (misc/today)))))
 
 (defn agenda-talk [db token pres-id]
   (talk/def-command db (str pres-id "agenda")
@@ -242,7 +240,7 @@
           (talk/send-text token id (str "Already scheduled, check /" pres-id "agenda."))
           (talk/stop-talk tx))
 
-        (let [future (schedule pres-id group for-schedule (today))]
+        (let [future (schedule pres-id group for-schedule (misc/today))]
           (if (empty? future)
             (do (talk/send-text token id "I don't have options for you.")
                 (talk/stop-talk tx))
@@ -254,7 +252,7 @@
     :get-date
     (fn [tx {{id :id} :from text :text}]
       (let [group (group tx token id pres-id)
-            future (schedule pres-id group for-schedule (today))
+            future (schedule pres-id group for-schedule (misc/today))
             dt (some #(-> % :datetime (= text)) future)]
         (when (nil? dt)
           (talk/send-text token id (str "Not found, allow only: "
@@ -317,7 +315,7 @@
     "feedback for report"
     :start
     (fn [tx {{id :id} :from text :text}]
-      (let [now (today)
+      (let [now (misc/today)
             group (group tx token id pres-id)
             future  (schedule-detail tx (schedule pres-id group nil))
             cur (some #(let [time (misc/read-time (:datetime %))
@@ -353,7 +351,7 @@
         (-> tx
             (codax/update-at [:pres pres-id group :feedback-from dt] conj id)
             (codax/update-at [:pres pres-id group :feedback dt]
-                             conj {:receive-at (misc/str-time (today))
+                             conj {:receive-at (misc/str-time (misc/today))
                                    :rank (conj rank (first studs))})
             talk/stop-talk)))))
 
@@ -366,7 +364,7 @@
     :start
     (fn [tx {{id :id} :from text :text}]
       (assert-admin tx token id)
-      (let [now (today)
+      (let [now (misc/today)
             group (group tx token id pres-id)
             future  (schedule-detail tx (schedule pres-id group nil))
             cur (some #(let [time (misc/read-time (:datetime %))
