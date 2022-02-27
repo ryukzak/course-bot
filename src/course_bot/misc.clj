@@ -23,6 +23,8 @@
                 [name dt]))
         (into {}))))
 
+;; TODO: make time-zone explicite
+
 (defn today [] (.getTime (new java.util.Date)))
 
 (defn read-time [s] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") s)))
