@@ -78,6 +78,27 @@ essay3results - результаты рассмотрения моего тре�
   (essay/essay-results-talk db token "essay3")
   (essay/essays-without-review-talk db token "essay3" assert-admin)
 
+  (essay/essay-talk db token "essay10")
+  (essay/assign-essay-talk db token "essay10" assert-admin)
+  (essay/essay-review-talk db token "essay10")
+  (essay/essay-status-talk db token "essay10")
+  (essay/essay-results-talk db token "essay10")
+  (essay/essays-without-review-talk db token "essay10" assert-admin)
+
+  (essay/essay-talk db token "essay20")
+  (essay/assign-essay-talk db token "essay20" assert-admin)
+  (essay/essay-review-talk db token "essay20")
+  (essay/essay-status-talk db token "essay20")
+  (essay/essay-results-talk db token "essay20")
+  (essay/essays-without-review-talk db token "essay20" assert-admin)
+
+  (essay/essay-talk db token "essay30")
+  (essay/assign-essay-talk db token "essay30" assert-admin)
+  (essay/essay-review-talk db token "essay30")
+  (essay/essay-status-talk db token "essay30")
+  (essay/essay-results-talk db token "essay30")
+  (essay/essays-without-review-talk db token "essay30" assert-admin)
+
   (pres/setgroup-talk db general/chat-token "lab1")
   (pres/submit-talk db general/chat-token "lab1")
   (pres/submissions-talk db general/chat-token "lab1")
