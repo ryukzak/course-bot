@@ -214,7 +214,7 @@
     (map #(let [dt (:datetime %)
                 studs (codax/get-at tx [:pres pres-id group dt])]
             (str dt " (" group ")\n"
-                 (str/join "\n" (map (fn [e] (str "- " (presentation tx e pres-id))) studs))))
+                 (str/join "\n" (map-indexed (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))
          (schedule pres-id group for-agenda (misc/today)))))
 
 (defn agenda-talk [db token pres-id]
