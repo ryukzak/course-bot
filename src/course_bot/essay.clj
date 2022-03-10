@@ -188,8 +188,8 @@
                        (t/send-text token id conclusion)
                        (t/send-yes-no-kbd token id "Всё верно?")
                        (t/change-branch tx :approve
-                                        :reviews reviews'
-                                        :conclusion conclusion))))))))
+                                        {:reviews reviews'
+                                         :conclusion conclusion}))))))))
 
           :approve
           (fn [tx {{id :id} :chat text :text} {reviews :reviews}]
