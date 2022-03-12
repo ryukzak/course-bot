@@ -2,7 +2,8 @@
    (:require [codax.core :as codax])
    (:require [course-bot.talk :as talk]
              [course-bot.general :as general]
-             [clojure.string :as str])
+             [clojure.string :as str]
+             [clojure.java.io :as io])
    (:require [course-bot.misc :as misc]))
 
 (declare submissions)
@@ -408,3 +409,21 @@
                           {:participants (map #(str/trim %) (str/split text #","))
                            :scores scores})
           talk/stop-talk))))
+
+(defn history-talk [db token pres-id]
+  (talk/def-command db (str pres-id "history")
+    "senf document with all presentation abstracts"
+    (fn [tx {{id :id} :from text :text}]
+      (let [group (group tx token id pres-id)
+            content (map #(let [dt (:datetime %)
+                                studs (codax/get-at tx [:pres pres-id group dt])]
+                            (str "# " dt " (" group ")\n\n"
+                                 (str/join "\n\n"
+                                           (map-indexed
+                                            (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))
+                         (schedule pres-id group nil))
+            text (str/join "\n\n---\n\n" content)]
+
+        (spit "history-out.md" text)
+        (talk/send-document token id (io/file "history-out.md")))
+      (talk/stop-talk tx))))

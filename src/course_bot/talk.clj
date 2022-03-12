@@ -1,5 +1,6 @@
 (ns course-bot.talk
-  (:require [codax.core :as c])
+  (:require [codax.core :as c]
+            [course-bot.talk :as talk])
   (:require [clojure.string :as str])
   (:require [morse.handlers :as h]
             [morse.api :as t]
@@ -137,7 +138,8 @@
          (with-redefs [talk/send-text (fn [token# id# msg#]
                                         (assert (= "TOKEN" token#))
                                         (swap! ~*chat conj {:id id# :msg msg#}))
-                       talk/send-yes-no-kbd (fn [token# id# msg#] (swap! ~*chat conj {:id id# :msg msg#}))]
+                       talk/send-yes-no-kbd (fn [token# id# msg#] (swap! ~*chat conj {:id id# :msg msg#}))
+                       talk/send-document (fn [token# id# file#] (swap! ~*chat conj {:id id# :msg (.getName file#)}))]
            ~@body)
          (codax/destroy-database! ~test-db)))))
 

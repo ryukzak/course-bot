@@ -212,7 +212,8 @@
         schedule-talk (ttalk/mock-talk pres/schedule-talk db "TOKEN" "lab1")
         agenda-talk (ttalk/mock-talk pres/agenda-talk db "TOKEN" "lab1")
         feedback-talk (ttalk/mock-talk pres/feedback-talk db "TOKEN" "lab1")
-        evaluate-talk (ttalk/mock-talk pres/evaluate-talk db "TOKEN" "lab1" general/assert-admin)]
+        evaluate-talk (ttalk/mock-talk pres/evaluate-talk db "TOKEN" "lab1" general/assert-admin)
+        history-talk (ttalk/mock-talk pres/history-talk db "TOKEN" "lab1")]
 
     (testing "Setup admin"
       (setgroup-talk 0 "/lab1setgroup")
@@ -358,7 +359,9 @@
                  '({:score "3", :stud {:id 3, :name "Charly", :topic "History C"}}
                    {:score "5", :stud {:id 2, :name "Bob", :topic "History B"}}
                    {:score "4", :stud {:id 1, :name "Alice", :topic "History A"}})}}
-               (codax/get-at! db [:pres "lab1" "ext" :evaluate])))))))
+               (codax/get-at! db [:pres "lab1" "ext" :evaluate])))))
+    (history-talk 1 "/lab1history")
+    (ttalk/in-history *chat 1 "history-out.md")))
 
 (deftest schedule-test
   (let [dt #(.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") %))]
