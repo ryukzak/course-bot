@@ -226,9 +226,9 @@
         (agenda-talk 1 "/lab1agenda")
         (ttalk/in-history *chat
                           (str/join "\n" ["2022.01.01 12:00 (ext)"
-                                          "- History A (Alice)"
-                                          "- History B (Bob)"
-                                          "- History C (Charly)"])
+                                          "1. History A (Alice)"
+                                          "2. History B (Bob)"
+                                          "3. History C (Charly)"])
                           "2022.02.02 12:00 (ext)\n")))
 
     (testing "feedback command not available"
