@@ -420,10 +420,10 @@
                             (str "# " dt " (" group ")\n\n"
                                  (str/join "\n\n"
                                            (map-indexed
-                                            (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))
+                                            (fn [idx stud-id] (str (+ 1 idx) ". " (codax/get-at tx [stud-id :name]) "\n"
+                                                                  (codax/get-at tx [stud-id :pres pres-id :description]))) studs))))
                          (schedule pres-id group nil))
             text (str/join "\n\n---\n\n" content)]
-
         (spit "history-out.md" text)
         (talk/send-document token id (io/file "history-out.md")))
       (talk/stop-talk tx))))
