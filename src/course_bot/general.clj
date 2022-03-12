@@ -99,10 +99,9 @@
     :start
     (fn [tx {{id :id} :from text :text}]
       (assert-admin tx token id)
-      (let [args (talk/command-args text)]
-        (if (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
-          (let [stud-id (Integer/parseInt (first args))
-                stud (codax/get-at tx [stud-id])]
+      (let [stud-id (talk/command-num-arg text)]
+        (if (some? stud-id)
+          (let [stud (codax/get-at tx [stud-id])]
             (when (nil? (:name stud))
               (talk/send-text token id "User with specific telegram id not found.")
               (talk/stop-talk tx))

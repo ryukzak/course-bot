@@ -32,6 +32,12 @@
 
 (defn command-text-arg [text] (str/replace-first text #"^/\w+\s*" ""))
 
+(defn command-num-arg [text]
+  (let [args (command-args text)]
+    (if (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
+      (Integer/parseInt (first args))
+      nil)))
+
 (defn id-from-arg [tx text]
   (let [args (command-args text)]
     (when (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
