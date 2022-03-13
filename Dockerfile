@@ -6,4 +6,5 @@ RUN lein deps
 COPY . /usr/src/app
 RUN mv "$(lein uberjar | sed -n 's/^Created \(.*standalone\.jar\)/\1/p')" app-standalone.jar
 WORKDIR /data
+ENV TZ="Europe/Moscow"
 CMD ["java", "-jar", "/usr/src/app/app-standalone.jar"]
