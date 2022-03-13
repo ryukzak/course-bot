@@ -439,7 +439,7 @@
         score (->> scores
                    (filter #(-> % :stud :id (= stud-id)))
                    (map :score))]
-    (doall score)))
+    (str/join ", " score)))
 
 (defn rank-score [tx pres-id stud-id]
   (let [group (get-group tx pres-id stud-id)
@@ -451,7 +451,7 @@
                     (apply concat)
                     (filter #(-> % second :id (= stud-id)))
                     (map first))]
-    (doall scores)))
+    (str/join ", " scores)))
 
 (defn participants [tx pres-id]
   (let [name-and-id (->> (codax/get-at tx [])
