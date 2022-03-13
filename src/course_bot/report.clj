@@ -59,6 +59,7 @@
 
                           :lab1-teacher (pres/teacher-score tx "lab1" id)
                           :lab1-rank (pres/rank-score tx "lab1" id)
+                          :lab1-group (pres/get-group tx "lab1" id)
 
                           :id (-> e :chat :id)}))
                   (map (fn [row] (assoc row :test-summary
