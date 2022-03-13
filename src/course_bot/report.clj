@@ -92,6 +92,7 @@
                  :e-30-result
                  :e-30-review
 
+                 :lab1-group
                  :lab1-teacher
                  :lab1-rank]
 
