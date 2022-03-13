@@ -97,15 +97,10 @@
         data (cons columns
                    (map (fn [row] (map #(% row) columns)) rows))]
 
-    rows
-    ;; (with-open [writer (io/writer "out-file.csv")]
-      ;; (csv/write-csv writer data))
-    ;; (talk/send-document token id (io/file "out-file.csv"))
-    ))
 
-;; (def db (c/open-database! (or (System/getenv "BOT_DATABASE") "course-data/csa")))
-
-;; (c/with-read-transaction [db tx] (send-report tx "token" -1))
+    (with-open [writer (io/writer "out-file.csv")]
+      (csv/write-csv writer data))
+    (talk/send-document token id (io/file "out-file.csv"))))
 
 (defn report-talk [db token assert-admin]
   (talk/def-command db "report"
