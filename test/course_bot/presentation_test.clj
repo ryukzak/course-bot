@@ -5,6 +5,7 @@
             [course-bot.misc :as misc]
             [course-bot.talk :as talk]
             [course-bot.talk-test :as ttalk]
+            [codax.core :as codax]
             [clojure.test :refer :all]
             [clojure.string :as str]))
 
@@ -351,17 +352,20 @@
         (ttalk/in-history *chat 0 "Enter your evaluation for:\nCharly (History C)")
         (evaluate-talk 0 "3")
         (ttalk/in-history *chat 0 "Please, provide list of discussion participants (comma separated):")
-        (evaluate-talk 0 "Alice, Bob, Charly")
+        (evaluate-talk 0 "Alice, Bob")
         (ttalk/in-history *chat 0 "Thank you, all data stored. If you make mistake, you can reupload it.")
         (is (= {"2022.01.01 12:00"
-                {:participants '("Alice" "Bob" "Charly"),
+                {:participants '("Alice" "Bob"),
                  :scores
                  '({:score "3", :stud {:id 3, :name "Charly", :topic "History C"}}
                    {:score "5", :stud {:id 2, :name "Bob", :topic "History B"}}
                    {:score "4", :stud {:id 1, :name "Alice", :topic "History A"}})}}
                (codax/get-at! db [:pres "lab1" "ext" :evaluate])))))
     (history-talk 1 "/lab1history")
-    (ttalk/in-history *chat 1 "history-out.md")))
+    (ttalk/in-history *chat 1 "history-out.md")
+
+    (is (= '(["2022.01.01 12:00" "Alice" "Alice" 1] ["2022.01.01 12:00" "Bob" "Bob" 2])
+           (codax/with-read-transaction [db tx] (pres/participants tx "lab1"))))))
 
 (deftest schedule-test
   (let [dt #(.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm") %))]

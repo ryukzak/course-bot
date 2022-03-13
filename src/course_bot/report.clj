@@ -1,16 +1,20 @@
 (ns course-bot.report
-  (:require [codax.core :as codax])
+  (:require [codax.core :as codax]
+            [codax.core :as c]
+            [course-bot.presentation :as pres])
   (:require [clojure.java.io :as io]
             [clojure.data.csv :as csv])
   (:require [course-bot.talk :as talk]
             [course-bot.quiz :as quiz]
+            [course-bot.presentation :as pres]
             [course-bot.essay :as essay]))
 
 (defn quiz-result [tx id name]
   (let [ans (codax/get-at tx [:quiz-results name id])
         quiz (get quiz/all-quiz name)
         [bool correct max] (quiz/stud-results-inner ans id quiz)]
-    (Math/round (* 100.0 (/ correct max)))))
+    (if (= 0 max) "-"
+        (Math/round (* 100.0 (/ correct max))))))
 
 (defn essay-result [tx id name]
   (let [scores (->> (essay/my-reviews tx name id)
@@ -46,6 +50,16 @@
                           :e-2-review (essay-review tx id "essay2")
                           :e-3-result (essay-result tx id "essay3")
                           :e-3-review (essay-review tx id "essay3")
+                          :e-10-result (essay-result tx id "essay10")
+                          :e-10-review (essay-review tx id "essay10")
+                          :e-20-result (essay-result tx id "essay20")
+                          :e-20-review (essay-review tx id "essay20")
+                          :e-30-result (essay-result tx id "essay30")
+                          :e-30-review (essay-review tx id "essay30")
+
+                          :lab1-teacher (pres/teacher-score tx "lab1" id)
+                          :lab1-rank (pres/rank-score tx "lab1" id)
+
                           :id (-> e :chat :id)}))
                   (map (fn [row] (assoc row :test-summary
                                         (->> tests
@@ -68,13 +82,30 @@
                  :essay-review
                  ;; :id
                  :e-1-review :e-2-review :e-3-review
-                 :t-1-2 :t-3-4 :t-5-6 :t-7-8 :t-9-10 :t-11-12 :t-13-14-15]
+                 :t-1-2 :t-3-4 :t-5-6 :t-7-8 :t-9-10 :t-11-12 :t-13-14-15
+
+                 :e-10-result
+                 :e-10-review
+                 :e-20-result
+                 :e-20-review
+                 :e-30-result
+                 :e-30-review
+
+                 :lab1-teacher
+                 :lab1-rank]
+
         data (cons columns
                    (map (fn [row] (map #(% row) columns)) rows))]
 
-    (with-open [writer (io/writer "out-file.csv")]
-      (csv/write-csv writer data))
-    (talk/send-document token id (io/file "out-file.csv"))))
+    rows
+    ;; (with-open [writer (io/writer "out-file.csv")]
+      ;; (csv/write-csv writer data))
+    ;; (talk/send-document token id (io/file "out-file.csv"))
+    ))
+
+;; (def db (c/open-database! (or (System/getenv "BOT_DATABASE") "course-data/csa")))
+
+;; (c/with-read-transaction [db tx] (send-report tx "token" -1))
 
 (defn report-talk [db token assert-admin]
   (talk/def-command db "report"

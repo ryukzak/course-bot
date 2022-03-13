@@ -3,6 +3,7 @@
    (:require [course-bot.talk :as talk]
              [course-bot.general :as general]
              [clojure.string :as str]
+             [clojure.data.csv :as csv]
              [clojure.java.io :as io])
    (:require [course-bot.misc :as misc]))
 
@@ -20,8 +21,10 @@
 (defn groups [pres-id]
   (into #{} (keys (-> configs (get pres-id) :groups))))
 
+(defn get-group [tx pres-id stud-id] (codax/get-at tx [stud-id :pres pres-id :group]))
+
 (defn group [tx token id pres-id]
-  (let [pres-group (codax/get-at tx [id :pres pres-id :group])]
+  (let [pres-group (get-group tx pres-id id)]
     (when (-> pres-group nil?)
       (talk/send-text token id (str "You should specify your group for presentation by /" pres-id "setgroup"))
       (talk/stop-talk tx))
@@ -421,9 +424,60 @@
                                  (str/join "\n\n"
                                            (map-indexed
                                             (fn [idx stud-id] (str (+ 1 idx) ". " (codax/get-at tx [stud-id :name]) "\n"
-                                                                  (codax/get-at tx [stud-id :pres pres-id :description]))) studs))))
+                                                                   (codax/get-at tx [stud-id :pres pres-id :description]))) studs))))
                          (schedule pres-id group nil))
             text (str/join "\n\n---\n\n" content)]
         (spit "history-out.md" text)
         (talk/send-document token id (io/file "history-out.md")))
       (talk/stop-talk tx))))
+
+(defn teacher-score [tx pres-id stud-id]
+  (let [group (get-group tx pres-id stud-id)
+        scores (->> (codax/get-at tx [:pres pres-id group :evaluate])
+                    (map #(-> % second :scores))
+                    (apply concat))
+        score (->> scores
+                   (filter #(-> % :stud :id (= stud-id)))
+                   (map :score))]
+    score))
+
+(defn rank-score [tx pres-id stud-id]
+  (let [group (get-group tx pres-id stud-id)
+        scores (->> (codax/get-at tx [:pres pres-id group :feedback])
+                    (map second)
+                    (apply concat)
+                    (map #(map-indexed (fn [idx rank] [(+ 1 idx) rank])
+                                       (:rank %)))
+                    (apply concat)
+                    (filter #(-> % second :id (= stud-id)))
+                    (map first))]
+    scores))
+
+(defn participants [tx pres-id]
+  (let [name-and-id (->> (codax/get-at tx [])
+                         (filter #(-> % second :name))
+                         (map (fn [[id desc]]
+                                (map #(vector % {:id id :name (:name desc)})
+                                     (str/split (:name desc) #"\s"))))
+
+                         (apply concat))
+        dict (into {} name-and-id)
+        participants (->> (codax/get-at tx [:pres pres-id])
+                          (map #(-> % second :evaluate))
+                          (apply concat)
+                          (map #(map (fn [name] [(-> % first) name]) (-> % second :participants)))
+                          ;; (map #(vector (-> % first) (-> % second :participants)))
+                          (apply concat))]
+    (map (fn [[dt name]] (let [norm (get dict name)]
+                           (if (some? norm)
+                             [dt (:name norm) name (:id norm)]
+                             [dt name nil nil]))) participants)))
+
+(defn participants-talks [db token pres-id]
+  (talk/def-command db (str pres-id "participants")
+    (fn [tx {{id :id} :chat}]
+      (talk/send-text token id "Participants:")
+      (let [file-name (str pres-id "-participants.csv")]
+        (with-open [writer (io/writer file-name)]
+          (csv/write-csv writer (participants tx pres-id)))
+        (talk/send-document token id (io/file file-name))))))

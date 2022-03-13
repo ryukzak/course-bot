@@ -109,9 +109,9 @@ essay3results - результаты рассмотрения моего тре�
   (pres/feedback-talk db general/chat-token "lab1")
   (pres/evaluate-talk db general/chat-token "lab1" general/assert-admin)
   (pres/history-talk db general/chat-token "lab1")
+  (pres/participants-talks db general/chat-token "lab1")
 
   (h/command "help" {{id :id} :chat} (t/send-text token id (talk/helps)))
-
   ;; (h/message {{id :id} :chat :as message}
   ;;     (println "Intercepted message: " message)
   ;;     (t/send-text token id "I don't do a whole lot ... yet."))
