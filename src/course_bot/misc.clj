@@ -2,11 +2,18 @@
   (:require [clojure.string :as str])
   (:require [clojure.java.io :as io]))
 
+(defn config-path
+  ([] (or (System/getenv "CONF_PATH")
+          "conf-example"
+        ;  "/Users/penskoi/src/edu-csa-internal"
+          ))
+  ([filename] (str (config-path) "/" filename)))
+
 (defn read-config
   ([filename] (read-config filename true))
   ([filename skip]
    (read-string (try
-                  (slurp (str (or (System/getenv "CONF_PATH") "conf-example") "/" filename))
+                  (slurp (config-path filename))
                   (catch Exception e
                     (if skip "nil" (throw e)))))))
 
@@ -14,7 +21,7 @@
   ([sub-path] (read-configs sub-path true))
   ([sub-path skip]
    (->> (try (let []
-               (file-seq (io/file (str (or (System/getenv "CONF_PATH") "conf-example") "/" sub-path))))
+               (file-seq (io/file (str (config-path) "/" sub-path))))
              (catch Exception e
                (if skip "()" (throw e))))
         (filter #(and (.isFile %) (str/ends-with? (.getName %) ".edn")))
