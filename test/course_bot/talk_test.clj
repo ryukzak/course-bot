@@ -19,7 +19,7 @@
     (is (= expect actual))))
 
 (deftest test-talk-return-value
-  (let [test-db (c/open-database! "talk-test-codax")
+  (let [test-db (c/open-database! "codax-db-test")
         test-talk1 (talk/def-talk test-db "cmd" :start (fn [tx _msg] (talk/wait tx)))
         test-talk2 (talk/def-talk test-db "cmd" :start (fn [_tx _msg] :ok))
         test-talk3 (talk/def-talk test-db "cmd" :start (fn [_tx _msg] nil))]

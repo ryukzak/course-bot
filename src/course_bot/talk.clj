@@ -1,11 +1,11 @@
 (ns course-bot.talk
-  (:require [codax.core :as c]
-            [course-bot.talk :as talk])
-  (:require [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [clojure.test :as test])
   (:require [morse.handlers :as h]
+            [codax.core :as codax]
             [morse.api :as t]
             [clj-http.client :as http])
-  (:require [clojure.test :as test]))
+  (:require [course-bot.talk :as talk]))
 
 ;; Talk flow
 
@@ -24,10 +24,10 @@
 
 (defn set-talk-branch [tx id talk branch state]
   (-> tx
-      (c/assoc-at [id :dialog-state] nil)
-      (c/assoc-at [id :talk] {:current-talk talk
-                              :current-branch branch
-                              :state state})))
+      (codax/assoc-at [id :dialog-state] nil)
+      (codax/assoc-at [id :talk] {:current-talk talk
+                                  :current-branch branch
+                                  :state state})))
 
 (defn command-args [text] (filter #(not (empty? %)) (str/split (str/replace-first text #"^/\w+\s*" "") #"\s+")))
 
@@ -46,10 +46,13 @@
 
 (def *helps (atom {}))
 
-(defn helps [] (->> @*helps
-                    (map (fn [[n d]] (str n " - " d)))
-                    sort
-                    (str/join "\n")))
+(defn helps []
+  (str "Helps:\n" (->> @*helps
+                       (map (fn [[n d]] (str n " - " d)))
+                       sort
+                       (str/join "\n"))))
+
+;; TODO: move help hint to name, like: "start - register student"
 
 (defn talk [db name & handlers]
   (let [[help handlers] (if (string? (first handlers))
@@ -64,12 +67,12 @@
       (let [res (atom nil)]
         (try
           (declare tx)
-          (c/with-write-transaction [db tx]
+          (codax/with-write-transaction [db tx]
             (let [id (-> update :message :from :id)
                   msg (:message update)
                   {current-talk :current-talk
                    current-branch :current-branch
-                   state :state} (c/get-at tx [id :talk])]
+                   state :state} (codax/get-at tx [id :talk])]
               (try
                 (let [tmp (cond
                             (h/command? update name) (start-handler tx msg)
@@ -96,14 +99,16 @@
 
 (defmacro def-talk [& args] `(talk ~@args))
 
+;; TODO: move help hint to name, like: "start - register student"
+
 (defn def-command
   ([db name foo] (talk db name :start foo))
   ([db name help foo] (talk db name help :start foo)))
 
 ;; Re-exports
 
-(intern 'course-bot.talk 'send-text t/send-text)
-(intern 'course-bot.talk 'send-document t/send-document)
+(defn send-text [& args] (apply t/send-text args))
+(defn send-document [& args] (apply t/send-document args))
 
 ;; Morse helpers
 

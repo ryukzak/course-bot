@@ -1,4 +1,0 @@
-{:admin-chat 0
- :chat-token "TOKEN"
- :groups {"gr1" {}
-          "gr2" {}}}

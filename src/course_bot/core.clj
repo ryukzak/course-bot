@@ -18,11 +18,13 @@
             [clojure.pprint :refer [pprint]])
   (:gen-class))
 
-(def db (c/open-database! (or (System/getenv "BOT_DATABASE") "course-data/csa")))
-(def token general/chat-token)
-(def group-list general/group-list)
-(def admin-chat general/admin-chat)
-(def assert-admin general/assert-admin)
+;; depricated
+
+(def db (c/open-database! "codax-db-test"))
+(def token "")
+(def group-list '())
+(def admin-chat 123)
+(def assert-admin 0)
 
 (def help-msg
   "start - регистрация
@@ -46,15 +48,15 @@ essay3results - результаты рассмотрения моего тре�
 
 (declare bot-api id chat text)
 (h/defhandler bot-api
-  (general/start-talk db general/chat-token)
-  (general/restart-talk db general/chat-token general/assert-admin)
-  (general/whoami-talk db general/chat-token)
-  (general/listgroups-talk db general/chat-token)
+  (general/start-talk db token)
+  ;; (general/restart-talk db token assert-admin)
+  (general/whoami-talk db token)
+  (general/listgroups-talk db token)
 
-  (report/report-talk db general/chat-token general/assert-admin)
+  (report/report-talk db token assert-admin)
 
-  (quiz/startquiz-talk db general/chat-token general/assert-admin)
-  (quiz/stopquiz-talk db general/chat-token general/assert-admin)
+  (quiz/startquiz-talk db token assert-admin)
+  (quiz/stopquiz-talk db token assert-admin)
   (quiz/quiz-talk db token admin-chat)
 
   (essay/essay-talk db token "essay1")
@@ -99,17 +101,17 @@ essay3results - результаты рассмотрения моего тре�
   (essay/essay-results-talk db token "essay30")
   (essay/essays-without-review-talk db token "essay30" assert-admin)
 
-  (pres/setgroup-talk db general/chat-token "lab1")
-  (pres/submit-talk db general/chat-token "lab1")
-  (pres/submissions-talk db general/chat-token "lab1")
-  (pres/check-talk db general/chat-token "lab1" general/assert-admin)
-  (pres/schedule-talk db general/chat-token "lab1")
-  (pres/agenda-talk db general/chat-token "lab1")
-  (pres/drop-talk db general/chat-token "lab1" general/assert-admin general/admin-chat)
-  (pres/feedback-talk db general/chat-token "lab1")
-  (pres/evaluate-talk db general/chat-token "lab1" general/assert-admin)
-  (pres/history-talk db general/chat-token "lab1")
-  (pres/participants-talks db general/chat-token "lab1")
+  (pres/setgroup-talk db token "lab1")
+  (pres/submit-talk db token "lab1")
+  (pres/submissions-talk db token "lab1")
+  (pres/check-talk db token "lab1" assert-admin)
+  (pres/schedule-talk db token "lab1")
+  (pres/agenda-talk db token "lab1")
+  (pres/drop-talk db token "lab1" assert-admin admin-chat)
+  (pres/feedback-talk db token "lab1")
+  (pres/evaluate-talk db token "lab1" assert-admin)
+  (pres/history-talk db token "lab1")
+  (pres/participants-talks db token "lab1")
 
   (h/command "help" {{id :id} :chat} (t/send-text token id (talk/helps)))
   ;; (h/message {{id :id} :chat :as message}

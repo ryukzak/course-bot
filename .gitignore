@@ -11,8 +11,9 @@ data/
 .DS_Store
 .lsp
 .nrepl-port
+csa-db
 .clj-kondo
-test-codax
+codax-db-test
 default-codax
 *.tar.gz
 .cpcache/

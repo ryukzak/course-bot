@@ -1,10 +1,6 @@
 (ns course-bot.csa.lab1-test
   (:require [clojure.test :refer :all]
-            [codax.core :as c]
-            [morse.api :as t]
-            [course-bot.talk :as b]
             [course-bot.csa.lab1 :refer :all]
-            [clojure.string :as str]
             [course-bot.core :refer :all]))
 
 (deftest lab1-score-test

@@ -1,14 +1,16 @@
 (ns course-bot.general-test
+  (:require [clojure.test :refer :all])
   (:require [course-bot.general :as general]
             [course-bot.talk :as talk]
             [course-bot.talk-test :as ttalk]
-            [codax.core :as codax]
-            [clojure.test :refer :all]))
+            [course-bot.misc :as misc]))
 
-(declare start-talk-test restart-talk-test)
+(declare db *chat start-talk-test restart-talk-test)
 
 (talk/deftest start-talk-test [db *chat]
-  (let [start-talk (ttalk/mock-talk general/start-talk db "TOKEN")]
+  (let [conf (misc/get-config "conf-example")
+        start-talk (ttalk/mock-talk general/start-talk db conf)
+        listgroup-talk (ttalk/mock-talk general/listgroups-talk db conf)]
     (start-talk "bla-bla")
     (is (= '() @*chat))
 
@@ -23,18 +25,23 @@
       (ttalk/in-history *chat "I don't know this group. Please, repeat it (gr1, gr2):")
 
       (start-talk "gr1")
-      (ttalk/in-history *chat "Hi:"
+      (ttalk/in-history *chat "Hi Bot Botovich!"
                         "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
                         "Send /help for help."))
+
+    (testing "group list"
+      (listgroup-talk "/listgroups")
+      (ttalk/in-history *chat "gr1 group:\n1) Bot Botovich (@, 1)"))
 
     (testing "second registration"
       (start-talk "/start")
       (ttalk/in-history *chat "You are already registered. To change your information, contact the teacher and send /whoami"))))
 
 (talk/deftest restart-talk-test [db *chat]
-  (let [start-talk (ttalk/mock-talk general/start-talk db "TOKEN")
-        whoami-talk (ttalk/mock-talk general/whoami-talk db "TOKEN")
-        restart-talk (ttalk/mock-talk general/restart-talk db "TOKEN" general/assert-admin)]
+  (let [conf (misc/get-config "conf-example")
+        start-talk (ttalk/mock-talk general/start-talk db conf)
+        whoami-talk (ttalk/mock-talk general/whoami-talk db conf)
+        restart-talk (ttalk/mock-talk general/restart-talk db conf)]
     (restart-talk "bla-bla")
     (is (= '() @*chat))
 
@@ -71,7 +78,7 @@
       (restart-talk 0 "/restart 1")
       (restart-talk 0 "yes")
       (ttalk/in-history *chat
-                        [0 "Restarted: 1"]
+                        [0 "Restarted and notified: 1"]
                         [1 "You can use /start once more."])
 
       (start-talk "/start")

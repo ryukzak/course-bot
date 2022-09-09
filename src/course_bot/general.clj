@@ -1,23 +1,18 @@
 (ns course-bot.general
-  (:require [codax.core :as codax]
-            [codax.core :as c])
-  (:require [morse.handlers :as handlers])
   (:require [clojure.string :as str])
-  (:require [course-bot.misc :as misc])
-  (:require [course-bot.talk :as talk]))
+  (:require [codax.core :as codax])
+  (:require [course-bot.general :as general]
+            [course-bot.misc :as misc]
+            [course-bot.talk :as talk]))
 
-(def conf (misc/read-config "general.edn" false))
-(def admin-chat (-> conf :admin-chat))
-(def group-list (-> conf :groups keys set))
-(def chat-token (-> conf :chat-token))
-
-(defn assert-admin [tx token id]
-  (when-not (= id admin-chat)
-    (talk/send-text token id "That action requires admin rights.")
-    (talk/stop-talk tx)))
+(defn assert-admin
+  ([tx {token :token admin-chat-id :admin-chat-id} id]
+   (when-not (= id admin-chat-id)
+     (talk/send-text token id "That action requires admin rights.")
+     (talk/stop-talk tx))))
 
 (defn get-registered [tx token id]
-  (let [info (c/get-at tx [id])]
+  (let [info (codax/get-at tx [id])]
     (if-not (-> info :name some?)
       (do (talk/send-text token id "Not registered. Do /start")
           (talk/stop-talk tx))
@@ -31,8 +26,8 @@
                                    "Group: " group "; "
                                    "Telegram ID: " about)))))
 
-(defn whoami-talk [db token]
-  (talk/def-command db "whoami"
+(defn whoami-talk [db {token :token}]
+  (talk/def-command db "whoami" "send me my refistration info"
     (fn [tx {{id :id} :from}]
       (send-whoami tx token id)
       (talk/stop-talk tx))))
@@ -52,53 +47,51 @@
                                  (sort-by :name)
                                  (map (fn [i x] (str (+ 1 i) ") " (:name x) " (@" (-> x :chat :username) ", " (-> x :chat :id) ")"))
                                       (range)))
-                      msg (str "Group: " group "\n" (str/join "\n" studs))]
+                      msg (str group " group:\n" (str/join "\n" studs))]
                   (talk/send-text token id msg))))))))
 
-(defn listgroups-talk [db token]
-  (talk/def-command db "listgroups"
-    (fn [tx {{id :id} :chat}] (send-list-groups tx token id))))
+(defn listgroups-talk [db {token :token}]
+  (talk/def-command db "listgroups" "send me group list know by the bot"
+    (fn [tx {{id :id} :from}] (send-list-groups tx token id) tx)))
 
-(defn save-chat-info [tx id chat]
-  (reduce (fn [[tx key value]] (c/assoc-at tx [id :chat key] value)) tx chat))
+(defn start-talk [db {token :token groups-raw :groups}]
+  (let [groups (-> groups-raw keys set)]
+    (talk/def-talk db "start" "register student"
+      :start
+      (fn [tx {{id :id} :from}]
+        (let [info (codax/get-at tx [id])]
+          (when (and (some? (:name info)) (not (:allow-restart info)))
+            (talk/send-text token id "You are already registered. To change your information, contact the teacher and send /whoami")
+            (talk/stop-talk tx))
+          (talk/send-text token id (str "Hi, I'm a bot for your course. I will help you with your work. What is your name?"))
+          (talk/change-branch tx :get-name)))
 
-(defn start-talk [db token]
-  (talk/def-talk db "start"
-    :start
-    (fn [tx {{id :id} :from}]
-      (let [info (c/get-at tx [id])]
-        (when (and (some? (:name info)) (not (:allow-restart info)))
-          (talk/send-text token id "You are already registered. To change your information, contact the teacher and send /whoami")
-          (talk/stop-talk tx))
-        (talk/send-text token id (str "Hi, I'm a bot for your course. I will help you with your work. What is your name?"))
-        (talk/change-branch tx :get-name)))
+      :get-name
+      (fn [tx {{id :id} :from text :text}]
+        (talk/send-text token id (str "What is your group (" (str/join ", " (sort groups)) ")?"))
+        (talk/change-branch tx :get-group {:name text}))
 
-    :get-name
-    (fn [tx {{id :id} :from text :text}]
-      (talk/send-text token id (str "What is your group (" (str/join ", " (sort group-list)) ")?"))
-      (talk/change-branch tx :get-group {:name text}))
+      :get-group
+      (fn [tx {{id :id :as chat} :from text :text} {name :name}]
+        (when-not (contains? groups text)
+          (talk/send-text token id (str "I don't know this group. Please, repeat it (" (str/join ", " (sort groups)) "):"))
+          (talk/repeat-branch tx))
+        (let [tx (-> tx
+                     (codax/assoc-at [id :chat] chat)
+                     (codax/assoc-at [id :name] name)
+                     (codax/assoc-at [id :group] text)
+                     (codax/assoc-at [id :reg-date] (str (new java.util.Date)))
+                     (codax/assoc-at [id :allow-restart] false))]
+          (talk/send-text token id (str "Hi " name "!"))
+          (send-whoami tx token id)
+          (talk/send-text token id "Send /help for help.")
+          (talk/stop-talk tx))))))
 
-    :get-group
-    (fn [tx {{id :id :as chat} :from text :text} {name :name}]
-      (when-not (contains? group-list text)
-        (talk/send-text token id (str "I don't know this group. Please, repeat it (" (str/join ", " (sort group-list)) "):"))
-        (talk/repeat-branch tx))
-      (let [tx (-> tx
-                   (codax/assoc-at [id :chat] chat)
-                   (codax/assoc-at [id :name] name)
-                   (codax/assoc-at [id :group] text)
-                   (codax/assoc-at [id :reg-date] (str (new java.util.Date)))
-                   (codax/assoc-at [id :allow-restart] false))]
-        (talk/send-text token id "Hi:")
-        (send-whoami tx token id)
-        (talk/send-text token id "Send /help for help.")
-        (talk/stop-talk tx)))))
-
-(defn restart-talk [db token assert-admin]
+(defn restart-talk [db {token :token admin-chat-id :admin-chat-id :as conf}]
   (talk/def-talk db "restart"
     :start
     (fn [tx {{id :id} :from text :text}]
-      (assert-admin tx token id)
+      (general/assert-admin tx conf id)
       (let [stud-id (talk/command-num-arg text)]
         (if (some? stud-id)
           (let [stud (codax/get-at tx [stud-id])]
@@ -116,7 +109,7 @@
     :approve
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
       (cond
-        (= text "yes") (do (talk/send-text token id (str "Restarted: " stud-id))
+        (= text "yes") (do (talk/send-text token id (str "Restarted and notified: " stud-id))
                            (talk/send-text token stud-id (str "You can use /start once more."))
                            (-> tx
                                (codax/assoc-at [stud-id :allow-restart] true)
