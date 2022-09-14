@@ -55,10 +55,6 @@ essay3results - результаты рассмотрения моего тре�
 
   (report/report-talk db token assert-admin)
 
-  (quiz/startquiz-talk db token assert-admin)
-  (quiz/stopquiz-talk db token assert-admin)
-  (quiz/quiz-talk db token admin-chat)
-
   (essay/essay-talk db token "essay1")
   (essay/assign-essay-talk db token "essay1" assert-admin)
   (essay/essay-review-talk db token "essay1")

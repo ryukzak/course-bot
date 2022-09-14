@@ -11,7 +11,7 @@
 
 (defn quiz-result [tx id name]
   (let [ans (codax/get-at tx [:quiz-results name id])
-        quiz (get quiz/all-quiz name)
+        quiz nil ; (get quiz/all-quiz name)
         [bool correct max] (quiz/stud-results-inner ans id quiz)]
     (if (= 0 max) 0
         (Math/round (* 100.0 (/ correct max))))))

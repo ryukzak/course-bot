@@ -3,6 +3,7 @@
             [morse.polling :as polling])
   (:require [codax.core :as codax])
   (:require [course-bot.misc :as misc]
+            [course-bot.quiz :as quiz]
             [course-bot.general :as general])
   (:require [course-bot.talk :as talk]))
 
@@ -25,6 +26,10 @@
   (general/restart-talk db conf)
   (general/whoami-talk db conf)
   (general/listgroups-talk db conf)
+
+  (quiz/startquiz-talk db conf)
+  (quiz/stopquiz-talk db conf)
+  (quiz/quiz-talk db conf)
 
   (handlers/command "help" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/helps)))
 
