@@ -24,7 +24,6 @@
 
 (defn set-talk-branch [tx id talk branch state]
   (-> tx
-      (codax/assoc-at [id :dialog-state] nil)
       (codax/assoc-at [id :talk] {:current-talk talk
                                   :current-branch branch
                                   :state state})))

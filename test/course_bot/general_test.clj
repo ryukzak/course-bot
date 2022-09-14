@@ -1,5 +1,6 @@
 (ns course-bot.general-test
-  (:require [clojure.test :refer :all])
+  (:require [clojure.test :refer :all]
+            [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.talk :as talk]
             [course-bot.talk-test :as ttalk]
@@ -27,7 +28,12 @@
       (start-talk "gr1")
       (ttalk/in-history *chat "Hi Bot Botovich!"
                         "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
-                        "Send /help for help."))
+                        "Send /help for help.")
+
+      (is (= false (codax/get-at! db [1 :allow-restart])))
+      (is (= "gr1" (codax/get-at! db [1 :group])))
+      (is (= "Bot Botovich" (codax/get-at! db [1 :name])))
+      (is (some? (codax/get-at! db [1 :reg-date]))))
 
     (testing "group list"
       (listgroup-talk "/listgroups")
