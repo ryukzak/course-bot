@@ -34,6 +34,9 @@
 (defn read-time [s] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm Z") s)))
 (defn str-time [dt] (.format (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm Z") dt))
 
+(defn normalize-time [dt]
+  (str-time (read-time dt)))
+
 ;; deprecated:
 
 ;; (get-config  "/Users/penskoi/src/edu-csa-internal")
@@ -43,7 +46,7 @@
           "conf-example"
         ;  "/Users/penskoi/src/edu-csa-internal"
           ))
-  ([filename] (str (config-path) "/" filename)))
+  ([filename] (str "/" filename)))
 
 (defn read-config
   ([filename] (read-config filename true))
