@@ -25,7 +25,7 @@ clj -X course-bot.csa/run
 
 ``` sh
 docker build -t csa-bot .
-docker run --restart=always -d -v $PWD/../edu-csa-internal:/edu-csa-internal -v $PWD/../csa-db:/csa-db csa-bot
+docker run --name csa-bot --restart=always -d -v $PWD/../edu-csa-internal:/edu-csa-internal -v $PWD/../csa-db:/csa-db csa-bot
 ```
 
 ## License
