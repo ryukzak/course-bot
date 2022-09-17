@@ -42,10 +42,8 @@
   (let [cmd (str pres-key-name "submit")
         pres-key (keyword pres-key-name)
         hint (-> conf (get pres-key) :submition-hint)
-        name (-> conf (get pres-key) :name)
-        groups (-> conf (get pres-key) :groups)
-        ;; groups-text (->>  groups keys sort (str/join ", "))
-        ]
+        name (-> conf (get pres-key) :name)]
+
     (talk/def-talk db cmd
       (str "submit your '" name "' description")
 
@@ -79,7 +77,7 @@
         (talk/change-branch tx :approve {:desc text}))
 
       :approve
-      (fn [tx {{id :id :as chat} :from text :text} {desc :desc}]
+      (fn [tx {{id :id} :from text :text} {desc :desc}]
         (cond
           (= text "yes") (do (talk/send-text token id "Registered, the teacher will check it soon.")
                              (-> tx
@@ -297,45 +295,6 @@
               (codax/assoc-at [id :presentation pres-key :scheduled?] true)
               talk/stop-talk))))))
 
-;; (defn drop-talk [db token pres-id assert-admin admin-id]
-;;   (talk/def-talk db (str pres-id "drop")
-;;     "for teacher, drop presentation for specific student"
-;;     :start
-;;     (fn [tx {{id :id} :from text :text}]
-;;       (assert-admin tx token id)
-;;       (let [stud-id (talk/command-num-arg text)]
-;;         (if (some? stud-id)
-;;           (let [stud (codax/get-at tx [stud-id])]
-;;             (when-not stud
-;;               (talk/send-text token id "Not found.")
-;;               (talk/stop-talk tx))
-;;             (general/send-whoami tx token id stud-id)
-;;             (talk/send-yes-no-kbd token id (str "Drop presentation config for " pres-id "?"))
-;;             (talk/change-branch tx :approve {:stud-id stud-id}))
-;;           (do
-;;             (talk/send-text token id (str "Wrong input: /" pres-id "drop 12345"))
-;;             (talk/wait tx)))))
-
-;;     :approve
-;;     (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
-;;       (cond
-;;         (= text "yes") (let [group (group tx token stud-id pres-id)
-;;                              sch (codax/get-at tx [:pres pres-id group])]
-;;                          (talk/send-text token id (str "We drop student: " pres-id))
-;;                          (talk/send-text token stud-id (str "We drop your state for " pres-id))
-;;                          (-> tx
-;;                              (codax/assoc-at [stud-id :pres pres-id] nil)
-;;                              (codax/assoc-at [:pres pres-id group]
-;;                                              (into {}
-;;                                                    (map (fn [[dt studs]]
-;;                                                           [dt (filter #(not= stud-id %) studs)])
-;;                                                         sch)))
-;;                              talk/stop-talk))
-;;         (= text "no") (do (talk/send-text token id "Not droped.")
-;;                           (talk/stop-talk tx))
-;;         :else (do (talk/send-text token id "What?")
-;;                   (talk/repeat-branch tx))))))
-
 (defn feedback-str [studs]
   (str "Enter number of the best presentation in the list:\n"
        (->> studs
@@ -406,87 +365,44 @@
                                      :rank (conj rank (first studs))})
               talk/stop-talk))))))
 
-;; (defn teacher-score [tx pres-id stud-id]
-;;   (let [group (get-group tx pres-id stud-id)
-;;         scores (->> (codax/get-at tx [:pres pres-id group :evaluate])
-;;                     (map #(-> % second :scores))
-;;                     (apply concat))
-;;         score (->> scores
-;;                    (filter #(-> % :stud :id (= stud-id)))
-;;                    (map :score))]
-;;     (str/join ", " score)))
-
-;; (defn evaluate-str [stud]
-;;   (str "Enter your evaluation for:\n" (:name stud) " (" (:topic stud) ")"))
-
-;; (defn evaluate-talk [db token pres-id assert-admin]
-;;   (talk/def-talk db (str pres-id "evaluate")
-;;     "evaluate presentation by the teacher"
+;; (defn drop-talk [db token pres-id assert-admin admin-id]
+;;   (talk/def-talk db (str pres-id "drop")
+;;     "for teacher, drop presentation for specific student"
 ;;     :start
 ;;     (fn [tx {{id :id} :from text :text}]
 ;;       (assert-admin tx token id)
-;;       (let [arg (talk/command-text-arg text)
-;;             now (misc/today)
-;;             group (group tx token id pres-id)
-;;             future (schedule-detail tx (schedule pres-id group nil))
-;;             is-current-pres #(let [time (misc/read-time (:datetime %))
-;;                                    offset (/ (- now time) (* 1000 60))]
-;;                                (when (and (<= 30 offset) (<= offset 120)) %))
-;;             is-selected #(when (= arg (:datetime %)) %)
-;;             ;; should be filter, if we received several results, we should force manual check by user.
-;;             cur (some (if (empty? arg) is-current-pres is-selected) future)
-;;             dt (:datetime cur)
-;;             stud (-> cur :studs first)
-;;             all-studs (-> cur :studs)]
-;;         (when (nil? all-studs)
-;;           (talk/send-text token id "Feedback collecting is over.")
-;;           (talk/stop-talk tx))
-;;         (talk/send-text token id (str "Collect evaluation for " pres-id " " group " " dt))
-;;         (talk/send-text token id (evaluate-str stud))
-;;         (talk/change-branch tx :score {:scores [] :remain all-studs :group group :dt dt})))
+;;       (let [stud-id (talk/command-num-arg text)]
+;;         (if (some? stud-id)
+;;           (let [stud (codax/get-at tx [stud-id])]
+;;             (when-not stud
+;;               (talk/send-text token id "Not found.")
+;;               (talk/stop-talk tx))
+;;             (general/send-whoami tx token id stud-id)
+;;             (talk/send-yes-no-kbd token id (str "Drop presentation config for " pres-id "?"))
+;;             (talk/change-branch tx :approve {:stud-id stud-id}))
+;;           (do
+;;             (talk/send-text token id (str "Wrong input: /" pres-id "drop 12345"))
+;;             (talk/wait tx)))))
 
-;;     :score
-;;     (fn [tx {{id :id} :from text :text} {scores :scores remain :remain :as state}]
-;;       (let [stud (-> remain first)
-;;             studs (-> remain rest)
-;;             score {:score text :stud stud}]
-
-;;         (if (empty? studs)
-;;           (do (talk/send-text token id "Please, provide list of discussion participants (comma separated):")
-;;               (talk/change-branch tx :participants (assoc state
-;;                                                           :scores (cons score scores)
-;;                                                           :remain studs)))
-;;           (do (talk/send-text token id (evaluate-str (first studs)))
-;;               (talk/change-branch tx :score (assoc state
-;;                                                    :scores (cons score scores)
-;;                                                    :remain studs))))))
-
-;;     :participants
-;;     (fn [tx {{id :id} :from text :text} {scores :scores group :group dt :dt}]
-;;       (talk/send-text token id "Thank you, all data stored. If you make mistake, you can reupload it.")
-;;       (-> tx
-;;           (codax/assoc-at [:pres pres-id group :evaluate dt]
-;;                           {:participants (map #(str/trim %) (str/split text #","))
-;;                            :scores scores})
-;;           talk/stop-talk))))
-
-;; (defn history-talk [db token pres-id]
-;;   (talk/def-command db (str pres-id "history")
-;;     "senf document with all presentation abstracts"
-;;     (fn [tx {{id :id} :from text :text}]
-;;       (let [group (group tx token id pres-id)
-;;             content (map #(let [dt (:datetime %)
-;;                                 studs (codax/get-at tx [:pres pres-id group dt])]
-;;                             (str "# " dt " (" group ")\n\n"
-;;                                  (str/join "\n\n"
-;;                                            (map-indexed
-;;                                             (fn [idx stud-id] (str (+ 1 idx) ". " (codax/get-at tx [stud-id :name]) "\n"
-;;                                                                    (codax/get-at tx [stud-id :pres pres-id :description]))) studs))))
-;;                          (schedule pres-id group nil))
-;;             text (str/join "\n\n---\n\n" content)]
-;;         (spit "history-out.md" text)
-;;         (talk/send-document token id (io/file "history-out.md")))
-;;       (talk/stop-talk tx))))
+;;     :approve
+;;     (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
+;;       (cond
+;;         (= text "yes") (let [group (group tx token stud-id pres-id)
+;;                              sch (codax/get-at tx [:pres pres-id group])]
+;;                          (talk/send-text token id (str "We drop student: " pres-id))
+;;                          (talk/send-text token stud-id (str "We drop your state for " pres-id))
+;;                          (-> tx
+;;                              (codax/assoc-at [stud-id :pres pres-id] nil)
+;;                              (codax/assoc-at [:pres pres-id group]
+;;                                              (into {}
+;;                                                    (map (fn [[dt studs]]
+;;                                                           [dt (filter #(not= stud-id %) studs)])
+;;                                                         sch)))
+;;                              talk/stop-talk))
+;;         (= text "no") (do (talk/send-text token id "Not droped.")
+;;                           (talk/stop-talk tx))
+;;         :else (do (talk/send-text token id "What?")
+;;                   (talk/repeat-branch tx))))))
 
 (defn avg-rank-score [tx pres-key stud-id]
   (let [group (codax/get-at tx [stud-id :presentation pres-key :group])
@@ -520,32 +436,3 @@
     (-> scores
         (get (count ranks))
         (nth (- rank 1)))))
-
-;; (defn participants [tx pres-id]
-;;   (let [name-and-id (->> (codax/get-at tx [])
-;;                          (filter #(-> % second :name))
-;;                          (map (fn [[id desc]]
-;;                                 (map #(vector % {:id id :name (:name desc)})
-;;                                      (str/split (:name desc) #"\s"))))
-
-;;                          (apply concat))
-;;         dict (into {} name-and-id)
-;;         participants (->> (codax/get-at tx [:pres pres-id])
-;;                           (map #(-> % second :evaluate))
-;;                           (apply concat)
-;;                           (map #(map (fn [name] [(-> % first) name]) (-> % second :participants)))
-;;                           ;; (map #(vector (-> % first) (-> % second :participants)))
-;;                           (apply concat))]
-;;     (map (fn [[dt name]] (let [norm (get dict name)]
-;;                            (if (some? norm)
-;;                              [dt (:name norm) name (:id norm)]
-;;                              [dt name nil nil]))) participants)))
-
-;; (defn participants-talks [db token pres-id]
-;;   (talk/def-command db (str pres-id "participants")
-;;     (fn [tx {{id :id} :chat}]
-;;       (talk/send-text token id "Participants:")
-;;       (let [file-name (str pres-id "-participants.csv")]
-;;         (with-open [writer (io/writer file-name)]
-;;           (csv/write-csv writer (participants tx pres-id)))
-;;         (talk/send-document token id (io/file file-name))))))

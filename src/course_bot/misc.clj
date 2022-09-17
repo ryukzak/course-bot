@@ -36,35 +36,3 @@
 
 (defn normalize-time [dt]
   (str-time (read-time dt)))
-
-;; deprecated:
-
-;; (get-config  "/Users/penskoi/src/edu-csa-internal")
-
-(defn config-path
-  ([] (or (System/getenv "CONF_PATH")
-          "conf-example"
-        ;  "/Users/penskoi/src/edu-csa-internal"
-          ))
-  ([filename] (str "/" filename)))
-
-(defn read-config
-  ([filename] (read-config filename true))
-  ([filename skip]
-   (read-string (try
-                  (slurp (config-path filename))
-                  (catch Exception e
-                    (if skip "nil" (throw e)))))))
-
-(defn read-configs
-  ([sub-path] (read-configs sub-path true))
-  ([sub-path skip]
-   (->> (try (let []
-               (file-seq (io/file (str (config-path) "/" sub-path))))
-             (catch Exception e
-               (if skip "()" (throw e))))
-        (filter #(and (.isFile %) (str/ends-with? (.getName %) ".edn")))
-        (map #(let [name (-> % .getName (str/replace #".edn" ""))
-                    dt (read-string (slurp %))]
-                [name dt]))
-        (into {}))))

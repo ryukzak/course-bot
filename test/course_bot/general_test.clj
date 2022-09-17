@@ -1,6 +1,6 @@
 (ns course-bot.general-test
-  (:require [clojure.test :refer :all]
-            [codax.core :as codax])
+  (:require [clojure.test :refer :all])
+  (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.talk :as talk]
             [course-bot.talk-test :as ttalk]

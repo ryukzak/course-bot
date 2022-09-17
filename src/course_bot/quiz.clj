@@ -59,7 +59,7 @@
         scores (map #(if % 1 0) bools)]
     [bools (reduce + scores) (count options)]))
 
-(defn stopquiz-talk [db {token :token admin-chat-id :admin-chat-id :as conf}]
+(defn stopquiz-talk [db {token :token :as conf}]
   (talk/talk db "stopquiz"
              :start
              (fn [tx {{id :id} :from}]
@@ -79,7 +79,7 @@
                  (case text
                    "yes" (let [results (codax/get-at tx [:quiz :results quiz-key])
                                per-studs (map (fn [stud-id]
-                                                (let [[details cur max] (stud-results-inner quiz (get results stud-id) stud-id)
+                                                (let [[_details cur max] (stud-results-inner quiz (get results stud-id) stud-id)
                                                       info (str cur "/" max)]
                                                   [stud-id cur info]))
                                               (keys results))]
@@ -122,7 +122,7 @@
                             "]$"))]
     (not (empty? (re-seq re text)))))
 
-(defn quiz-talk [db {token :token admin-chat-id :admin-chat-id :as conf}]
+(defn quiz-talk [db {token :token :as conf}]
   (talk/talk db "quiz"
              :start
              (fn [tx {{id :id} :from}]
@@ -135,9 +135,7 @@
                  (when (some? results)
                    (talk/send-text token id (str "Вы уже проходили/проходите этот тест: " quiz-key ". "
                                                  "Если вы его перебили другой коммандой -- значит не судьба."))
-                   (-> tx
-                    ;; (codax/assoc-at [:quiz-results current-quiz id] nil)
-                       talk/stop-talk))
+                   (-> tx talk/stop-talk))
 
                  (talk/send-yes-no-kbd token id (str "Хотите начать тест '" quiz-name "'?"))
                  (talk/change-branch tx :quiz-approve)))

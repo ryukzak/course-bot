@@ -1,21 +1,13 @@
 (ns course-bot.general
   (:require [clojure.string :as str])
   (:require [codax.core :as codax])
-  (:require [course-bot.misc :as misc]
-            [course-bot.talk :as talk]))
+  (:require [course-bot.talk :as talk]))
 
 (defn assert-admin
   ([tx {token :token admin-chat-id :admin-chat-id} id]
    (when-not (= id admin-chat-id)
      (talk/send-text token id "That action requires admin rights.")
      (talk/stop-talk tx))))
-
-(defn get-registered [tx token id]
-  (let [info (codax/get-at tx [id])]
-    (if-not (-> info :name some?)
-      (do (talk/send-text token id "Not registered. Do /start")
-          (talk/stop-talk tx))
-      info)))
 
 (defn send-whoami
   ([tx token id] (send-whoami tx token id id))
@@ -30,10 +22,6 @@
     (fn [tx {{id :id} :from}]
       (send-whoami tx token id)
       (talk/stop-talk tx))))
-
-(defn students-from-group [tx group]
-  (->> (codax/get-at tx [])
-       (filter #(-> % second :group (= group)))))
 
 (defn send-list-groups
   ([tx token id]
@@ -86,7 +74,7 @@
           (talk/send-text token id "Send /help for help.")
           (talk/stop-talk tx))))))
 
-(defn restart-talk [db {token :token admin-chat-id :admin-chat-id :as conf}]
+(defn restart-talk [db {token :token :as conf}]
   (talk/def-talk db "restart"
     :start
     (fn [tx {{id :id} :from text :text}]

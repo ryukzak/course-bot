@@ -1,7 +1,7 @@
 (ns course-bot.talk-test
-  (:require [clojure.test :refer :all]
-            [course-bot.talk :as talk]
-            [codax.core :as c]))
+  (:require [clojure.test :refer :all])
+  (:require [codax.core :as codax])
+  (:require [course-bot.talk :as talk]))
 
 (defn mock-talk [talk-maker & args]
   (let [do-talk (apply talk-maker args)]
@@ -19,7 +19,7 @@
     (is (= expect actual))))
 
 (deftest test-talk-return-value
-  (let [test-db (c/open-database! "codax-db-test")
+  (let [test-db (codax/open-database! "codax-db-test")
         test-talk1 (talk/def-talk test-db "cmd" :start (fn [tx _msg] (talk/wait tx)))
         test-talk2 (talk/def-talk test-db "cmd" :start (fn [_tx _msg] :ok))
         test-talk3 (talk/def-talk test-db "cmd" :start (fn [_tx _msg] nil))]
