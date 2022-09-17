@@ -8,25 +8,28 @@
             [course-bot.general :as general]
             [course-bot.talk :as talk]))
 
-(def conf (misc/get-config "/Users/penskoi/src/edu-csa-internal"))
+(def conf (misc/get-config "../edu-csa-internal"))
 
 (def token (-> conf :token))
 (def db-path (-> conf :db-path))
 
-(defn assert-admin [tx token id]
-  (when-not (= id (-> conf :general :admin-chat))
-    (talk/send-text token id "That action requires admin rights.")
-    (talk/stop-talk tx)))
-
 (def db (codax/open-database! db-path))
 
-(declare bot-api id)
+(declare bot-api id message)
 
 (handlers/defhandler bot-api
   (general/start-talk db conf)
   (general/restart-talk db conf)
   (general/whoami-talk db conf)
   (general/listgroups-talk db conf)
+
+  (pres/setgroup-talk db conf "lab1")
+  (pres/submit-talk db conf "lab1")
+  (pres/submissions-talk db conf "lab1")
+  (pres/check-talk db conf "lab1")
+  (pres/schedule-talk db conf "lab1")
+  (pres/agenda-talk db conf "lab1")
+  (pres/feedback-talk db conf "lab1")
 
   (quiz/startquiz-talk db conf)
   (quiz/stopquiz-talk db conf)

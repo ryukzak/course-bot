@@ -1,10 +1,10 @@
 FROM clojure
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-COPY project.clj /usr/src/app/
-RUN lein deps
-COPY . /usr/src/app
-RUN mv "$(lein uberjar | sed -n 's/^Created \(.*standalone\.jar\)/\1/p')" app-standalone.jar
-WORKDIR /data
+
+RUN mkdir -p /course-bot
+WORKDIR /course-bot
+COPY . /course-bot
+
+RUN clj -X:test
+
 ENV TZ="Europe/Moscow"
-CMD ["java", "-jar", "/usr/src/app/app-standalone.jar"]
+CMD ["clj", "-X", "course-bot.csa/run"]
