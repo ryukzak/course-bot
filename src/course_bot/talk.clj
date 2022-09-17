@@ -1,14 +1,17 @@
 (ns course-bot.talk
-  (:require [codax.core :as c])
-  (:require [clojure.string :as str])
-  (:require [morse.handlers :as h]
-            [morse.api :as t]
+  (:require [clojure.string :as str]
+            [clojure.test :as test])
+  (:require [codax.core :as codax]
+            [morse.handlers :as handlers]
+            [morse.api :as morse]
             [clj-http.client :as http]))
 
 ;; Talk flow
 
-(defn change-branch [tx name & kwargs]
-  (throw (ex-info "Change branch" {:next-branch name :tx tx :kwargs kwargs})))
+(defn change-branch
+  ([tx name] (change-branch tx name {}))
+  ([tx name state]
+   (throw (ex-info "Change branch" {:next-branch name :tx tx :state state}))))
 
 (defn stop-talk [tx]
   (throw (ex-info "Stop talk" {:tx tx})))
@@ -16,68 +19,100 @@
 (defn wait [tx]
   (throw (ex-info "Wait talk" {:tx tx})))
 
-(defn set-talk-branch [tx id talk branch kwargs]
-  (-> tx
-   (c/assoc-at [id :dialog-state] nil)
-   (c/assoc-at [id :talk] {:current-talk talk
-                           :current-branch branch
-                           :kwargs (apply hash-map kwargs)})))
+(defn repeat-branch [tx] (wait tx))
 
-(defn command-args [text] (str/split (str/replace-first text #"^/\w+\s+" "") #"\s+"))
+(defn set-talk-branch [tx id talk branch state]
+  (-> tx
+      (codax/assoc-at [id :talk] {:current-talk talk
+                                  :current-branch branch
+                                  :state state})))
+
+(defn command-args [text] (filter #(not (empty? %)) (str/split (str/replace-first text #"^/\w+\s*" "") #"\s+")))
+
+(defn command-text-arg [text] (str/replace-first text #"^/\w+\s*" ""))
+
+(defn command-num-arg [text]
+  (let [args (command-args text)]
+    (if (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
+      (Integer/parseInt (first args))
+      nil)))
+
+(defn command-keyword-arg [text]
+  (let [args (command-args text)]
+    (if (and (= (count args) 1) (re-matches #"^[\w-_]+$" (first args)))
+      (keyword (first args))
+      nil)))
 
 (defn id-from-arg [tx text]
   (let [args (command-args text)]
     (when (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
       (Integer/parseInt (first args)))))
 
-(defmacro talk [db name & body]
-  (let [branches (apply hash-map body)
-        current-branch-var `current-branch#
-        current-talk-var `current-talk#
-        kwargs `kwargs#
-        msg-var `msg#
-        tx-var `tx#]
-    `(fn talk-top# [update#]
-       (let [res# (atom nil)]
-         (try
-           (c/with-write-transaction [~db ~tx-var]
-             (let [id# (-> update# :message :from :id)
-                   ~msg-var (:message update#)
-                   {~current-talk-var :current-talk
-                    ~current-branch-var :current-branch
-                    ~kwargs :kwargs} (c/get-at ~tx-var [id# :talk])]
-               (try
-                 (let [tmp# (cond
-                              (h/command? update# ~name)
-                              (~(:start branches) ~tx-var ~msg-var)
+(def *helps (atom {}))
 
-                              (str/starts-with? (-> update# :message :text) "/") nil
+(defn helps []
+  (str "Helps:\n" (->> @*helps
+                       (map (fn [[n d]] (str n " - " d)))
+                       sort
+                       (str/join "\n"))))
 
-                              ~@(apply concat
-                                       (->> branches
-                                            (filter #(not= :start (first %)))
-                                            (map (fn [[branch body]]
-                                                   [`(and (= ~current-talk-var ~name) (= ~current-branch-var ~branch))
-                                                    `(if (nil? ~kwargs)
-                                                       (~body ~tx-var ~msg-var)
-                                                       (~body ~tx-var ~msg-var ~kwargs))])))))]
-                   (swap! res# (constantly tmp#))
-                   (if (nil? @res#) ~tx-var @res#))
-                 (catch clojure.lang.ExceptionInfo e#
-                   (swap! res# (constantly :ok))
-                   (case (ex-message e#)
-                     "Change branch" (set-talk-branch (-> e# ex-data :tx)
-                                                      id# ~name
-                                                      (-> e# ex-data :next-branch)
-                                                      (-> e# ex-data :kwargs))
-                     "Stop talk" (set-talk-branch (-> e# ex-data :tx) id# nil nil nil)
-                     "Wait talk" (-> e# ex-data :tx)
-                     (throw e#))))))
-           @res#)))))
+;; TODO: move help hint to name, like: "start - register student"
+
+(defn talk [db name & handlers]
+  (let [[help handlers] (if (string? (first handlers))
+                          [(first handlers) (rest handlers)]
+                          [nil handlers])
+        handlers (apply hash-map handlers)
+        start-handler (:start handlers)
+        handlers (into {} (filter #(not= :start (first %)) handlers))]
+    (when (and (some? help) (not (contains? @*helps name)))
+      (swap! *helps assoc name help))
+    (fn talk-top [update]
+      (let [res (atom nil)]
+        (try
+          (declare tx)
+          (codax/with-write-transaction [db tx]
+            (let [id (-> update :message :from :id)
+                  msg (:message update)
+                  {current-talk :current-talk
+                   current-branch :current-branch
+                   state :state} (codax/get-at tx [id :talk])]
+              (try
+                (let [tmp (cond
+                            (handlers/command? update name) (start-handler tx msg)
+
+                            (str/starts-with? (-> msg :text) "/") nil
+
+                            (and (= current-talk name) (contains? handlers current-branch))
+                            (if (nil? state)
+                              ((get handlers current-branch) tx msg)
+                              ((get handlers current-branch) tx msg state)))]
+                  (swap! res (constantly tmp))
+                  (if (nil? @res) tx @res))
+                (catch clojure.lang.ExceptionInfo e
+                  (swap! res (constantly :ok))
+                  (case (ex-message e)
+                    "Change branch" (set-talk-branch (-> e ex-data :tx)
+                                                     id name
+                                                     (-> e ex-data :next-branch)
+                                                     (-> e ex-data :state))
+                    "Stop talk" (set-talk-branch (-> e ex-data :tx) id nil nil nil)
+                    "Wait talk" (-> e ex-data :tx)
+                    (throw e))))))
+          @res)))))
+
+(defmacro def-talk [& args] `(talk ~@args))
+
+;; TODO: move help hint to name, like: "start - register student"
+
+(defn def-command
+  ([db name foo] (talk db name :start foo))
+  ([db name help foo] (talk db name help :start foo)))
 
 ;; Re-exports
 
-(intern 'course-bot.talk 'send-text t/send-text)
+(defn send-text [& args] (apply morse/send-text args))
+(defn send-document [& args] (apply morse/send-document args))
 
 ;; Morse helpers
 
@@ -85,7 +120,7 @@
   "Sends json to the chat"
   ([token chat-id data] (send-message token chat-id {} data))
   ([token chat-id options data]
-   (let [url  (str t/base-url token "/sendMessage")
+   (let [url  (str morse/base-url token "/sendMessage")
          body (merge {:chat_id chat-id} options data)
          resp (http/post url {:content-type :json
                               :as           :json
@@ -99,3 +134,24 @@
                            :resize_keyboard true
                            :keyboard
                            [[{:text "yes"} {:text "no"}]]}}))
+
+;; tests
+
+(defmacro deftest [name args & body]
+  (let [test-db "test-databases/example-database"
+        [db *chat] args]
+    `(test/deftest ~name
+       (codax/destroy-database! ~test-db)
+       (let [~*chat (atom (list))
+             ~db (codax/open-database! ~test-db)]
+         (with-redefs [talk/send-text (fn [token# id# msg#]
+                                        (assert (= "TOKEN" token#))
+                                        (swap! ~*chat conj {:id id# :msg msg#}))
+                       talk/send-yes-no-kbd (fn [token# id# msg#] (swap! ~*chat conj {:id id# :msg msg#}))
+                       talk/send-document (fn [token# id# file#] (swap! ~*chat conj {:id id# :msg (.getName file#)}))]
+           ~@body)
+         (codax/destroy-database! ~test-db)))))
+
+(defn msg
+  ([msg] {:message {:from {:id 1} :text msg}})
+  ([id msg] {:message {:from {:id id} :text msg}}))

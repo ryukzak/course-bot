@@ -1,0 +1,5 @@
+{:admin-chat-id 0
+ :token "TOKEN"
+ :db-path "codax-db-test"
+ :groups {"gr1" {}
+          "gr2" {}}}
