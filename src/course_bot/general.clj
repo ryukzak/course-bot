@@ -1,8 +1,7 @@
 (ns course-bot.general
   (:require [clojure.string :as str])
   (:require [codax.core :as codax])
-  (:require [course-bot.general :as general]
-            [course-bot.misc :as misc]
+  (:require [course-bot.misc :as misc]
             [course-bot.talk :as talk]))
 
 (defn assert-admin
@@ -91,7 +90,7 @@
   (talk/def-talk db "restart"
     :start
     (fn [tx {{id :id} :from text :text}]
-      (general/assert-admin tx conf id)
+      (assert-admin tx conf id)
       (let [stud-id (talk/command-num-arg text)]
         (if (some? stud-id)
           (let [stud (codax/get-at tx [stud-id])]

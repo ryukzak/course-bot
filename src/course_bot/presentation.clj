@@ -1,11 +1,9 @@
  (ns course-bot.presentation
+   (:require [clojure.string :as str])
    (:require [codax.core :as codax])
    (:require [course-bot.talk :as talk]
              [course-bot.general :as general]
-             [clojure.string :as str]
-             [clojure.data.csv :as csv]
-             [clojure.java.io :as io])
-   (:require [course-bot.misc :as misc]))
+             [course-bot.misc :as misc]))
 
 (defn send-please-set-group [token id pres-key-name name]
   (talk/send-text token id (str "Please, set your '" name "' group "

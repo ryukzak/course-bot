@@ -1,11 +1,10 @@
 (ns course-bot.talk
   (:require [clojure.string :as str]
             [clojure.test :as test])
-  (:require [morse.handlers :as h]
-            [codax.core :as codax]
-            [morse.api :as t]
-            [clj-http.client :as http])
-  (:require [course-bot.talk :as talk]))
+  (:require [codax.core :as codax]
+            [morse.handlers :as handlers]
+            [morse.api :as morse]
+            [clj-http.client :as http]))
 
 ;; Talk flow
 
@@ -80,7 +79,7 @@
                    state :state} (codax/get-at tx [id :talk])]
               (try
                 (let [tmp (cond
-                            (h/command? update name) (start-handler tx msg)
+                            (handlers/command? update name) (start-handler tx msg)
 
                             (str/starts-with? (-> msg :text) "/") nil
 
@@ -112,8 +111,8 @@
 
 ;; Re-exports
 
-(defn send-text [& args] (apply t/send-text args))
-(defn send-document [& args] (apply t/send-document args))
+(defn send-text [& args] (apply morse/send-text args))
+(defn send-document [& args] (apply morse/send-document args))
 
 ;; Morse helpers
 
@@ -121,7 +120,7 @@
   "Sends json to the chat"
   ([token chat-id data] (send-message token chat-id {} data))
   ([token chat-id options data]
-   (let [url  (str t/base-url token "/sendMessage")
+   (let [url  (str morse/base-url token "/sendMessage")
          body (merge {:chat_id chat-id} options data)
          resp (http/post url {:content-type :json
                               :as           :json

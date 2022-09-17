@@ -1,11 +1,12 @@
 (ns course-bot.csa
   (:require [morse.handlers :as handlers]
-            [morse.polling :as polling])
-  (:require [codax.core :as codax])
+            [morse.polling :as polling]
+            [codax.core :as codax])
   (:require [course-bot.misc :as misc]
             [course-bot.quiz :as quiz]
-            [course-bot.general :as general])
-  (:require [course-bot.talk :as talk]))
+            [course-bot.presentation :as pres]
+            [course-bot.general :as general]
+            [course-bot.talk :as talk]))
 
 (def conf (misc/get-config "/Users/penskoi/src/edu-csa-internal"))
 
