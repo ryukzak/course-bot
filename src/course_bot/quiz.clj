@@ -16,8 +16,9 @@
                (let [quiz-key (talk/command-keyword-arg text)
                      quiz (-> conf :quiz (get quiz-key))]
                  (when-not quiz-key
-                   (let [quizs (map (fn [[k v]] (str "- " k " (" (-> v :name) ")"))
-                                    (-> conf :quiz))]
+                   (let [quizs (->> (-> conf :quiz)
+                                    (sort-by first)
+                                    (map (fn [[k v]] (str "- " k " (" (-> v :name) ")"))))]
                      (talk/send-text token id (str "Available tests:\n"
                                                    (str/join "\n" quizs)))
                      (talk/stop-talk tx)))
@@ -98,7 +99,7 @@
                                                   "нет ответов")))
                            (doall (map (fn [[stud-id _cur info]] (talk/send-text token stud-id (str "Ваш результат: " info)))
                                        per-studs))
-                           (-> (reduce (fn [tx [stud-id cur _info]] (codax/assoc-at tx [id :quiz (:name quiz)] cur))
+                           (-> (reduce (fn [tx [_stud-id cur _info]] (codax/assoc-at tx [id :quiz (:name quiz)] cur))
                                        tx per-studs)
                                (codax/assoc-at [:quiz :current] nil)
                                talk/stop-talk))
