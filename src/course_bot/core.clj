@@ -8,7 +8,6 @@
             [course-bot.quiz :as quiz]
             [course-bot.essay :as essay]
             [course-bot.general :as general]
-            [course-bot.csa.lab1 :as lab1]
             [course-bot.presentation :as pres]
             [course-bot.report :as report])
   (:require [morse.handlers :as h]
