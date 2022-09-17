@@ -53,7 +53,7 @@
     (ttalk/in-history *chat 1 "Your Lab 1 presentation group setted: lgr1")
 
     (submit-talk 1 "/lab1submit")
-    (ttalk/in-history *chat 1 "Please, provide description for your 'Lab 1 presentation' (in one message):")
+    (ttalk/in-history *chat 1 "hint")
 
     (submit-talk 1 "bla-bla-bla the best")
     (ttalk/in-history *chat 1
@@ -434,13 +434,11 @@
 
       (is (= {:feedback (list
                          {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
-                          :rank
-                          [{:id 1, :name "Alice", :topic "pres 1"}
-                           {:id 2, :name "Bob", :topic "pres 2"}]}
+                          :rank [{:id 1, :name "Alice", :topic "pres 1"}
+                                 {:id 2, :name "Bob", :topic "pres 2"}]}
                          {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
-                          :rank
-                          [{:id 2, :name "Bob", :topic "pres 2"}
-                           {:id 1, :name "Alice", :topic "pres 1"}]})
+                          :rank [{:id 2, :name "Bob", :topic "pres 2"}
+                                 {:id 1, :name "Alice", :topic "pres 1"}]})
               :feedback-from '(2 1)
               :stud-ids '(2 1)}
              (codax/get-at! db [:presentation
@@ -459,17 +457,14 @@
 
       (is (= {:feedback (list
                          {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
-                          :rank
-                          [{:id 1, :name "Alice", :topic "pres 1"}
-                           {:id 2, :name "Bob", :topic "pres 2"}]}
+                          :rank [{:id 1, :name "Alice", :topic "pres 1"}
+                                 {:id 2, :name "Bob", :topic "pres 2"}]}
                          {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
-                          :rank
-                          [{:id 1, :name "Alice", :topic "pres 1"}
-                           {:id 2, :name "Bob", :topic "pres 2"}]}
+                          :rank [{:id 1, :name "Alice", :topic "pres 1"}
+                                 {:id 2, :name "Bob", :topic "pres 2"}]}
                          {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
-                          :rank
-                          [{:id 2, :name "Bob", :topic "pres 2"}
-                           {:id 1, :name "Alice", :topic "pres 1"}]})
+                          :rank [{:id 2, :name "Bob", :topic "pres 2"}
+                                 {:id 1, :name "Alice", :topic "pres 1"}]})
               :feedback-from '(3 2 1)
               :stud-ids '(2 1)}
              (codax/get-at! db [:presentation

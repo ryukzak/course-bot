@@ -43,9 +43,11 @@
 (defn submit-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "submit")
         pres-key (keyword pres-key-name)
+        hint (-> conf (get pres-key) :submition-hint)
         name (-> conf (get pres-key) :name)
         groups (-> conf (get pres-key) :groups)
-        groups-text (->>  groups keys sort (str/join ", "))]
+        ;; groups-text (->>  groups keys sort (str/join ", "))
+        ]
     (talk/def-talk db cmd
       (str "submit your '" name "' description")
 
@@ -65,8 +67,10 @@
             (talk/send-text token id (str "Already submitted and approved, maybe you need schedule it? /" pres-key-name "schedule"))
             (talk/stop-talk tx))
 
-          (talk/send-text token id (str "Please, provide description for your '"
-                                        name "' (in one message):"))
+          (talk/send-text token id (if hint
+                                     hint
+                                     (str "Please, provide description for your '"
+                                          name "' (in one message):")))
           (talk/change-branch tx :recieve-description)))
 
       :recieve-description

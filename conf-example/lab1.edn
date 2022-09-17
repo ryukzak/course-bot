@@ -1,4 +1,5 @@
 {:name "Lab 1 presentation"
+ :submition-hint "hint"
  :schedule-cut-off-time-in-min 30
  :agenda-hide-cut-off-time-in-min -1440
  :groups {"lgr1" {:lessons [{:datetime "2022.01.01 12:00 +0000"}
