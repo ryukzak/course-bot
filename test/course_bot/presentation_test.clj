@@ -128,6 +128,21 @@
                       (str/join "\n" '("Submitted presentation in 'lgr1':"
                                        "- bla-bla-bla the best (Bot Botovich) - REJECTED")))
 
+    (testing "submissions-talk with args"
+      (submissions-talk 2 "/lab1submissions")
+      (ttalk/in-history *chat 2 "Please, set your 'Lab 1 presentation' group by /lab1setgroup")
+
+      (submissions-talk 2 "/lab1submissions lgr1")
+      (ttalk/in-history *chat 2 "Submitted presentation in 'lgr1':\n- bla-bla-bla the best (Bot Botovich) - REJECTED")
+
+      (submissions-talk 2 "/lab1submissions eeeeeeeeeeeeeeeeeeeeeeeee")
+      (ttalk/in-history *chat 2 "I don't know 'eeeeeeeeeeeeeeeeeeeeeeeee', you should specify one from: lgr1, lgr2")
+
+      (submissions-talk 0 "/lab1submissions")
+      (ttalk/in-history *chat 0
+                        "Submitted presentation in 'lgr1':\n- bla-bla-bla the best (Bot Botovich) - REJECTED"
+                        "Submitted presentation in 'lgr2':\n"))
+
     (is (= {:lab1
             {:description "bla-bla-bla the best"
              :group "lgr1"

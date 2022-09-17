@@ -176,18 +176,32 @@
             (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
             talk/stop-talk)))))
 
-(defn submissions-talk [db {token :token :as conf} pres-key-name]
+(defn submissions-talk [db {token :token admin-chat-id :admin-chat-id :as conf} pres-key-name]
   (let [cmd (str pres-key-name "submissions")
         pres-key (keyword pres-key-name)
-        name (-> conf (get pres-key) :name)]
+        name (-> conf (get pres-key) :name)
+        groups (-> conf (get pres-key) :groups)
+        groups-text (->> groups keys sort (str/join ", "))]
 
     (talk/def-command db cmd
-      "list your group submittions and their status"
-      (fn [tx {{id :id} :from}]
-        (let [group (codax/get-at tx [id :presentation pres-key :group])]
-          (if (nil? group)
-            (send-please-set-group token id pres-key-name name)
-            (talk/send-text token id (all-submissions tx pres-key group)))
+      "list submissions and their status (no args -- your group, with args -- specified)"
+      (fn [tx {{id :id} :from text :text}]
+        (let [arg (talk/command-text-arg text)]
+          (cond
+            (and (= id admin-chat-id) (= arg ""))
+            (doall (->> groups keys sort (map #(talk/send-text token id (all-submissions tx pres-key %)))))
+
+            (= arg "")
+            (let [group (codax/get-at tx [id :presentation pres-key :group])]
+              (if (nil? group)
+                (send-please-set-group token id pres-key-name name)
+                (talk/send-text token id (all-submissions tx pres-key group))))
+
+            (get groups arg)
+            (talk/send-text token id (all-submissions tx pres-key arg))
+
+            :else
+            (talk/send-text token id (str "I don't know '" arg "', you should specify one from: " groups-text)))
           (talk/stop-talk tx))))))
 
 (defn lessons [conf pres-id group]
