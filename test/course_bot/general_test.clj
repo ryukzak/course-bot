@@ -17,7 +17,7 @@
 
     (testing "registration"
       (start-talk "/start")
-      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name?")
+      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the regestry)?")
 
       (start-talk "Bot Botovich")
       (ttalk/in-history *chat "What is your group (gr1, gr2)?")
@@ -88,4 +88,4 @@
                         [1 "You can use /start once more."])
 
       (start-talk "/start")
-      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name?"))))
+      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the regestry)?"))))
