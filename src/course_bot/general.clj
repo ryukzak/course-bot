@@ -50,7 +50,9 @@
           (when (and (some? (:name info)) (not (:allow-restart info)))
             (talk/send-text token id "You are already registered. To change your information, contact the teacher and send /whoami")
             (talk/stop-talk tx))
-          (talk/send-text token id (str "Hi, I'm a bot for your course. I will help you with your work. What is your name?"))
+          (talk/send-text token id (str "Hi, I'm a bot for your course. "
+                                        "I will help you with your work. "
+                                        "What is your name (like in the regestry)?"))
           (talk/change-branch tx :get-name)))
 
       :get-name
