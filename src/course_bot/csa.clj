@@ -31,7 +31,7 @@
   (pres/agenda-talk db conf "lab1")
   (pres/feedback-talk db conf "lab1")
   (pres/drop-talk db conf "lab1" false)
-  (pres/drop-talk db conf "lab1" true)]
+  (pres/drop-talk db conf "lab1" true)
 
   (quiz/startquiz-talk db conf)
   (quiz/stopquiz-talk db conf)
