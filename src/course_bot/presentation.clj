@@ -306,7 +306,7 @@
     (talk/def-talk db (str pres-key-name "feedback")
       "send feedback for report"
       :start
-      (fn [tx {{id :id} :from text :text}]
+      (fn [tx {{id :id} :from}]
         (let [now (misc/today)
               pres (codax/get-at tx [id :presentation pres-key])
               name (-> conf (get pres-key) :name)
@@ -365,44 +365,58 @@
                                      :rank (conj rank (first studs))})
               talk/stop-talk))))))
 
-;; (defn drop-talk [db token pres-id assert-admin admin-id]
-;;   (talk/def-talk db (str pres-id "drop")
-;;     "for teacher, drop presentation for specific student"
-;;     :start
-;;     (fn [tx {{id :id} :from text :text}]
-;;       (assert-admin tx token id)
-;;       (let [stud-id (talk/command-num-arg text)]
-;;         (if (some? stud-id)
-;;           (let [stud (codax/get-at tx [stud-id])]
-;;             (when-not stud
-;;               (talk/send-text token id "Not found.")
-;;               (talk/stop-talk tx))
-;;             (general/send-whoami tx token id stud-id)
-;;             (talk/send-yes-no-kbd token id (str "Drop presentation config for " pres-id "?"))
-;;             (talk/change-branch tx :approve {:stud-id stud-id}))
-;;           (do
-;;             (talk/send-text token id (str "Wrong input: /" pres-id "drop 12345"))
-;;             (talk/wait tx)))))
+(defn drop-talk [db {token :token :as conf} pres-key-name drop-description]
+  (let [cmd (str pres-key-name "drop" (when drop-description "all"))
+        pres-key (keyword pres-key-name)
+        name (-> conf (get pres-key) :name)
+        groups (-> conf (get pres-key) :groups)
+        groups-text (->> groups keys sort (str/join ", "))]
+    (talk/def-talk db cmd
+      (str "for teacher, drop '" name "' for specific student ("
+           (if drop-description "all" "only schedule") ")")
 
-;;     :approve
-;;     (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
-;;       (cond
-;;         (= text "yes") (let [group (group tx token stud-id pres-id)
-;;                              sch (codax/get-at tx [:pres pres-id group])]
-;;                          (talk/send-text token id (str "We drop student: " pres-id))
-;;                          (talk/send-text token stud-id (str "We drop your state for " pres-id))
-;;                          (-> tx
-;;                              (codax/assoc-at [stud-id :pres pres-id] nil)
-;;                              (codax/assoc-at [:pres pres-id group]
-;;                                              (into {}
-;;                                                    (map (fn [[dt studs]]
-;;                                                           [dt (filter #(not= stud-id %) studs)])
-;;                                                         sch)))
-;;                              talk/stop-talk))
-;;         (= text "no") (do (talk/send-text token id "Not droped.")
-;;                           (talk/stop-talk tx))
-;;         :else (do (talk/send-text token id "What?")
-;;                   (talk/repeat-branch tx))))))
+      :start
+      (fn [tx {{id :id} :from text :text}]
+        (general/assert-admin tx conf id)
+        (let [stud-id (talk/command-num-arg text)]
+
+          (when (nil? stud-id)
+            (talk/send-text token id (str "Wrong input: /" cmd " 12345"))
+            (talk/stop-talk tx))
+
+          (let [stud (codax/get-at tx [stud-id])]
+            (when-not stud
+              (talk/send-text token id "Not found.")
+              (talk/stop-talk tx))
+
+            (general/send-whoami tx token id stud-id)
+            (talk/send-yes-no-kbd token id (str "Drop '" name "' config for " stud-id "?"))
+
+            (talk/change-branch tx :approve {:stud-id stud-id}))))
+
+      :approve
+      (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
+        (cond
+          (= text "yes") (let [group (codax/get-at tx [stud-id :presentation pres-key :group])
+                               lessons (codax/get-at tx [:presentation pres-key group])]
+                           (talk/send-text token id (str "We drop student: " stud-id))
+                           (talk/send-text token stud-id (str "We drop your state for " name))
+                           (-> (if drop-description
+                                 (codax/assoc-at tx [stud-id :presentation pres-key] nil)
+                                 (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
+                               (codax/assoc-at [:presentation pres-key group]
+                                               (->> lessons
+                                                    (map (fn [[dt desc]]
+                                                           [dt (assoc desc
+                                                                      :stud-ids (filter #(not= stud-id %) (:stud-ids desc)))]))
+                                                    (into {})))
+                               talk/stop-talk))
+
+          (= text "no") (do (talk/send-text token id "Not droped.")
+                            (talk/stop-talk tx))
+
+          :else (do (talk/send-text token id "What?")
+                    (talk/repeat-branch tx)))))))
 
 (defn avg-rank-score [tx pres-key stud-id]
   (let [group (codax/get-at tx [stud-id :presentation pres-key :group])

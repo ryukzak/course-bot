@@ -229,7 +229,7 @@
                                          "- bla-bla-bla 2 (Bot Botovich) - APPROVED"
                                          "- pres 2 (Alice) - APPROVED"))))))
 
-(talk/deftest schedule-and-agenda-talks-test [db *chat]
+(talk/deftest schedule-agenda-and-drop-talks-test [db *chat]
   (let [conf (misc/get-config "conf-example")
         start-talk (ttalk/mock-talk general/start-talk db conf)
         setgroup-talk (ttalk/mock-talk pres/setgroup-talk db conf "lab1")
@@ -237,7 +237,10 @@
         check-talk (ttalk/mock-talk pres/check-talk db conf "lab1")
         submissions-talk (ttalk/mock-talk pres/submissions-talk db conf "lab1")
         schedule-talk (ttalk/mock-talk pres/schedule-talk db conf "lab1")
-        agenda-talk (ttalk/mock-talk pres/agenda-talk db conf "lab1")]
+        agenda-talk (ttalk/mock-talk pres/agenda-talk db conf "lab1")
+        drop-talk (ttalk/mock-talk pres/drop-talk db conf "lab1" false)
+        dropall-talk (ttalk/mock-talk pres/drop-talk db conf "lab1" true)]
+
     (register-user *chat start-talk 1 "Alice")
     (setgroup-talk 1 "/lab1setgroup")
     (setgroup-talk 1 "lgr1")
@@ -352,7 +355,71 @@
 
     (is (= {:lab1 {"lgr1" {"2022.01.01 12:00 +0000" {:stud-ids '(2)}
                            "2022.01.02 12:00 +0000" {:stud-ids '(1)}}}}
-           (codax/get-at! db [:presentation])))))
+           (codax/get-at! db [:presentation])))
+
+    (drop-talk 1 "/lab1drop 1")
+    (ttalk/in-history *chat 1 "That action requires admin rights.")
+
+    (drop-talk 0 "/lab1drop")
+    (ttalk/in-history *chat 0 "Wrong input: /lab1drop 12345")
+
+    (drop-talk 0 "/lab1drop asdf")
+    (ttalk/in-history *chat 0 "Wrong input: /lab1drop 12345")
+
+    (drop-talk 0 "/lab1drop 123")
+    (ttalk/in-history *chat 0 "Not found.")
+
+    (dropall-talk 0 "/lab1dropall asdf")
+    (ttalk/in-history *chat 0 "Wrong input: /lab1dropall 12345")
+
+    (drop-talk 0 "/lab1drop 1")
+    (ttalk/in-history *chat 0
+                      "Name: Alice; Group: gr1; Telegram ID: 1"
+                      "Drop 'Lab 1 presentation' config for 1?")
+
+    (drop-talk 0 "noooooooooooooooooooo")
+    (ttalk/in-history *chat 0 "What?")
+
+    (drop-talk 0 "no")
+    (ttalk/in-history *chat 0 "Not droped.")
+
+    (drop-talk 0 "/lab1drop 1")
+    (ttalk/in-history *chat 0
+                      "Name: Alice; Group: gr1; Telegram ID: 1"
+                      "Drop 'Lab 1 presentation' config for 1?")
+
+    (drop-talk 0 "yes")
+    (ttalk/in-history *chat
+                      [0 "We drop student: 1"]
+                      [1 "We drop your state for Lab 1 presentation"])
+
+    (is (= {:lab1 {:approved? true
+                   :description "pres 1"
+                   :group "lgr1"
+                   :on-review? false
+                   :scheduled? nil}}
+           (codax/get-at! db [1 :presentation])))
+
+    (is (= {"lgr1" {"2022.01.01 12:00 +0000" {:stud-ids '(2)}
+                    "2022.01.02 12:00 +0000" {:stud-ids '()}}}
+           (codax/get-at! db [:presentation :lab1])))
+
+    (dropall-talk 0 "/lab1dropall 2")
+    (ttalk/in-history *chat 0
+                      "Name: Bob; Group: gr1; Telegram ID: 2"
+                      "Drop 'Lab 1 presentation' config for 2?")
+
+    (dropall-talk 0 "yes")
+    (ttalk/in-history *chat
+                      [0 "We drop student: 2"]
+                      [2 "We drop your state for Lab 1 presentation"])
+
+    (is (= {:lab1 nil}
+           (codax/get-at! db [2 :presentation])))
+
+    (is (= {"lgr1" {"2022.01.01 12:00 +0000" {:stud-ids '()}
+                    "2022.01.02 12:00 +0000" {:stud-ids '()}}}
+           (codax/get-at! db [:presentation :lab1])))))
 
 (talk/deftest feedback-and-rank-talks-test [db *chat]
   (let [conf (misc/get-config "conf-example")
