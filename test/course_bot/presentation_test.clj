@@ -290,9 +290,8 @@
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
         (schedule-talk 2 "/lab1schedule")
         (ttalk/in-history *chat 2
-                          "Agenda:"
-                          "2022.01.01 12:00 +0000 (lgr1):\n"
-                          "2022.01.02 12:00 +0000 (lgr1):\n"
+                          "Agenda 2022.01.01 12:00 +0000 (lgr1):\n"
+                          "Agenda 2022.01.02 12:00 +0000 (lgr1):\n"
                           (str/join "\n" '("Select your option:"
                                            "- 2022.01.01 12:00 +0000"
                                            "- 2022.01.02 12:00 +0000")))
@@ -310,10 +309,9 @@
 
         (schedule-talk 1 "/lab1schedule")
         (ttalk/in-history *chat 1
-                          "Agenda:"
-                          (str/join "\n" '("2022.01.01 12:00 +0000 (lgr1):"
+                          (str/join "\n" '("Agenda 2022.01.01 12:00 +0000 (lgr1):"
                                            "1. pres 2 (Bob)"))
-                          "2022.01.02 12:00 +0000 (lgr1):\n"
+                          "Agenda 2022.01.02 12:00 +0000 (lgr1):\n"
                           (str/join "\n" '("Select your option:"
                                            "- 2022.01.01 12:00 +0000"
                                            "- 2022.01.02 12:00 +0000")))
@@ -323,21 +321,37 @@
 
         (agenda-talk 1 "/lab1agenda")
         (ttalk/in-history *chat 1
-                          "Agenda:"
-                          (str/join "\n" '("2022.01.01 12:00 +0000 (lgr1):"
+                          (str/join "\n" '("Agenda 2022.01.01 12:00 +0000 (lgr1):"
                                            "1. pres 2 (Bob)"))
-                          (str/join "\n" '("2022.01.02 12:00 +0000 (lgr1):"
+                          (str/join "\n" '("Agenda 2022.01.02 12:00 +0000 (lgr1):"
                                            "1. pres 1 (Alice)")))))
 
     (testing "agenda show history for one day more"
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.02 11:30 +0000"))]
         (agenda-talk 1 "/lab1agenda")
         (ttalk/in-history *chat 1
-                          "Agenda:"
-                          (str/join "\n" '("2022.01.01 12:00 +0000 (lgr1):"
+                          (str/join "\n" '("Agenda 2022.01.01 12:00 +0000 (lgr1):"
                                            "1. pres 2 (Bob)"))
-                          (str/join "\n" '("2022.01.02 12:00 +0000 (lgr1):"
-                                           "1. pres 1 (Alice)")))))
+                          (str/join "\n" '("Agenda 2022.01.02 12:00 +0000 (lgr1):"
+                                           "1. pres 1 (Alice)")))
+
+        (testing "agenda with args"
+          (agenda-talk 2 "/lab1agenda lgr1")
+          (ttalk/in-history *chat 2
+                            (str/join "\n" '("Agenda 2022.01.01 12:00 +0000 (lgr1):"
+                                             "1. pres 2 (Bob)"))
+                            (str/join "\n" '("Agenda 2022.01.02 12:00 +0000 (lgr1):"
+                                             "1. pres 1 (Alice)")))
+
+          (agenda-talk 2 "/lab1agenda eeeeeeeeeeeeeeeeeeeeeeeee")
+          (ttalk/in-history *chat 2 "I don't know 'eeeeeeeeeeeeeeeeeeeeeeeee', you should specify one from: lgr1, lgr2")
+
+          (agenda-talk 0 "/lab1agenda")
+          (ttalk/in-history *chat 0
+                            (str/join "\n" '("Agenda 2022.01.01 12:00 +0000 (lgr1):"
+                                             "1. pres 2 (Bob)"))
+                            (str/join "\n" '("Agenda 2022.01.02 12:00 +0000 (lgr1):"
+                                             "1. pres 1 (Alice)"))))))
 
     (is (= {:lab1 {:approved? true
                    :description "pres 1"
@@ -468,11 +482,10 @@
 
       (agenda-talk 1 "/lab1agenda")
       (ttalk/in-history *chat 1
-                        "Agenda:"
-                        (str/join "\n" '("2022.01.01 12:00 +0000 (lgr1):"
+                        (str/join "\n" '("Agenda 2022.01.01 12:00 +0000 (lgr1):"
                                          "1. pres 2 (Bob)"
                                          "2. pres 1 (Alice)"))
-                        "2022.01.02 12:00 +0000 (lgr1):\n"))
+                        "Agenda 2022.01.02 12:00 +0000 (lgr1):\n"))
 
     (is (= {:lab1 {"lgr1" {"2022.01.01 12:00 +0000" {:stud-ids '(2 1)}}}}
            (codax/get-at! db [:presentation])))

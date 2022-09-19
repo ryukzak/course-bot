@@ -223,19 +223,42 @@
          (filter-lesson cut-off-in-min now)
          (map #(let [dt (:datetime %)
                      studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])]
-                 (str dt " (" group "):\n"
+                 (str "Agenda " dt " (" group "):\n"
                       (str/join "\n" (map-indexed (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
 
-(defn agenda-talk [db {token :token :as conf} pres-key-name]
-  (let [pres-key (keyword pres-key-name)]
-    (talk/def-command db (str pres-key-name "agenda")
-      "show our agenda"
-      (fn [tx {{id :id} :from}]
-        (let [pres (codax/get-at tx [id :presentation pres-key])
-              group (-> pres :group)]
-          (talk/send-text token id "Agenda:")
-          (doall (map #(talk/send-text token id %)
-                      (agenda tx conf pres-key group (misc/today))))
+(defn agenda-talk [db {token :token admin-chat-id :admin-chat-id :as conf} pres-key-name]
+  (let [cmd (str pres-key-name "agenda")
+        pres-key (keyword pres-key-name)
+        name (-> conf (get pres-key) :name)
+        groups (-> conf (get pres-key) :groups)
+        groups-text (->> groups keys sort (str/join ", "))]
+
+    (talk/def-command db cmd
+      "agenda (no args -- your group, with args -- specified)"
+      (fn [tx {{id :id} :from text :text}]
+
+        (let [arg (talk/command-text-arg text)]
+
+          (cond
+            (and (= id admin-chat-id) (= arg ""))
+            (doall (->> groups keys sort
+                        (map #(agenda tx conf pres-key % (misc/today)))
+                        (apply concat)
+                        (map #(talk/send-text token id %))))
+
+            (= arg "")
+            (let [group (codax/get-at tx [id :presentation pres-key :group])]
+              (if (nil? group)
+                (send-please-set-group token id pres-key-name name)
+                (doall (->> (agenda tx conf pres-key group (misc/today))
+                            (map #(talk/send-text token id %))))))
+
+            (get groups arg)
+            (doall (->> (agenda tx conf pres-key arg (misc/today))
+                        (map #(talk/send-text token id %))))
+
+            :else
+            (talk/send-text token id (str "I don't know '" arg "', you should specify one from: " groups-text)))
           (talk/stop-talk tx))))))
 
 (defn schedule-talk [db {token :token :as conf} pres-key-name]
@@ -265,7 +288,6 @@
               (talk/send-text token id "I don't have options for you.")
               (talk/stop-talk tx))
 
-            (talk/send-text token id "Agenda:")
             (doall (map #(talk/send-text token id %)
                         (agenda tx conf pres-key group (misc/today))))
             (talk/send-text token id
