@@ -129,12 +129,15 @@
                (let [quiz-key (codax/get-at tx [:quiz :current])
                      quiz (-> conf :quiz (get quiz-key))
                      quiz-name (-> quiz :name)
-                     results (codax/get-at tx [:quiz :results quiz-key id])
-                     ctx {:key quiz-key :name quiz-name}]
+                     results (codax/get-at tx [:quiz :results quiz-key id])]
 
                  (when (some? results)
                    (talk/send-text token id (str "Вы уже проходили/проходите этот тест: " quiz-key ". "
                                                  "Если вы его перебили другой коммандой -- значит не судьба."))
+                   (-> tx talk/stop-talk))
+
+                 (when (nil? quiz)
+                   (talk/send-text token id (str "Тест не запущен, дождитесь отмашки преподавателя."))
                    (-> tx talk/stop-talk))
 
                  (talk/send-yes-no-kbd token id (str "Хотите начать тест '" quiz-name "'?"))
@@ -149,9 +152,8 @@
                              (talk/change-branch tx :quiz-step))
                    "no" (do (talk/send-text token id "Ваше право.")
                             (talk/stop-talk tx))
-                   (do
-                     (talk/send-yes-no-kbd token id (str "Что (yes/no)?"))
-                     (talk/wait tx)))))
+                   (do (talk/send-yes-no-kbd token id (str "Что (yes/no)?"))
+                       (talk/wait tx)))))
              :quiz-step
              (fn [tx {{id :id} :from text :text}]
                (let [quiz-key (codax/get-at tx [:quiz :current])

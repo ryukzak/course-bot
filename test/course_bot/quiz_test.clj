@@ -61,6 +61,10 @@
         startquiz-talk (ttalk/mock-talk quiz/startquiz-talk db conf)
         quiz-talk (ttalk/mock-talk quiz/quiz-talk db conf)]
     (start-user *chat start-talk 1 "Bot Botovich")
+
+    (quiz-talk 1 "/quiz")
+    (ttalk/in-history *chat 1 "Тест не запущен, дождитесь отмашки преподавателя.")
+
     (startquiz-talk 0 "/startquiz test-quiz")
     (startquiz-talk 0 "yes")
     (ttalk/in-history *chat 0 "The quiz was started.")
