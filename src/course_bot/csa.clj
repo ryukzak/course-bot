@@ -21,6 +21,7 @@
   (general/start-talk db conf)
   (general/restart-talk db conf)
   (general/whoami-talk db conf)
+  (general/renameme-talk db conf)
   (general/listgroups-talk db conf)
 
   (pres/setgroup-talk db conf "lab1")
@@ -48,8 +49,10 @@
   [& args]
   (println "Bot activated, my Lord!")
   (loop [channel (polling/start token bot-api)]
-    (Thread/sleep 1000)
+    (Thread/sleep 500)
     (print ".") (flush)
-    (when-not (.closed? channel)
+    (if (.closed? channel)
+      (do (print "Restart bot")
+          (recur (polling/start token bot-api)))
       (recur channel)))
   (println "Bot is dead, my Lord!"))

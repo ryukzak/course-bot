@@ -76,6 +76,27 @@
           (talk/send-text token id "Send /help for help.")
           (talk/stop-talk tx))))))
 
+(defn renameme-talk [db {token :token groups-raw :groups}]
+  (talk/def-talk db "renameme" "rename me"
+    :start
+    (fn [tx {{id :id} :from}]
+      (let [info (codax/get-at tx [id])]
+        (when (nil? (:name info))
+          (talk/send-text token id "You should be registred to rename yourself!")
+          (talk/stop-talk tx))
+        (talk/send-text token id (str "What is your new name?"))
+        (talk/change-branch tx :get-name)))
+
+    :get-name
+    (fn [tx {{id :id :as chat} :from text :text}]
+      (let [tx (-> tx
+                   (codax/assoc-at [id :name] text)
+                   (codax/assoc-at [id :rename-date] (str (new java.util.Date))))]
+        (talk/send-text token id "Renamed:")
+        (send-whoami tx token id)
+        (talk/stop-talk tx)))))
+
+
 (defn restart-talk [db {token :token :as conf}]
   (talk/def-talk db "restart"
     :start

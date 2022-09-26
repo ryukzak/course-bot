@@ -89,3 +89,29 @@
 
       (start-talk "/start")
       (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the regestry)?"))))
+
+(talk/deftest renameme-talk-test [db *chat]
+  (let [conf (misc/get-config "conf-example")
+        start-talk (ttalk/mock-talk general/start-talk db conf)
+        whoami-talk (ttalk/mock-talk general/whoami-talk db conf)
+        renameme-talk (ttalk/mock-talk general/renameme-talk db conf)]
+
+    (renameme-talk "/renameme")
+    (ttalk/in-history *chat "You should be registred to rename yourself!")
+
+    (start-talk "/start")
+    (start-talk "Bot Botovich")
+    (start-talk "gr1")
+    (whoami-talk "/whoami")
+    (ttalk/in-history *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
+
+    (renameme-talk "/renameme")
+    (ttalk/in-history *chat "What is your new name?")
+
+    (renameme-talk "Buddy")
+    (ttalk/in-history *chat
+                      "Renamed:"
+                      "Name: Buddy; Group: gr1; Telegram ID: 1")
+
+    (whoami-talk "/whoami")
+    (ttalk/in-history *chat "Name: Buddy; Group: gr1; Telegram ID: 1")))
