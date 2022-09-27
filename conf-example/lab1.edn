@@ -4,7 +4,7 @@
  :agenda-hide-cut-off-time-in-min -1440
  :groups {"lgr1" {:lessons [{:datetime "2022.01.01 12:00 +0000"}
                             {:datetime "2022.01.02 12:00 +0000"}]}
-          "lgr2" {}}
+          "lgr2" {:lessons [{:datetime "2022.02.02 12:00 +0000"}]}}
  :feedback-scores {1 [2]
                    2 [4 2]
                    3 [6 4 2]

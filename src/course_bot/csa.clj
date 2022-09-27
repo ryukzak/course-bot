@@ -30,6 +30,7 @@
   (pres/check-talk db conf "lab1")
   (pres/schedule-talk db conf "lab1")
   (pres/agenda-talk db conf "lab1")
+  (pres/soon-talk db conf "lab1")
   (pres/feedback-talk db conf "lab1")
   (pres/drop-talk db conf "lab1" false)
   (pres/drop-talk db conf "lab1" true)

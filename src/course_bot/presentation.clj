@@ -226,6 +226,19 @@
                  (str "Agenda " dt " (" group "):\n"
                       (str/join "\n" (map-indexed (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
 
+(defn soon [tx conf pres-id group now]
+  (let [scale (* 1000 60 60)]
+    (->> (lessons conf pres-id group)
+         (filter #(let [dt (misc/read-time (:datetime %))
+                        diff (/ (- dt now) scale)]
+                    (println (:datetime %) (misc/str-time now) diff (> diff -24)
+                             (<= diff 48))
+                    (and (> diff -24) (<= diff 48))))
+         (map #(let [dt (:datetime %)
+                     studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])]
+                 (str "Agenda " dt " (" group "):\n"
+                      (str/join "\n" (map-indexed (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
+
 (defn agenda-talk [db {token :token admin-chat-id :admin-chat-id :as conf} pres-key-name]
   (let [cmd (str pres-key-name "agenda")
         pres-key (keyword pres-key-name)
@@ -260,6 +273,21 @@
             :else
             (talk/send-text token id (str "I don't know '" arg "', you should specify one from: " groups-text)))
           (talk/stop-talk tx))))))
+
+(defn soon-talk [db {token :token  :as conf} pres-key-name]
+  (let [cmd (str pres-key-name "soon")
+        pres-key (keyword pres-key-name)
+        name (-> conf (get pres-key) :name)
+        groups (-> conf (get pres-key) :groups)]
+    (talk/def-command db cmd
+      "what will happen soon"
+      (fn [tx {{id :id} :from}]
+        (talk/send-text token id (str "We will expect for " name " soon:"))
+        (doall (->> groups keys sort
+                    (map #(soon tx conf pres-key % (misc/today)))
+                    (apply concat)
+                    (map #(talk/send-text token id %))))
+        (talk/stop-talk tx)))))
 
 (defn schedule-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "schedule")

@@ -238,6 +238,7 @@
         submissions-talk (ttalk/mock-talk pres/submissions-talk db conf "lab1")
         schedule-talk (ttalk/mock-talk pres/schedule-talk db conf "lab1")
         agenda-talk (ttalk/mock-talk pres/agenda-talk db conf "lab1")
+        soon-talk (ttalk/mock-talk pres/soon-talk db conf "lab1")
         drop-talk (ttalk/mock-talk pres/drop-talk db conf "lab1" false)
         dropall-talk (ttalk/mock-talk pres/drop-talk db conf "lab1" true)]
 
@@ -351,7 +352,38 @@
                             (str/join "\n" '("Agenda 2022.01.01 12:00 +0000 (lgr1):"
                                              "1. pres 2 (Bob)"))
                             (str/join "\n" '("Agenda 2022.01.02 12:00 +0000 (lgr1):"
-                                             "1. pres 1 (Alice)"))))))
+                                             "1. pres 1 (Alice)"))
+                            "Agenda 2022.02.02 12:00 +0000 (lgr2):\n"))))
+
+    (testing "soon-talk"
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:30 +0000"))]
+        (soon-talk 1 "/lab1soon")
+        (ttalk/in-history *chat 1
+                          "We will expect for Lab 1 presentation soon:"
+                          "Agenda 2022.01.01 12:00 +0000 (lgr1):\n1. pres 2 (Bob)"
+                          "Agenda 2022.01.02 12:00 +0000 (lgr1):\n1. pres 1 (Alice)"))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.02 11:30 +0000"))]
+        (soon-talk 1 "/lab1soon")
+        (ttalk/in-history *chat 1
+                          "We will expect for Lab 1 presentation soon:"
+                          "Agenda 2022.01.01 12:00 +0000 (lgr1):\n1. pres 2 (Bob)"
+                          "Agenda 2022.01.02 12:00 +0000 (lgr1):\n1. pres 1 (Alice)"))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.03 11:30 +0000"))]
+        (soon-talk 1 "/lab1soon")
+        (ttalk/in-history *chat 1
+                          "We will expect for Lab 1 presentation soon:"
+                          "Agenda 2022.01.02 12:00 +0000 (lgr1):\n1. pres 1 (Alice)"))
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.04 11:30 +0000"))]
+        (soon-talk 1 "/lab1soon")
+        (ttalk/in-history *chat 1
+                          "We will expect for Lab 1 presentation soon:"))
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.02.01 00:30 +0000"))]
+        (soon-talk 1 "/lab1soon")
+        (ttalk/in-history *chat 1
+                          "We will expect for Lab 1 presentation soon:"
+                          "Agenda 2022.02.02 12:00 +0000 (lgr2):\n")))
 
     (is (= {:lab1 {:approved? true
                    :description "pres 1"
