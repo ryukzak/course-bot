@@ -362,7 +362,7 @@
               {dt :datetime} (->> (future-lessons conf pres-key group nil)
                                   (some #(let [dt (misc/read-time (:datetime %))
                                                offset (/ (- now dt) (* 1000 60))]
-                                           (when (and (<= 30 offset) (<= offset 120)) %))))
+                                           (when (and (<= 30 offset) (<= offset 180)) %))))
               stud-ids (codax/get-at tx [:presentation pres-key group dt :stud-ids])
               studs (->> stud-ids
                          (map #(let [info (codax/get-at tx [%])]
