@@ -33,8 +33,8 @@
     (startquiz-talk 0 "/startquiz")
     (ttalk/in-history *chat 0 (str/join "\n"
                                         '("Available tests:"
-                                          "- :test-quiz (Test quiz)"
-                                          "- :test-quiz-2 (Test quiz 2)")))
+                                          "- test-quiz (Test quiz)"
+                                          "- test-quiz-2 (Test quiz 2)")))
 
     (startquiz-talk 0 "/startquiz test-quiz")
     (ttalk/in-history *chat 0 "Are you sure to run 'Test quiz' quiz?")

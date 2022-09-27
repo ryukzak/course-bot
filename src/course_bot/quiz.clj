@@ -18,7 +18,7 @@
                  (when-not quiz-key
                    (let [quizs (->> (-> conf :quiz)
                                     (sort-by first)
-                                    (map (fn [[k v]] (str "- " k " (" (-> v :name) ")"))))]
+                                    (map (fn [[k v]] (str "- " (name k) " (" (-> v :name) ")"))))]
                      (talk/send-text token id (str "Available tests:\n"
                                                    (str/join "\n" quizs)))
                      (talk/stop-talk tx)))
