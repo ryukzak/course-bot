@@ -231,8 +231,6 @@
     (->> (lessons conf pres-id group)
          (filter #(let [dt (misc/read-time (:datetime %))
                         diff (/ (- dt now) scale)]
-                    (println (:datetime %) (misc/str-time now) diff (> diff -24)
-                             (<= diff 48))
                     (and (> diff -24) (<= diff 48))))
          (map #(let [dt (:datetime %)
                      studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])]
