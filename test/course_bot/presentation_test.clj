@@ -530,7 +530,7 @@
       (feedback-talk 1 "/lab1feedback")
       (ttalk/in-history *chat 1 "Feedback collecting disabled (too early or too late)."))
 
-    (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 14:01 +0000"))]
+    (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 15:01 +0000"))]
       (feedback-talk 1 "/lab1feedback")
       (ttalk/in-history *chat 1 "Feedback collecting disabled (too early or too late)."))
 
