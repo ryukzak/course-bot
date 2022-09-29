@@ -534,6 +534,11 @@
       (feedback-talk 1 "/lab1feedback")
       (ttalk/in-history *chat 1 "Feedback collecting disabled (too early or too late)."))
 
+    (testing "pres group not setted"
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
+        (feedback-talk 4 "/lab1feedback")
+        (ttalk/in-history *chat 4 "To send feedback, you should set your group for Lab 1 presentation by /lab1feedback")))
+
     (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
       (feedback-talk 1 "/lab1feedback")
       (ttalk/in-history *chat 1

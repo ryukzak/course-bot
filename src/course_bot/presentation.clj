@@ -352,8 +352,9 @@
             (str/join "\n"))))
 
 (defn feedback-talk [db {token :token :as conf} pres-key-name]
-  (let [pres-key (keyword pres-key-name)]
-    (talk/def-talk db (str pres-key-name "feedback")
+  (let [pres-key (keyword pres-key-name)
+        cmd (str pres-key-name "feedback")]
+    (talk/def-talk db cmd
       "send feedback for report"
       :start
       (fn [tx {{id :id} :from}]
@@ -375,6 +376,10 @@
                                              (get pres-key)
                                              :description
                                              topic)})))]
+
+          (when (nil? group)
+            (talk/send-text token id (str "To send feedback, you should set your group for " name " by /" cmd))
+            (talk/stop-talk tx))
 
           (when (nil? dt)
             (talk/send-text token id "Feedback collecting disabled (too early or too late).")
