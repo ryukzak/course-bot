@@ -420,15 +420,16 @@
                                      :rank (conj rank (first studs))})
               talk/stop-talk))))))
 
-(defn drop-talk [db {token :token :as conf} pres-key-name drop-description]
-  (let [cmd (str pres-key-name "drop" (when drop-description "all"))
+(defn drop-talk [db {token :token :as conf} pres-key-name drop-all]
+  (let [cmd (str pres-key-name "drop" (when drop-all "all"))
+        help (str "for teacher, drop '" name "' for specific student ("
+                  (if drop-all "all" "only schedule") ")")
+
         pres-key (keyword pres-key-name)
         name (-> conf (get pres-key) :name)
         groups (-> conf (get pres-key) :groups)
         groups-text (->> groups keys sort (str/join ", "))]
-    (talk/def-talk db cmd
-      (str "for teacher, drop '" name "' for specific student ("
-           (if drop-description "all" "only schedule") ")")
+    (talk/def-talk db cmd help
 
       :start
       (fn [tx {{id :id} :from text :text}]
@@ -456,7 +457,7 @@
                                lessons (codax/get-at tx [:presentation pres-key group])]
                            (talk/send-text token id (str "We drop student: " stud-id))
                            (talk/send-text token stud-id (str "We drop your state for " name))
-                           (-> (if drop-description
+                           (-> (if drop-all
                                  (codax/assoc-at tx [stud-id :presentation pres-key] nil)
                                  (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
                                (codax/assoc-at [:presentation pres-key group]
