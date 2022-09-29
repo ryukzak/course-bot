@@ -152,18 +152,17 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
-        (cond
-          (= text "yes") (do (talk/send-text token id (str "OK, student will reveive his approve."
-                                                           "\n\n/" cmd))
-                             (talk/send-text token stud-id (str "'" name "' description was approved."))
-                             (-> tx
-                                 (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
-                                 (codax/assoc-at [stud-id :presentation pres-key :approved?] true)
-                                 talk/stop-talk))
-          (= text "no") (do (talk/send-text token id "OK, you need send your remark for the student:")
-                            (talk/change-branch tx :remark {:stud-id stud-id}))
-          :else (do (talk/send-text token id "Please, yes or no?")
-                    (talk/repeat-branch tx))))
+        (talk/if-parse-yes-or-no
+         tx token id text
+         (do (talk/send-text token id (str "OK, student will reveive his approve.\n\n/" cmd))
+             (talk/send-text token stud-id (str "'" name "' description was approved."))
+             (-> tx
+                 (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
+                 (codax/assoc-at [stud-id :presentation pres-key :approved?] true)
+                 talk/stop-talk))
+
+         (do (talk/send-text token id "OK, you need send your remark for the student:")
+             (talk/change-branch tx :remark {:stud-id stud-id}))))
 
       :remark
       (fn [tx {{id :id} :from remark :text} {stud-id :stud-id}]
@@ -424,7 +423,6 @@
   (let [cmd (str pres-key-name "drop" (when drop-all "all"))
         help (str "for teacher, drop '" name "' for specific student ("
                   (if drop-all "all" "only schedule") ")")
-
         pres-key (keyword pres-key-name)
         name (-> conf (get pres-key) :name)
         groups (-> conf (get pres-key) :groups)
@@ -452,27 +450,22 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
-        (cond
-          (= text "yes") (let [group (codax/get-at tx [stud-id :presentation pres-key :group])
-                               lessons (codax/get-at tx [:presentation pres-key group])]
-                           (talk/send-text token id (str "We drop student: " stud-id))
-                           (talk/send-text token stud-id (str "We drop your state for " name))
-                           (-> (if drop-all
-                                 (codax/assoc-at tx [stud-id :presentation pres-key] nil)
-                                 (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
-                               (codax/assoc-at [:presentation pres-key group]
-                                               (->> lessons
-                                                    (map (fn [[dt desc]]
-                                                           [dt (assoc desc
-                                                                      :stud-ids (filter #(not= stud-id %) (:stud-ids desc)))]))
-                                                    (into {})))
-                               talk/stop-talk))
-
-          (= text "no") (do (talk/send-text token id "Not droped.")
-                            (talk/stop-talk tx))
-
-          :else (do (talk/send-text token id "What?")
-                    (talk/repeat-branch tx)))))))
+        (talk/when-parse-yes-or-no
+         tx token id text
+         (let [group (codax/get-at tx [stud-id :presentation pres-key :group])
+               lessons (codax/get-at tx [:presentation pres-key group])]
+           (talk/send-text token id (str "We drop student: " stud-id))
+           (talk/send-text token stud-id (str "We drop your state for " name))
+           (-> (if drop-all
+                 (codax/assoc-at tx [stud-id :presentation pres-key] nil)
+                 (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
+               (codax/assoc-at [:presentation pres-key group]
+                               (->> lessons
+                                    (map (fn [[dt desc]]
+                                           [dt (assoc desc
+                                                      :stud-ids (filter #(not= stud-id %) (:stud-ids desc)))]))
+                                    (into {})))
+               talk/stop-talk)))))))
 
 (defn avg-rank-score [tx pres-key stud-id]
   (let [group (codax/get-at tx [stud-id :presentation pres-key :group])

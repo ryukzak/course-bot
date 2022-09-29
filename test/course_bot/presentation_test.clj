@@ -108,7 +108,7 @@
                       "Approve (yes or no)?")
 
     (check-talk 0 "nooooooooooooo")
-    (ttalk/in-history *chat 0 "Please, yes or no?")
+    (ttalk/in-history *chat 0 "What (yes or no)?")
 
     (check-talk 0 "no")
     (ttalk/in-history *chat 0 "OK, you need send your remark for the student:")
@@ -424,10 +424,10 @@
                       "Drop 'Lab 1 presentation' config for 1?")
 
     (drop-talk 0 "noooooooooooooooooooo")
-    (ttalk/in-history *chat 0 "What?")
+    (ttalk/in-history *chat 0 "What (yes or no)?")
 
     (drop-talk 0 "no")
-    (ttalk/in-history *chat 0 "Not droped.")
+    (ttalk/in-history *chat 0 "Canceled.")
 
     (drop-talk 0 "/lab1drop 1")
     (ttalk/in-history *chat 0
