@@ -31,6 +31,7 @@
          (map (fn [[group records]]
                 (let [studs (->> records
                                  (map second)
+                                 (filter #(some? (:group %)))
                                  (sort-by :name)
                                  (map (fn [i x] (str (+ 1 i) ") " (:name x) " (@" (-> x :chat :username) ", " (-> x :chat :id) ")"))
                                       (range)))
