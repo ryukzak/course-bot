@@ -218,12 +218,13 @@
          (filter-lesson cut-off-in-min now))))
 
 (defn agenda [tx conf pres-id group now]
-  (let [cut-off-in-min (-> conf (get pres-id) :agenda-hide-cut-off-time-in-min)]
+  (let [cut-off-in-min (-> conf (get pres-id) :agenda-hide-cut-off-time-in-min)
+        comment (-> conf (get pres-id) :groups (get group) :comment)]
     (->> (lessons conf pres-id group)
          (filter-lesson cut-off-in-min now)
          (map #(let [dt (:datetime %)
                      studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])]
-                 (str "Agenda " dt " (" group "):\n"
+                 (str "Agenda " dt " (" group ")" (when (some? comment) (str ", " comment)) ":\n"
                       (str/join "\n" (map-indexed (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
 
 (defn soon [tx conf pres-id group now]
@@ -233,8 +234,9 @@
                         diff (/ (- dt now) scale)]
                     (and (> diff -24) (<= diff 48))))
          (map #(let [dt (:datetime %)
+                     comment (-> conf (get pres-id) :groups (get group) :comment)
                      studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])]
-                 (str "Agenda " dt " (" group "):\n"
+                 (str "Agenda " dt " (" group ")" (when (some? comment) (str ", " comment)) ":\n"
                       (str/join "\n" (map-indexed (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
 
 (defn agenda-talk [db {token :token admin-chat-id :admin-chat-id :as conf} pres-key-name]
