@@ -141,8 +141,12 @@
             (talk/stop-talk tx))
           (let [[stud-id info] submition
                 group (-> info :presentation (get pres-key) :group)
-                desc (-> info :presentation (get pres-key) :description)]
+                desc (-> info :presentation (get pres-key) :description)
+                remarks (codax/get-at tx [stud-id :presentation pres-key :remarks])]
             (talk/send-text token id (approved-submissions tx pres-key group))
+            (when (some? remarks)
+              (talk/send-text token id "Remarks:")
+              (doall (->> remarks reverse (map #(talk/send-text token id %)))))
             (talk/send-text token id (str "We receive from the student (group " (-> info :group) "): "
                                           "\n\n"
                                           "Topic: " (topic desc)))
@@ -171,6 +175,7 @@
         (talk/send-text token stud-id (str "'" name "' description was rejected. Remark:\n\n" remark))
         (-> tx
             (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
+            (codax/update-at [stud-id :presentation pres-key :remarks] conj remark)
             talk/stop-talk)))))
 
 (defn submissions-talk [db {token :token admin-chat-id :admin-chat-id :as conf} pres-key-name]

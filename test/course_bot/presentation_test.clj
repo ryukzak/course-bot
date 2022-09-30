@@ -100,30 +100,31 @@
     (submit-talk 1 "yes")
     (ttalk/in-history *chat 1 "Registered, the teacher will check it soon.")
 
-    (check-talk 0 "/lab1check")
-    (ttalk/in-history *chat 0
-                      "Approved presentation in 'lgr1':\n"
-                      "We receive from the student (group gr1): \n\nTopic: bla-bla-bla the best"
-                      "bla-bla-bla the best"
-                      "Approve (yes or no)?")
+    (testing "check and reject"
+      (check-talk 0 "/lab1check")
+      (ttalk/in-history *chat 0
+                        "Approved presentation in 'lgr1':\n"
+                        "We receive from the student (group gr1): \n\nTopic: bla-bla-bla the best"
+                        "bla-bla-bla the best"
+                        "Approve (yes or no)?")
 
-    (check-talk 0 "nooooooooooooo")
-    (ttalk/in-history *chat 0 "What (yes or no)?")
+      (check-talk 0 "nooooooooooooo")
+      (ttalk/in-history *chat 0 "What (yes or no)?")
 
-    (check-talk 0 "no")
-    (ttalk/in-history *chat 0 "OK, you need send your remark for the student:")
+      (check-talk 0 "no")
+      (ttalk/in-history *chat 0 "OK, you need send your remark for the student:")
 
-    (check-talk 0 "Please, add details!")
-    (ttalk/in-history *chat
-                      [0 "Presentation description declined. The student was informed about your decision.\n\n/lab1check"]
-                      [1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details!"])
+      (check-talk 0 "Please, add details!")
+      (ttalk/in-history *chat
+                        [0 "Presentation description declined. The student was informed about your decision.\n\n/lab1check"]
+                        [1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details!"])
 
-    (submissions-talk 1 "/lab1submissions")
-    (ttalk/in-history *chat 1
-                      (str/join "\n" '("Submitted presentation in 'lgr1':"
-                                       "- bla-bla-bla the best (Bot Botovich) - REJECTED")))
+      (submissions-talk 1 "/lab1submissions")
+      (ttalk/in-history *chat 1
+                        (str/join "\n" '("Submitted presentation in 'lgr1':"
+                                         "- bla-bla-bla the best (Bot Botovich) - REJECTED"))))
 
-    (testing "submissions-talk with args"
+    (testing "submissions-talk with specific group"
       (submissions-talk 2 "/lab1submissions")
       (ttalk/in-history *chat 2 "Please, set your 'Lab 1 presentation' group by /lab1setgroup")
 
@@ -138,10 +139,38 @@
                         "Submitted presentation in 'lgr1':\n- bla-bla-bla the best (Bot Botovich) - REJECTED"
                         "Submitted presentation in 'lgr2':\n"))
 
+    (testing "resubmit 2"
+      (submit-talk 1 "/lab1submit")
+      (submit-talk 1 "bla-bla-bla the best (second reject)")
+      (submit-talk 1 "yes")
+      (ttalk/in-history *chat 1 "Registered, the teacher will check it soon."))
+
+    (testing "check and reject 2"
+      (check-talk 0 "/lab1check")
+      (ttalk/in-history *chat 0
+                        "Approved presentation in 'lgr1':\n"
+                        "Remarks:"
+                        "Please, add details!"
+                        "We receive from the student (group gr1): \n\nTopic: bla-bla-bla the best (second reject)"
+                        "bla-bla-bla the best (second reject)"
+                        "Approve (yes or no)?")
+
+      (check-talk 0 "no")
+      (ttalk/in-history *chat 0 "OK, you need send your remark for the student:")
+
+      (check-talk 0 "Please, add details 2!")
+      (ttalk/in-history *chat
+                        [0 "Presentation description declined. The student was informed about your decision.\n\n/lab1check"]
+                        [1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details 2!"])
+
+      (submissions-talk 1 "/lab1submissions"))
+
     (is (= {:lab1
-            {:description "bla-bla-bla the best"
+            {:description "bla-bla-bla the best (second reject)"
              :group "lgr1"
-             :on-review? false}}
+             :on-review? false
+             :remarks '("Please, add details 2!"
+                        "Please, add details!")}}
            (codax/get-at! db [1 :presentation])))
 
     (submit-talk 1 "/lab1submit")
@@ -156,6 +185,9 @@
     (check-talk 0 "/lab1check")
     (ttalk/in-history *chat 0
                       "Approved presentation in 'lgr1':\n"
+                      "Remarks:"
+                      "Please, add details!"
+                      "Please, add details 2!"
                       "We receive from the student (group gr1): \n\nTopic: bla-bla-bla 2"
                       "bla-bla-bla 2\ntext"
                       "Approve (yes or no)?")
@@ -169,7 +201,9 @@
             {:description "bla-bla-bla 2\ntext"
              :group "lgr1"
              :approved? true
-             :on-review? false}}
+             :on-review? false
+             :remarks '("Please, add details 2!"
+                        "Please, add details!")}}
            (codax/get-at! db [1 :presentation])))
 
     (check-talk 0 "/lab1check")
