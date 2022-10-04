@@ -123,7 +123,7 @@
     (not (empty? (re-seq re text)))))
 
 (defn quiz-talk [db {token :token :as conf}]
-  (talk/talk db "quiz"
+  (talk/talk db "quiz" "начать прохождение теста, если он запущен"
              :start
              (fn [tx {{id :id} :from}]
                (let [quiz-key (codax/get-at tx [:quiz :current])
