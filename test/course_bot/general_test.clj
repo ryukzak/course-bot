@@ -88,7 +88,7 @@
                         [1 "You can use /start once more."])
 
       (start-talk "/start")
-      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the regestry)?"))))
+      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))))
 
 (talk/deftest renameme-talk-test [db *chat]
   (let [conf (misc/get-config "conf-example")
