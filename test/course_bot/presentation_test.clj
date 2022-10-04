@@ -34,7 +34,7 @@
     (ttalk/in-history *chat "Your Lab 1 presentation group set: lgr1")
 
     (setgroup-talk 1 "/lab1setgroup")
-    (ttalk/in-history *chat "Your Lab 1 presentation group already set: lgr1")
+    (ttalk/in-history *chat "Your Lab 1 presentation group is already set: lgr1")
     (is (= {:lab1 {:group "lgr1"}} (codax/get-at! db [1 :presentation])))))
 
 (talk/deftest submit-talk-test [db *chat]
