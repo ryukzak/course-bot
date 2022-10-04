@@ -194,7 +194,7 @@
 
     (check-talk 0 "yes")
     (ttalk/in-history *chat
-                      [0 "OK, student will reveive his approve.\n\n/lab1check"]
+                      [0 "OK, student will receive his approve.\n\n/lab1check"]
                       [1 "'Lab 1 presentation' description was approved."])
 
     (is (= {:lab1
