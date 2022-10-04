@@ -24,7 +24,7 @@
                      (talk/stop-talk tx)))
 
                  (when-not quiz
-                   (talk/send-text token id "Quiz not defined.") (talk/stop-talk tx))
+                   (talk/send-text token id "Quiz is not defined.") (talk/stop-talk tx))
 
                  (talk/send-yes-no-kbd token id (str "Are you sure to run '" (:name quiz) "' quiz?"))
                  (talk/change-branch tx :approve {:quiz-key quiz-key})))
@@ -103,7 +103,7 @@
                                        tx per-studs)
                                (codax/assoc-at [:quiz :current] nil)
                                talk/stop-talk))
-                   "no" (do (talk/send-text token id "In a next time. The quiz is still in progres.") (talk/stop-talk tx))
+                   "no" (do (talk/send-text token id "In a next time. The quiz is still in progress.") (talk/stop-talk tx))
                    (do (talk/send-text token id "What?") (talk/wait tx)))))))
 
 (defn question-msg [quiz question-idx]
@@ -172,7 +172,7 @@
                          (talk/send-text token id next-question)
                          (codax/assoc-at tx [:quiz :results quiz-key id] new-results))
                        (do
-                         (talk/send-text token id "Спасибо, тест пройден. Результаты пришлю когда тест будет закрыт.")
+                         (talk/send-text token id "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт.")
                          (talk/send-text token (-> conf :admin-chat-id)
                                          (str "Quiz answers: " (str/join ", " new-results)))
                          (-> tx
