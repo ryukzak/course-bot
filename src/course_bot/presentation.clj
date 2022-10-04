@@ -170,7 +170,7 @@
 
       :remark
       (fn [tx {{id :id} :from remark :text} {stud-id :stud-id}]
-        (talk/send-text token id (str "Presentation description declined. The student was informed about your decision."
+        (talk/send-text token id (str "Presentation description was declined. The student was informed about your decision."
                                       "\n\n/" cmd))
         (talk/send-text token stud-id (str "'" name "' description was rejected. Remark:\n\n" remark))
         (-> tx
