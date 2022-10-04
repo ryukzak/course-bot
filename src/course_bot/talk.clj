@@ -145,7 +145,7 @@
 (defmacro when-parse-yes-or-no [tx token id text & body]
   `(if-parse-yes-or-no ~tx ~token ~id ~text
                        (do ~@body)
-                       (do (talk/send-text ~token ~id "Canceled.")
+                       (do (talk/send-text ~token ~id "Cancelled.")
                            (talk/stop-talk ~tx))))
 
 ;; tests
