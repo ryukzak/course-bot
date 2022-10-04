@@ -87,7 +87,7 @@
     (register-user *chat start-talk 1 "Bot Botovich")
     (setgroup-talk 1 "/lab1setgroup")
     (setgroup-talk 1 "lgr1")
-    (ttalk/in-history *chat 1 "Your Lab 1 presentation group setted: lgr1")
+    (ttalk/in-history *chat 1 "Your Lab 1 presentation group set: lgr1")
 
     (check-talk 1 "/lab1check")
     (ttalk/in-history *chat 1 "That action requires admin rights.")
@@ -112,11 +112,11 @@
       (ttalk/in-history *chat 0 "What (yes or no)?")
 
       (check-talk 0 "no")
-      (ttalk/in-history *chat 0 "OK, you need send your remark for the student:")
+      (ttalk/in-history *chat 0 "OK, you need to send your remark for the student:")
 
       (check-talk 0 "Please, add details!")
       (ttalk/in-history *chat
-                        [0 "Presentation description declined. The student was informed about your decision.\n\n/lab1check"]
+                        [0 "Presentation description was declined. The student was informed about your decision.\n\n/lab1check"]
                         [1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details!"])
 
       (submissions-talk 1 "/lab1submissions")
@@ -156,11 +156,11 @@
                         "Approve (yes or no)?")
 
       (check-talk 0 "no")
-      (ttalk/in-history *chat 0 "OK, you need send your remark for the student:")
+      (ttalk/in-history *chat 0 "OK, you need to send your remark for the student:")
 
       (check-talk 0 "Please, add details 2!")
       (ttalk/in-history *chat
-                        [0 "Presentation description declined. The student was informed about your decision.\n\n/lab1check"]
+                        [0 "Presentation description was declined. The student was informed about your decision.\n\n/lab1check"]
                         [1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details 2!"])
 
       (submissions-talk 1 "/lab1submissions"))
@@ -180,7 +180,7 @@
 
     (testing "Try to resubmit:"
       (submit-talk 1 "/lab1submit")
-      (ttalk/in-history *chat 1 "On review, you will be informed when it finished."))
+      (ttalk/in-history *chat 1 "On review, you will be informed when it is finished."))
 
     (check-talk 0 "/lab1check")
     (ttalk/in-history *chat 0
@@ -211,7 +211,7 @@
 
     (testing "Try to resubmit:"
       (submit-talk 1 "/lab1submit")
-      (ttalk/in-history *chat 1 "Already submitted and approved, maybe you need schedule it? /lab1schedule"))
+      (ttalk/in-history *chat 1 "Already submitted and approved, maybe you need to schedule it? /lab1schedule"))
 
     (testing "Second student"
       (register-user *chat start-talk 2 "Alice")
@@ -247,7 +247,7 @@
                         "Approve (yes or no)?")
       (check-talk 0 "yes")
       (ttalk/in-history *chat
-                        [0 "OK, student will reveive his approve.\n\n/lab1check"]
+                        [0 "OK, student will receive his approve.\n\n/lab1check"]
                         [2 "'Lab 1 presentation' description was approved."])
 
       (is (= {:lab1
@@ -461,7 +461,7 @@
     (ttalk/in-history *chat 0 "What (yes or no)?")
 
     (drop-talk 0 "no")
-    (ttalk/in-history *chat 0 "Canceled.")
+    (ttalk/in-history *chat 0 "Cancelled.")
 
     (drop-talk 0 "/lab1drop 1")
     (ttalk/in-history *chat 0
@@ -577,21 +577,21 @@
       (feedback-talk 1 "/lab1feedback")
       (ttalk/in-history *chat 1
                         "Collect feedback for 'Lab 1 presentation' (lgr1) at 2022.01.01 12:00 +0000"
-                        (str/join "\n" '("Enter number of the best presentation in the list:"
+                        (str/join "\n" '("Enter the number of the best presentation in the list:"
                                          "0. Bob (pres 2)"
                                          "1. Alice (pres 1)")))
       (feedback-talk 1 "0")
       (ttalk/in-history *chat 1
-                        (str/join "\n" '("Enter number of the best presentation in the list:"
+                        (str/join "\n" '("Enter the number of the best presentation in the list:"
                                          "0. Alice (pres 1)")))
 
       (feedback-talk 1 "0")
-      (ttalk/in-history *chat 1 "Thank, your feedback saved!")
+      (ttalk/in-history *chat 1 "Thanks, your feedback saved!")
 
       (feedback-talk 2 "/lab1feedback")
       (feedback-talk 2 "1")
       (feedback-talk 2 "0")
-      (ttalk/in-history *chat 2 "Thank, your feedback saved!")
+      (ttalk/in-history *chat 2 "Thanks, your feedback saved!")
 
       (is (= {:feedback (list
                          {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
@@ -614,7 +614,7 @@
         (feedback-talk 3 "/lab1feedback")
         (feedback-talk 3 "1")
         (feedback-talk 3 "0")
-        (ttalk/in-history *chat 3 "Thank, your feedback saved!"))
+        (ttalk/in-history *chat 3 "Thanks, your feedback saved!"))
 
       (is (= {:feedback (list
                          {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
