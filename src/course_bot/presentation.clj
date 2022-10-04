@@ -33,7 +33,7 @@
           (talk/send-text token id (str "I don't know this group. Try again (" groups-text ")"))
           (talk/wait tx))
 
-        (talk/send-text token id (str "Your " name " group setted: " text))
+        (talk/send-text token id (str "Your " name " group set: " text))
         (-> tx
             (codax/assoc-at [id :presentation pres-key :group] text)
             talk/stop-talk)))))
