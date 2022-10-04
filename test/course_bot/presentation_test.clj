@@ -31,10 +31,10 @@
     (ttalk/in-history *chat "I don't know this group. Try again (lgr1, lgr2)")
 
     (setgroup-talk 1 "lgr1")
-    (ttalk/in-history *chat "Your Lab 1 presentation group setted: lgr1")
+    (ttalk/in-history *chat "Your Lab 1 presentation group set: lgr1")
 
     (setgroup-talk 1 "/lab1setgroup")
-    (ttalk/in-history *chat "Your Lab 1 presentation group already setted: lgr1")
+    (ttalk/in-history *chat "Your Lab 1 presentation group already set: lgr1")
     (is (= {:lab1 {:group "lgr1"}} (codax/get-at! db [1 :presentation])))))
 
 (talk/deftest submit-talk-test [db *chat]
@@ -49,7 +49,7 @@
 
     (setgroup-talk 1 "/lab1setgroup")
     (setgroup-talk 1 "lgr1")
-    (ttalk/in-history *chat 1 "Your Lab 1 presentation group setted: lgr1")
+    (ttalk/in-history *chat 1 "Your Lab 1 presentation group set: lgr1")
 
     (submit-talk 1 "/lab1submit")
     (ttalk/in-history *chat 1 "hint")
@@ -568,7 +568,7 @@
       (feedback-talk 1 "/lab1feedback")
       (ttalk/in-history *chat 1 "Feedback collecting disabled (too early or too late)."))
 
-    (testing "pres group not setted"
+    (testing "pres group not set"
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
         (feedback-talk 4 "/lab1feedback")
         (ttalk/in-history *chat 4 "To send feedback, you should set your group for Lab 1 presentation by /lab1feedback")))
