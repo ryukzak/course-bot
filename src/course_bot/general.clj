@@ -18,7 +18,7 @@
                                    "Telegram ID: " about)))))
 
 (defn whoami-talk [db {token :token}]
-  (talk/def-command db "whoami" "send me my refistration info"
+  (talk/def-command db "whoami" "send me my registration info"
     (fn [tx {{id :id} :from}]
       (send-whoami tx token id)
       (talk/stop-talk tx))))
@@ -53,7 +53,7 @@
             (talk/stop-talk tx))
           (talk/send-text token id (str "Hi, I'm a bot for your course. "
                                         "I will help you with your work. "
-                                        "What is your name (like in the regestry)?"))
+                                        "What is your name (like in the registry)?"))
           (talk/change-branch tx :get-name)))
 
       :get-name
@@ -83,7 +83,7 @@
     (fn [tx {{id :id} :from}]
       (let [info (codax/get-at tx [id])]
         (when (nil? (:name info))
-          (talk/send-text token id "You should be registred to rename yourself!")
+          (talk/send-text token id "You should be registered to rename yourself!")
           (talk/stop-talk tx))
         (talk/send-text token id (str "What is your new name?"))
         (talk/change-branch tx :get-name)))
