@@ -17,7 +17,7 @@
 
     (testing "registration"
       (start-talk "/start")
-      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the regestry)?")
+      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?")
 
       (start-talk "Bot Botovich")
       (ttalk/in-history *chat "What is your group (gr1, gr2)?")
@@ -88,7 +88,7 @@
                         [1 "You can use /start once more."])
 
       (start-talk "/start")
-      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the regestry)?"))))
+      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))))
 
 (talk/deftest renameme-talk-test [db *chat]
   (let [conf (misc/get-config "conf-example")
@@ -97,7 +97,7 @@
         renameme-talk (ttalk/mock-talk general/renameme-talk db conf)]
 
     (renameme-talk "/renameme")
-    (ttalk/in-history *chat "You should be registred to rename yourself!")
+    (ttalk/in-history *chat "You should be registered to rename yourself!")
 
     (start-talk "/start")
     (start-talk "Bot Botovich")

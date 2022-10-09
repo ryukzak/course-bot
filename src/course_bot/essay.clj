@@ -37,7 +37,7 @@
                 (talk/send-text token id (str "Ваше эссе '" essay-code "' уже загружено"))
                 (talk/stop-talk tx))
               (case text
-                "yes" (do (talk/send-text token id "Спасибо, текст загружен и скоро попадет на рецензирование.")
+                "yes" (do (talk/send-text token id "Спасибо, текст загружен и скоро попадёт на рецензирование.")
                           (-> tx
                               (codax/assoc-at [id :essays essay-code :submitted?] true)
                               talk/stop-talk))
@@ -118,7 +118,7 @@
           (fn [tx {{id :id} :chat}]
             (let [assignments (my-assignements tx id essay-code)]
               (when (empty? assignments)
-                (talk/send-text token id "Вам не назначено не одно эссе. Вероятно, вы не загрузили своё.")
+                (talk/send-text token id "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё.")
                 (talk/stop-talk tx))
               (when-not (nil? (codax/get-at tx [id :essays essay-code :my-reviews]))
                 (talk/send-text token id "Вы уже сделали ревью.")
@@ -154,7 +154,7 @@
           (fn foo ([tx msg] (foo tx msg {}))
             ([tx {{id :id} :chat text :text} {reviews :reviews}]
              (when (and (seq reviews) (empty? (filter :index reviews)))
-               (talk/send-text token id "Увы, но вам надо начать писать отзывы с начала (если вы это сообщение видете в очередной раз -- сообщите).")
+               (talk/send-text token id "Увы, но вам надо начать писать отзывы сначала (если вы это сообщение видите в очередной раз -- сообщите).")
                (talk/stop-talk tx))
              (let [assignments (my-assignement-ids tx id essay-code)
                    index (try (- (Integer/parseInt (.trim (first (re-find #"^\d(\s|$)" text)))) 1)
@@ -166,7 +166,7 @@
                  (or (nil? index)
                      (< index 0) (>= index (count assignments))
                      (< pos 1) (> pos (count assignments)))
-                 (do (talk/send-text token id "Увы, но я не понял какое эссе вы назвали. Номер должен быть первым символом и отделён от остального текста.")
+                 (do (talk/send-text token id "Увы, но я не понял, какое эссе вы назвали. Номер должен быть первым символом и отделён от остального текста.")
                      (talk/wait tx))
 
                  (< (count text) 10)
@@ -174,7 +174,7 @@
                      (talk/wait tx))
 
                  (some #{index} (map :index reviews))
-                 (do (talk/send-text token id "Вы уже дали ответ относительно данного Эссе.")
+                 (do (talk/send-text token id "Вы уже дали ответ относительно данного эссе.")
                      (talk/wait tx))
 
                  :else
@@ -185,7 +185,7 @@
                      (do (talk/send-text token id "ok")
                          (talk/change-branch tx :get-feedback {:reviews reviews'}))
                      (let [conclusion (str-reviews tx essay-code id reviews')]
-                       (talk/send-text token id "Вы высказались про все эссе. Посмотрите что получилось:")
+                       (talk/send-text token id "Вы высказались про все эссе. Посмотрите, что получилось:")
                        (talk/send-text token id conclusion)
                        (talk/send-yes-no-kbd token id "Всё верно?")
                        (talk/change-branch tx :approve
@@ -207,7 +207,7 @@
                   (talk/stop-talk tx))
 
               :else
-              (do (talk/send-yes-no-kbd token id "Непонял. yes или no?")
+              (do (talk/send-yes-no-kbd token id "Не понял. yes или no?")
                   (talk/wait tx))))))
 
 (defn essay-status-talk [db token essay-code]
@@ -251,10 +251,10 @@
                        (apply concat)
                        (filter #(-> % :essay-author (= id))))]
       (->> reviews
-           (map #(str "Как за вас проголовали: " (:pos %)
+           (map #(str "Как за вас проголосовали: " (:pos %)
                       (when-let [fb (:feedback %)] (str "\nОтзыв: " fb))))))
     (->> (codax/get-at tx [id :essays essay-code :received-review])
-         (map #(str "Как за вас проголовали: " (:pos %)
+         (map #(str "Как за вас проголосовали: " (:pos %)
                     (when-let [fb (:feedback %)] (str "\nОтзыв: " fb)))))))
 
 (defn essay-results-talk [db token essay-code]

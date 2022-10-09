@@ -28,7 +28,7 @@
     (ttalk/in-history *chat 1 "That action requires admin rights.")
 
     (startquiz-talk 0 "/startquiz missed-quiz")
-    (ttalk/in-history *chat 0 "Quiz not defined.")
+    (ttalk/in-history *chat 0 "Quiz is not defined.")
 
     (startquiz-talk 0 "/startquiz")
     (ttalk/in-history *chat 0 (str/join "\n"
@@ -106,7 +106,7 @@
 
     (quiz-talk 1 "2")
     (ttalk/in-history *chat
-                      [1 "Спасибо, тест пройден. Результаты пришлю когда тест будет закрыт."]
+                      [1 "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."]
                       [0 "Quiz answers: 1, 2"])
 
     (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results])))))
@@ -128,7 +128,7 @@
     (quiz-talk 1 "1")
     (quiz-talk 1 "1")
     (ttalk/in-history *chat
-                      [1 "Спасибо, тест пройден. Результаты пришлю когда тест будет закрыт."]
+                      [1 "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."]
                       [0 "Quiz answers: 1, 1"])
 
     (is (= {:test-quiz {1 '("1" "1")}} (codax/get-at! db [:quiz :results])))
@@ -143,7 +143,7 @@
     (ttalk/in-history *chat 0 "What?")
 
     (stopquiz-talk 0 "no")
-    (ttalk/in-history *chat 0 "In a next time. The quiz is still in progres.")
+    (ttalk/in-history *chat 0 "In a next time. The quiz is still in progress.")
 
     (stopquiz-talk 0 "/stopquiz")
     (ttalk/in-history *chat 0 "Are you sure to stop 'Test quiz' quiz?")

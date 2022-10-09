@@ -22,7 +22,7 @@
       (fn [tx {{id :id} :from}]
         (let [pres-group (codax/get-at tx [id :presentation pres-key :group])]
           (if (some? pres-group)
-            (do (talk/send-text token id (str "Your " name " group already setted: " pres-group))
+            (do (talk/send-text token id (str "Your " name " group is already set: " pres-group))
                 (talk/stop-talk tx))
             (do (talk/send-text token id (str "Please, select your " name " group: " groups-text))
                 (talk/change-branch tx :set-group)))))
@@ -33,7 +33,7 @@
           (talk/send-text token id (str "I don't know this group. Try again (" groups-text ")"))
           (talk/wait tx))
 
-        (talk/send-text token id (str "Your " name " group setted: " text))
+        (talk/send-text token id (str "Your " name " group set: " text))
         (-> tx
             (codax/assoc-at [id :presentation pres-key :group] text)
             talk/stop-talk)))))
@@ -56,11 +56,11 @@
             (talk/stop-talk tx))
 
           (when (:on-review? pres)
-            (talk/send-text token id "On review, you will be informed when it finished.")
+            (talk/send-text token id "On review, you will be informed when it is finished.")
             (talk/stop-talk tx))
 
           (when (:approved? pres)
-            (talk/send-text token id (str "Already submitted and approved, maybe you need schedule it? /" pres-key-name "schedule"))
+            (talk/send-text token id (str "Already submitted and approved, maybe you need to schedule it? /" pres-key-name "schedule"))
             (talk/stop-talk tx))
 
           (talk/send-text token id (if hint
@@ -158,19 +158,19 @@
       (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
         (talk/if-parse-yes-or-no
          tx token id text
-         (do (talk/send-text token id (str "OK, student will reveive his approve.\n\n/" cmd))
+         (do (talk/send-text token id (str "OK, student will receive his approve.\n\n/" cmd))
              (talk/send-text token stud-id (str "'" name "' description was approved."))
              (-> tx
                  (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
                  (codax/assoc-at [stud-id :presentation pres-key :approved?] true)
                  talk/stop-talk))
 
-         (do (talk/send-text token id "OK, you need send your remark for the student:")
+         (do (talk/send-text token id "OK, you need to send your remark for the student:")
              (talk/change-branch tx :remark {:stud-id stud-id}))))
 
       :remark
       (fn [tx {{id :id} :from remark :text} {stud-id :stud-id}]
-        (talk/send-text token id (str "Presentation description declined. The student was informed about your decision."
+        (talk/send-text token id (str "Presentation description was declined. The student was informed about your decision."
                                       "\n\n/" cmd))
         (talk/send-text token stud-id (str "'" name "' description was rejected. Remark:\n\n" remark))
         (-> tx
@@ -350,7 +350,7 @@
               talk/stop-talk))))))
 
 (defn feedback-str [studs]
-  (str "Enter number of the best presentation in the list:\n"
+  (str "Enter the number of the best presentation in the list:\n"
        (->> studs
             (map-indexed #(str %1 ". " (:name %2) " (" (:topic %2) ")"))
             (str/join "\n"))))
@@ -403,7 +403,7 @@
       (fn [tx {{id :id} :from text :text} {rank :rank studs :remain group :group dt :dt :as state}]
         (let [n (if (re-matches #"^\d+$" text) (Integer/parseInt text) nil)]
           (when (or (nil? n) (not (< n (count studs))))
-            (talk/send-text token id "Wrong input. Enter number of the best presentation in the list.")
+            (talk/send-text token id "Wrong input. Enter the number of the best presentation in the list.")
             (talk/wait tx))
 
           (when (> (count studs) 1)
@@ -415,7 +415,7 @@
                                          :rank (conj rank best)
                                          :remain studs))))
 
-          (talk/send-text token id "Thank, your feedback saved!")
+          (talk/send-text token id "Thanks, your feedback saved!")
           (-> tx
               (codax/update-at [:presentation pres-key group dt :feedback-from]
                                conj id)
