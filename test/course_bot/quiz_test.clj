@@ -50,10 +50,10 @@
     (is (= {:current :test-quiz} (codax/get-at! db [:quiz])))
 
     (startquiz-talk 0 "/startquiz test-quiz")
-    (ttalk/in-history *chat 0 "Test already runned.")
+    (ttalk/in-history *chat 0 "Test is already running.")
 
     (startquiz-talk 0 "/startquiz")
-    (ttalk/in-history *chat 0 "Test already runned.")))
+    (ttalk/in-history *chat 0 "Test is already running.")))
 
 (talk/deftest quiz-talk-test [db *chat]
   (let [conf (misc/get-config "conf-example")
