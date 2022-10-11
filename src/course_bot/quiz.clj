@@ -128,6 +128,7 @@
              (fn [tx {{id :id} :from}]
                (let [quiz-key (codax/get-at tx [:quiz :current])
                      quiz (-> conf :quiz (get quiz-key))
+                     questions-count (-> conf :quiz (get quiz-key) :questions count)
                      quiz-name (-> quiz :name)
                      results (codax/get-at tx [:quiz :results quiz-key id])]
 
@@ -140,7 +141,8 @@
                    (talk/send-text token id (str "Тест не запущен, дождитесь отмашки преподавателя."))
                    (-> tx talk/stop-talk))
 
-                 (talk/send-yes-no-kbd token id (str "Хотите начать тест '" quiz-name "'?"))
+                 (talk/send-yes-no-kbd token id (str "Хотите начать тест '" quiz-name
+                                                     "' (" questions-count " вопроса(-ов))?"))
                  (talk/change-branch tx :quiz-approve)))
              :quiz-approve
              (fn [tx {{id :id} :from text :text}]
