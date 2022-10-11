@@ -426,10 +426,10 @@
 
 (defn drop-talk [db {token :token :as conf} pres-key-name drop-all]
   (let [cmd (str pres-key-name "drop" (when drop-all "all"))
-        help (str "for teacher, drop '" name "' for specific student ("
-                  (if drop-all "all" "only schedule") ")")
         pres-key (keyword pres-key-name)
         name (-> conf (get pres-key) :name)
+        help (str "for teacher, drop '" name "' for specific student ("
+                  (if drop-all "all" "only schedule") ")")
         groups (-> conf (get pres-key) :groups)
         groups-text (->> groups keys sort (str/join ", "))]
     (talk/def-talk db cmd help
