@@ -51,10 +51,10 @@
 (def *helps (atom {}))
 
 (defn helps []
-  (str "Helps:\n" (->> @*helps
-                       (map (fn [[n d]] (str n " - " d)))
-                       sort
-                       (str/join "\n"))))
+  (->> @*helps
+       (map (fn [[n d]] (str n " - " d)))
+       sort
+       (str/join "\n")))
 
 ;; TODO: move help hint to name, like: "start - register student"
 
