@@ -10,7 +10,7 @@
              (fn [tx {{id :id} :from text :text}]
                (general/assert-admin tx conf id)
                (when-not (nil? (codax/get-at tx [:quiz :current]))
-                 (talk/send-text token id "Test already runned.")
+                 (talk/send-text token id "Test is already running.")
                  (talk/stop-talk tx))
 
                (let [quiz-key (talk/command-keyword-arg text)
