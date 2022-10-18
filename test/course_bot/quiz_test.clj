@@ -150,13 +150,15 @@
 
     (stopquiz-talk 0 "yes")
     (ttalk/in-history *chat
-                      [0 (str/join "\n" '("Статистика по ответам:\n"
-                                          "1. Q1"
-                                          "  - a1"
-                                          "  - a2"
-                                          "  -- 1; 0"
-                                          "2. Q2"
-                                          "  - a3"
-                                          "  - a4"
-                                          "  -- 1; 0"))]
+                      [0 "The quiz 'Test quiz' was stopped"]
+                      [0
+                       "Q1"
+                       ""
+                       "- [1] a1"
+                       "- [0] CORRECT a2"]
+                      [0
+                       "Q2"
+                       ""
+                       "- [1] CORRECT a3"
+                       "- [0] a4"]
                       [1 "Ваш результат: 1/2"])))

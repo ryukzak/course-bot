@@ -1,5 +1,6 @@
 (ns course-bot.talk-test
-  (:require [clojure.test :refer :all])
+  (:require [clojure.test :refer :all]
+            [clojure.string :as str])
   (:require [codax.core :as codax])
   (:require [course-bot.talk :as talk]))
 
@@ -12,7 +13,7 @@
   (let [[def-id msgs] (if (number? (first msgs)) [(first msgs) (rest msgs)] [1 msgs])
         expect (->> msgs
                     (map #(let [id (if (vector? %) (first %) def-id)
-                                text (if (vector? %) (second %) %)]  {:id id :msg text})))
+                                text (if (vector? %) (str/join "\n" (rest %)) %)]  {:id id :msg text})))
         actual (->> @*chat
                     (take (count expect))
                     reverse)]

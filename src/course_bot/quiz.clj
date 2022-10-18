@@ -46,8 +46,7 @@
                        (-> quiz :questions (get index) :options)
                        (map-indexed (fn [opt-index _text]
                                       (filter #(= % (str (+ 1 opt-index))) anss)))
-                       (map #(str (count %)))
-                       (str/join "; "))))))
+                       (map #(str (count %))))))))
 
 (defn stud-results-inner [quiz ans id]
   (let [options (map :options (:questions quiz))
@@ -84,19 +83,15 @@
                                                   [stud-id cur info]))
                                               (keys results))]
                            (talk/send-text token id (str "The quiz '" quiz-name "' was stopped"))
-                           (talk/send-text token id
-                                           (str "Статистика по ответам:\n\n"
-                                                (if results
-                                                  (str/join "\n" (map str
-                                                                      (->> (-> quiz :questions)
-                                                                           (map-indexed (fn [idx item]
-                                                                                          (str (+ 1 idx) ". " (:ask item) "\n"
-                                                                                               (->> (:options item)
-                                                                                                    (map #(str "  - " (:text %)))
-                                                                                                    (str/join "\n"))
-                                                                                               "\n  -- "))))
-                                                                      (result-stat quiz results)))
-                                                  "нет ответов")))
+
+                           (doall (map  #(talk/send-text token id %)
+                                        (map (fn [question scores]
+
+                                               (str (:ask question) "\n\n"
+                                                    (str/join "\n" (map #(str "- [" %1 "] " (when (:correct %2) "CORRECT ") (:text %2)) scores (:options question)))))
+                                             (-> quiz :questions)
+                                             (result-stat quiz results))))
+
                            (doall (map (fn [[stud-id _cur info]] (talk/send-text token stud-id (str "Ваш результат: " info)))
                                        per-studs))
                            (-> (reduce (fn [tx [_stud-id cur _info]] (codax/assoc-at tx [id :quiz (:name quiz)] cur))
