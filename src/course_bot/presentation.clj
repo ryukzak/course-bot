@@ -382,7 +382,7 @@
                                              topic)})))]
 
           (when (nil? group)
-            (talk/send-text token id (str "To send feedback, you should set your group for " name " by /" cmd))
+            (talk/send-text token id (str "To send feedback, you should set your group for " name " by /" pres-key-name "setgroup"))
             (talk/stop-talk tx))
 
           (when (nil? dt)

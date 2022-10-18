@@ -571,7 +571,7 @@
     (testing "pres group not set"
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
         (feedback-talk 4 "/lab1feedback")
-        (ttalk/in-history *chat 4 "To send feedback, you should set your group for Lab 1 presentation by /lab1feedback")))
+        (ttalk/in-history *chat 4 "To send feedback, you should set your group for Lab 1 presentation by /lab1setgroup")))
 
     (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
       (feedback-talk 1 "/lab1feedback")
