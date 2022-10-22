@@ -6,6 +6,7 @@
             [course-bot.quiz :as quiz]
             [course-bot.presentation :as pres]
             [course-bot.general :as general]
+            [course-bot.essay :as essay]
             [course-bot.talk :as talk]))
 
 (def conf (misc/get-config "../edu-csa-internal"))
@@ -34,6 +35,9 @@
   (pres/feedback-talk db conf "lab1")
   (pres/drop-talk db conf "lab1" false)
   (pres/drop-talk db conf "lab1" true)
+
+  (essay/submit-talk db conf "essay1")
+  (essay/status-talk db conf "essay1")
 
   (quiz/startquiz-talk db conf)
   (quiz/stopquiz-talk db conf)
