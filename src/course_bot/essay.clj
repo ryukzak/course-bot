@@ -15,7 +15,8 @@
           (when submitted?
             (talk/send-text token id (str "Ваше эссе '" essay-code "' уже загружено"))
             (talk/stop-talk tx))
-          (talk/send-text token id (str "Отправьте текст эссе '" essay-code "' одним сообщением. Тема(-ы):\n\n" topics-msg))
+          (talk/send-text token id (str "Отправьте текст эссе '" essay-code "' одним сообщением."
+                                        (when topics-msg (str " Тема(-ы):\n\n" topics-msg))))
           (talk/change-branch tx :submit)))
 
       :submit
@@ -28,17 +29,12 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
-        (let [{submitted? :submitted?
-               essay :text} (codax/get-at tx [id :essays essay-code])]
-          (when submitted?
-            (talk/send-text token id (str "Ваше эссе '" essay-code "' уже загружено"))
-            (talk/stop-talk tx))
-          (talk/when-parse-yes-or-no
-           tx token id text
-           (talk/send-text token id "Спасибо, текст загружен и скоро попадёт на рецензирование.")
-           (-> tx
-               (codax/assoc-at [id :essays essay-code :text] essay-text)
-               talk/stop-talk)))))))
+        (talk/when-parse-yes-or-no
+         tx token id text
+         (talk/send-text token id "Спасибо, текст загружен и скоро попадёт на рецензирование.")
+         (-> tx
+             (codax/assoc-at [id :essays essay-code :text] essay-text)
+             talk/stop-talk))))))
 
 (defn get-essays [tx essay-code]
   (->> (codax/get-at tx [])

@@ -23,6 +23,7 @@
   (let [conf (misc/get-config "conf-example")
         start-talk (ttalk/mock-talk general/start-talk db conf)
         essay-submit-talk (ttalk/mock-talk essay/submit-talk db conf "essay1")
+        essay-submit-2-talk (ttalk/mock-talk essay/submit-talk db conf "essay2")
         essay-status-talk (ttalk/mock-talk essay/status-talk db conf "essay1")]
 
     (register-user *chat start-talk 1 "u1")
@@ -66,4 +67,8 @@
 
     (testing "re-submit"
       (essay-submit-talk 1 "/essay1submit")
-      (ttalk/in-history *chat [1 "Ваше эссе 'essay1' уже загружено"]))))
+      (ttalk/in-history *chat [1 "Ваше эссе 'essay1' уже загружено"]))
+
+    (testing "submit without topic"
+      (essay-submit-2-talk 2 "/essay2submit")
+      (ttalk/in-history *chat [2 "Отправьте текст эссе 'essay2' одним сообщением."]))))
