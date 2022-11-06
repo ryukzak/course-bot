@@ -1,1 +1,2 @@
-{:topic-msg "essay1-topics-text"}
+{:topic-msg "essay1-topics-text"
+ :review-msg ":review-msg from config"}

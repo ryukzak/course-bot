@@ -38,6 +38,9 @@
 
   (essay/submit-talk db conf "essay1")
   (essay/status-talk db conf "essay1")
+  (essay/assignreviewers-talk db conf "essay1")
+  (essay/review-talk db conf "essay1")
+  (essay/myfeedback-talk db conf "essay1")
 
   (quiz/startquiz-talk db conf)
   (quiz/stopquiz-talk db conf)
