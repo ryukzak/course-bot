@@ -417,6 +417,7 @@
 
           (talk/send-text token id "Thanks, your feedback saved!")
           (-> tx
+              ;; TODO: move :feedback-from into [:feedback :from]
               (codax/update-at [:presentation pres-key group dt :feedback-from]
                                conj id)
               (codax/update-at [:presentation pres-key group dt :feedback]
