@@ -1,6 +1,7 @@
 (ns course-bot.essay
   (:require [course-bot.talk :as talk]
-            [course-bot.general :as general])
+            [course-bot.general :as general]
+            [course-bot.misc :as misc])
   (:require [codax.core :as codax])
   (:require [clojure.string :as str]))
 
@@ -187,6 +188,7 @@
                        (codax/update-at tx' [(:essay-author review) :essays essay-code :received-review] conj review))
                      tx reviews)
              (codax/assoc-at [id :essays essay-code :my-reviews] reviews)
+             (codax/assoc-at [id :essays essay-code :my-reviews-submitted-at] (misc/str-time (misc/today)))
              talk/stop-talk))))))
 
 (defn my-reviews [tx essay-code id]
