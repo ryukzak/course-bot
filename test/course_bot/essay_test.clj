@@ -203,13 +203,14 @@
                            ""
                            "The last essay -- worst."]
                           [1 "Correct?"]))
-      (review-talk 1 "yes")
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.03 11:30 +0000"))]
+        (review-talk 1 "yes"))
       (ttalk/in-history *chat 1 "Your feedback has been saved and will be available to essay writers.")
 
       (essay-status-talk 1 "/essay1status")
       (ttalk/in-history *chat [1 "Всего эссе: 4"
                                "Человек сделало ревью: 1"
-                               "Есть комплект ревью на: 0 эссе."])
+                                "Есть комплект ревью на: 0 эссе."])
 
       (is (= '({:rank 3
                 :index 2
@@ -227,6 +228,9 @@
                 :review-author 1
                 :feedback "111bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla"})
              (codax/get-at! db [1 :essays "essay1" :my-reviews])))
+
+      (is (= "2022.01.03 12:30 +0100"
+             (codax/get-at! db [1 :essays "essay1" :my-reviews-submitted-at])))
 
       (is (= '({:rank 3
                 :index 2
