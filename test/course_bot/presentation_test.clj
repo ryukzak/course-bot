@@ -613,8 +613,8 @@
                                 "2022.01.01 12:00 +0000"])))
 
       (codax/with-read-transaction [db tx]
-        (is (= 1.5 (pres/avg-rank-score tx :lab1 1)))
-        (is (= 1.5 (pres/avg-rank-score tx :lab1 2))))
+        (is (= 1.5 (pres/avg-rank tx :lab1 1)))
+        (is (= 1.5 (pres/avg-rank tx :lab1 2))))
 
       (testing "report"
         (report-talk 0 "/report")
@@ -649,15 +649,15 @@
                                 "2022.01.01 12:00 +0000"])))
 
       (codax/with-read-transaction [db tx]
-        (is (= 1.33 (pres/avg-rank-score tx :lab1 1)))
-        (is (= 1.67 (pres/avg-rank-score tx :lab1 2)))
-        (is (= nil (pres/avg-rank-score tx :lab1 3))))
+        (is (= 1.33 (pres/avg-rank tx :lab1 1)))
+        (is (= 1.67 (pres/avg-rank tx :lab1 2)))
+        (is (= nil (pres/avg-rank tx :lab1 3))))
 
       (codax/with-read-transaction [db tx]
-        (is (= nil (pres/rank-score tx conf :lab1 0)))
-        (is (= 4 (pres/rank-score tx conf :lab1 1)))
-        (is (= 2 (pres/rank-score tx conf :lab1 2)))
-        (is (= nil (pres/rank-score tx conf :lab1 3)))))
+        (is (= nil (pres/score tx conf :lab1 0)))
+        (is (= 4 (pres/score tx conf :lab1 1)))
+        (is (= 2 (pres/score tx conf :lab1 2)))
+        (is (= nil (pres/score tx conf :lab1 3)))))
 
     (testing "report"
       (report-talk 0 "/report")
