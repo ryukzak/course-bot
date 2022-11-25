@@ -1,5 +1,6 @@
 {:admin-chat-id 0
  :token "TOKEN"
  :db-path "codax-db-test"
+ :can-receive-reports [0]
  :groups {"gr1" {}
           "gr2" {}}}

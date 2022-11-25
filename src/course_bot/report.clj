@@ -51,7 +51,10 @@
 (defn report-talk [db {token :token :as conf} & fields]
   (talk/def-command db "report" "receive report)"
     (fn [tx {{id :id} :from}]
-      (general/assert-admin tx conf id)
+      (when-not (some #(= id %) (-> conf :can-receive-reports))
+        (talk/send-text token id "That action was restricted for specific users.")
+        (talk/stop-talk tx))
+
       (talk/send-text token id "Report file:")
       (send-report tx token id (partition 2 fields))
       tx)))
