@@ -48,9 +48,8 @@
       (report-talk 0 "/report")
       (ttalk/in-history *chat [0 "Report file:"]
                         [0
-                         "ID,name,group"
-                         "1,Bot Botovich,gr1"
-                         ""]))
+                         "ID;name;group"
+                         "1;Bot Botovich;gr1\n"]))
 
     (testing "second registration"
       (start-talk "/start")
