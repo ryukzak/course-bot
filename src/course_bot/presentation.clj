@@ -514,7 +514,11 @@
 
 (defn report-presentation-avg-rank [conf pres-key-name]
   (fn [tx _data id]
-    (avg-rank-score tx (keyword pres-key-name) id)))
+    (-> (avg-rank-score tx (keyword pres-key-name) id)
+        str
+        (str/replace #"\." ","))))
+
+
 
 (defn report-presentation-score [conf pres-key-name]
   (fn [tx _data id]

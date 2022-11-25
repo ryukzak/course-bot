@@ -45,7 +45,7 @@
     (let [dt (.format (java.text.SimpleDateFormat. "yyyy-MM-dd-HH-mm-Z") (misc/today))
           fn (str dt "-report.csv")]
       (with-open [writer (io/writer fn)]
-        (csv/write-csv writer data))
+        (csv/write-csv writer data :separator \;))
       (talk/send-document token id (io/file fn)))))
 
 (defn report-talk [db {token :token :as conf} & fields]

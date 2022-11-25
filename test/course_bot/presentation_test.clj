@@ -619,12 +619,12 @@
       (testing "report"
         (report-talk 0 "/report")
         (ttalk/in-history *chat [0
-                                 "ID,pres-group,feedback-avg,feedback"
-                                 "0,,,"
-                                 "1,lgr1,1.5,2"
-                                 "2,lgr1,1.5,4"
-                                 "3,lgr1,,"
-                                 "4,,,\n"]))
+                                 "ID;pres-group;feedback-avg;feedback"
+                                 "0;;;"
+                                 "1;lgr1;1,5;2"
+                                 "2;lgr1;1,5;4"
+                                 "3;lgr1;;"
+                                 "4;;;\n"]))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
         (feedback-talk 3 "/lab1feedback")
@@ -662,9 +662,9 @@
     (testing "report"
       (report-talk 0 "/report")
       (ttalk/in-history *chat [0
-                               "ID,pres-group,feedback-avg,feedback"
-                               "0,,,"
-                               "1,lgr1,1.33,4"
-                               "2,lgr1,1.67,2"
-                               "3,lgr1,,"
-                               "4,,,\n"]))))
+                               "ID;pres-group;feedback-avg;feedback"
+                               "0;;;"
+                               "1;lgr1;1,33;4"
+                               "2;lgr1;1,67;2"
+                               "3;lgr1;;"
+                               "4;;;\n"]))))
