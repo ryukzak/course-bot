@@ -161,7 +161,7 @@
                                         (assert (= "TOKEN" token#))
                                         (swap! ~*chat conj {:id id# :msg msg#}))
                        talk/send-yes-no-kbd (fn [token# id# msg#] (swap! ~*chat conj {:id id# :msg msg#}))
-                       talk/send-document (fn [token# id# file#] (swap! ~*chat conj {:id id# :msg (.getName file#)}))]
+                       talk/send-document (fn [token# id# file#] (swap! ~*chat conj {:id id# :msg (slurp file#)}))]
            ~@body)
          (codax/destroy-database! ~test-db)))))
 

@@ -17,3 +17,4 @@ codax-db-test
 default-codax
 *.tar.gz
 .cpcache/
+*-report.csv

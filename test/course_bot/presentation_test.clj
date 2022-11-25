@@ -6,6 +6,7 @@
             [course-bot.general :as general]
             [course-bot.misc :as misc]
             [course-bot.talk :as talk]
+            [course-bot.report :as report]
             [course-bot.talk-test :as ttalk]))
 
 (defn register-user [*chat start-talk id name]
@@ -509,7 +510,12 @@
         check-talk (ttalk/mock-talk pres/check-talk db conf "lab1")
         schedule-talk (ttalk/mock-talk pres/schedule-talk db conf "lab1")
         agenda-talk (ttalk/mock-talk pres/agenda-talk db conf "lab1")
-        feedback-talk (ttalk/mock-talk pres/feedback-talk db conf "lab1")]
+        feedback-talk (ttalk/mock-talk pres/feedback-talk db conf "lab1")
+        report-talk (ttalk/mock-talk report/report-talk db conf
+                                     "ID" report/stud-id
+                                     "pres-group" (pres/report-presentation-group "lab1")
+                                     "feedback-avg" (pres/report-presentation-avg-rank conf "lab1")
+                                     "feedback" (pres/report-presentation-score conf "lab1"))]
     (register-user *chat start-talk 1 "Alice")
     (setgroup-talk 1 "/lab1setgroup")
     (setgroup-talk 1 "lgr1")
@@ -610,6 +616,16 @@
         (is (= 1.5 (pres/avg-rank-score tx :lab1 1)))
         (is (= 1.5 (pres/avg-rank-score tx :lab1 2))))
 
+      (testing "report"
+        (report-talk 0 "/report")
+        (ttalk/in-history *chat [0
+                                 "ID,pres-group,feedback-avg,feedback"
+                                 "0,,,"
+                                 "1,lgr1,1.5,2"
+                                 "2,lgr1,1.5,4"
+                                 "3,lgr1,,"
+                                 "4,,,\n"]))
+
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
         (feedback-talk 3 "/lab1feedback")
         (feedback-talk 3 "1")
@@ -638,5 +654,17 @@
         (is (= nil (pres/avg-rank-score tx :lab1 3))))
 
       (codax/with-read-transaction [db tx]
+        (is (= nil (pres/rank-score tx conf :lab1 0)))
         (is (= 4 (pres/rank-score tx conf :lab1 1)))
-        (is (= 2 (pres/rank-score tx conf :lab1 2)))))))
+        (is (= 2 (pres/rank-score tx conf :lab1 2)))
+        (is (= nil (pres/rank-score tx conf :lab1 3)))))
+
+    (testing "report"
+      (report-talk 0 "/report")
+      (ttalk/in-history *chat [0
+                               "ID,pres-group,feedback-avg,feedback"
+                               "0,,,"
+                               "1,lgr1,1.33,4"
+                               "2,lgr1,1.67,2"
+                               "3,lgr1,,"
+                               "4,,,\n"]))))

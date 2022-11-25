@@ -3,6 +3,7 @@
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.talk :as talk]
+            [course-bot.report :as report]
             [course-bot.talk-test :as ttalk]
             [course-bot.misc :as misc]))
 
@@ -11,7 +12,11 @@
 (talk/deftest start-talk-test [db *chat]
   (let [conf (misc/get-config "conf-example")
         start-talk (ttalk/mock-talk general/start-talk db conf)
-        listgroup-talk (ttalk/mock-talk general/listgroups-talk db conf)]
+        listgroup-talk (ttalk/mock-talk general/listgroups-talk db conf)
+        report-talk (ttalk/mock-talk report/report-talk db conf
+                                     "ID" report/stud-id
+                                     "name" report/stud-name
+                                     "group" report/stud-group)]
     (start-talk "bla-bla")
     (is (= '() @*chat))
 
@@ -38,6 +43,14 @@
     (testing "group list"
       (listgroup-talk "/listgroups")
       (ttalk/in-history *chat "gr1 group:\n1) Bot Botovich (@, 1)"))
+
+    (testing "simple-report"
+      (report-talk 0 "/report")
+      (ttalk/in-history *chat [0 "Report file:"]
+                        [0
+                         "ID,name,group"
+                         "1,Bot Botovich,gr1"
+                         ""]))
 
     (testing "second registration"
       (start-talk "/start")
