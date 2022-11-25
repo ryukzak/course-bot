@@ -93,12 +93,12 @@
           :else (do (talk/send-text token id "Please, yes or no?")
                     (talk/repeat-branch tx)))))))
 
-(defn get-next-for-review [tx pres-key]
+(defn wait-for-reviews [tx pres-key]
   (->> (codax/get-at tx [])
        (filter (fn [[_id info]]
                  (and (some-> info :presentation (get pres-key) :on-review?)
                       (not (some-> info :presentation (get pres-key) :approved?)))))
-       first))
+       ))
 
 (defn topic [desc] (if (nil? desc) "nil" (-> desc str/split-lines first)))
 
