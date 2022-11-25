@@ -104,6 +104,7 @@
     (testing "check and reject"
       (check-talk 0 "/lab1check")
       (ttalk/in-history *chat 0
+                        "Wait for review: 1"
                         "Approved presentation in 'lgr1':\n"
                         "We receive from the student (group gr1): \n\nTopic: bla-bla-bla the best"
                         "bla-bla-bla the best"
@@ -149,6 +150,7 @@
     (testing "check and reject 2"
       (check-talk 0 "/lab1check")
       (ttalk/in-history *chat 0
+                        "Wait for review: 1"
                         "Approved presentation in 'lgr1':\n"
                         "Remarks:"
                         "Please, add details!"
@@ -185,6 +187,7 @@
 
     (check-talk 0 "/lab1check")
     (ttalk/in-history *chat 0
+                      "Wait for review: 1"
                       "Approved presentation in 'lgr1':\n"
                       "Remarks:"
                       "Please, add details!"
@@ -239,13 +242,14 @@
                                          "- pres 2 (Alice) - ON-REVIEW")))
 
       (check-talk 0 "/lab1check")
-      (ttalk/in-history *chat 0
-                        (str/join "\n" '("Approved presentation in 'lgr1':"
-                                         "- bla-bla-bla 2 (Bot Botovich)"))
-                        (str/join "\n" '("We receive from the student (group gr1): \n"
-                                         "Topic: pres 2"))
-                        "pres 2"
-                        "Approve (yes or no)?")
+      (ttalk/in-history *chat
+                        [0 "Wait for review: 1"]
+                        [0 "Approved presentation in 'lgr1':"
+                         "- bla-bla-bla 2 (Bot Botovich)"]
+                        [0 "We receive from the student (group gr1): \n"
+                         "Topic: pres 2"]
+                        [0 "pres 2"]
+                        [0 "Approve (yes or no)?"])
       (check-talk 0 "yes")
       (ttalk/in-history *chat
                         [0 "OK, student will receive his approve.\n\n/lab1check"]

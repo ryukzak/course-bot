@@ -139,7 +139,8 @@
       :start
       (fn [tx {{id :id} :from}]
         (general/assert-admin tx conf id)
-        (let [submition (get-next-for-review tx pres-key)]
+        (let [submitions (wait-for-reviews tx pres-key)
+              submition (first submitions)]
           (when (nil? submition)
             (talk/send-text token id "Nothing to check.")
             (talk/stop-talk tx))
@@ -147,6 +148,7 @@
                 group (-> info :presentation (get pres-key) :group)
                 desc (-> info :presentation (get pres-key) :description)
                 remarks (codax/get-at tx [stud-id :presentation pres-key :remarks])]
+            (talk/send-text token id (str "Wait for review: " (count submitions)))
             (talk/send-text token id (approved-submissions tx pres-key group))
             (when (some? remarks)
               (talk/send-text token id "Remarks:")
