@@ -174,8 +174,8 @@
       (report-talk 0 "/report")
       (ttalk/in-history *chat [0
                                "ID;fail;percent"
-                               "0;:test-quiz-3, :test-quiz;0"
-                               "1;:test-quiz-3, :test-quiz;0"
+                               "0;:test-quiz, :test-quiz-3;0"
+                               "1;:test-quiz, :test-quiz-3;0"
                                ""]))))
 
 (talk/deftest report-talk-test [db *chat]
@@ -232,9 +232,9 @@
       (report-talk 0 "/report")
       (ttalk/in-history *chat [0
                                "ID;fail;percent"
-                               "0;:test-quiz-3, :test-quiz;0"
-                               "1;:test-quiz-3, :test-quiz;0"
-                               "2;:test-quiz-3, :test-quiz;0"
+                               "0;:test-quiz, :test-quiz-3;0"
+                               "1;:test-quiz, :test-quiz-3;0"
+                               "2;:test-quiz, :test-quiz-3;0"
                                "3;:test-quiz;50"
                                "4;:test-quiz;50"
                                ""]))
@@ -254,9 +254,9 @@
       (report-talk 0 "/report")
       (ttalk/in-history *chat [0
                                "ID;fail;percent"
-                               "0;:test-quiz-3, :test-quiz;0"
+                               "0;:test-quiz, :test-quiz-3;0"
                                "1;:test-quiz-3;50"
-                               "2;:test-quiz-3, :test-quiz;0"
+                               "2;:test-quiz, :test-quiz-3;0"
                                "3;:test-quiz;50"
                                "4;;100"
                                ""]))))

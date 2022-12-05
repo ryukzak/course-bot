@@ -68,6 +68,7 @@
                               (-> (evaluate-answers questions answers)
                                   :percent
                                   (<= fail-test-threshold)))))
+         sort
          (str/join ", "))))
 
 (defn success-tests-percent [conf]
