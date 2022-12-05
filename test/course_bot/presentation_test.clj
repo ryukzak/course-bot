@@ -519,7 +519,8 @@
                                      "ID" report/stud-id
                                      "pres-group" (pres/report-presentation-group "lab1")
                                      "feedback-avg" (pres/report-presentation-avg-rank conf "lab1")
-                                     "feedback" (pres/report-presentation-score conf "lab1"))]
+                                     "feedback" (pres/report-presentation-score conf "lab1")
+                                     "classes" (pres/report-presentation-classes "lab1"))]
     (register-user *chat start-talk 1 "Alice")
     (setgroup-talk 1 "/lab1setgroup")
     (setgroup-talk 1 "lgr1")
@@ -623,12 +624,12 @@
       (testing "report"
         (report-talk 0 "/report")
         (ttalk/in-history *chat [0
-                                 "ID;pres-group;feedback-avg;feedback"
-                                 "0;;;"
-                                 "1;lgr1;1,5;2"
-                                 "2;lgr1;1,5;4"
-                                 "3;lgr1;;"
-                                 "4;;;\n"]))
+                                 "ID;pres-group;feedback-avg;feedback;classes"
+                                 "0;;;;0"
+                                 "1;lgr1;1,5;2;1"
+                                 "2;lgr1;1,5;4;1"
+                                 "3;lgr1;;;1"
+                                 "4;;;;0" ""]))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
         (feedback-talk 3 "/lab1feedback")
@@ -666,9 +667,9 @@
     (testing "report"
       (report-talk 0 "/report")
       (ttalk/in-history *chat [0
-                               "ID;pres-group;feedback-avg;feedback"
-                               "0;;;"
-                               "1;lgr1;1,33;4"
-                               "2;lgr1;1,67;2"
-                               "3;lgr1;;"
-                               "4;;;\n"]))))
+                               "ID;pres-group;feedback-avg;feedback;classes"
+                               "0;;;;0"
+                               "1;lgr1;1,33;4;1"
+                               "2;lgr1;1,67;2;1"
+                               "3;lgr1;;;1"
+                               "4;;;;0" ""]))))
