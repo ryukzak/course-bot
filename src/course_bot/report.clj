@@ -11,13 +11,6 @@
             [course-bot.presentation :as pres]
             [course-bot.essay :as essay]))
 
-(defn quiz-result [tx id name]
-  (let [ans (codax/get-at tx [:quiz-results name id])
-        quiz nil ; (get quiz/all-quiz name)
-        [bool correct max] (quiz/stud-results-inner ans id quiz)]
-    (if (= 0 max) 0
-        (Math/round (* 100.0 (/ correct max))))))
-
 (defn essay-result [tx id name]
   (let [scores (->> (essay/my-reviews tx name id)
                     (map #(subs % 24 25))
