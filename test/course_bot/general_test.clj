@@ -102,6 +102,21 @@
       (start-talk "/start")
       (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))))
 
+(talk/deftest restart-permitted-test [db *chat]
+  (let [conf (assoc (misc/get-config "conf-example") :allow-restart true)
+        start-talk (ttalk/mock-talk general/start-talk db conf)
+        whoami-talk (ttalk/mock-talk general/whoami-talk db conf)
+        restart-talk (ttalk/mock-talk general/restart-talk db conf)]
+
+    (testing "register user for restart"
+      (start-talk "/start")
+      (start-talk "Bot Botovich")
+      (start-talk "gr1")
+      (whoami-talk "/whoami")
+      (ttalk/in-history *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
+      (start-talk "/start")
+      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))))
+
 (talk/deftest renameme-talk-test [db *chat]
   (let [conf (misc/get-config "conf-example")
         start-talk (ttalk/mock-talk general/start-talk db conf)

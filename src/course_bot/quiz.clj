@@ -83,10 +83,6 @@
       (Math/round (* 100.0 (/ count-success (count tests)))))))
 
 (defn result-stat [quiz results]
-  (println (->> results
-                vals
-                (filter #(= (count %) (count (-> quiz :questions))))
-                (map #(str/join ", " %))))
   (->> results
        vals
        (filter #(= (count %) (count (-> quiz :questions))))

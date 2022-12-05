@@ -48,7 +48,9 @@
       :start
       (fn [tx {{id :id} :from}]
         (let [info (codax/get-at tx [id])]
-          (when (and (some? (:name info)) (not allow-restart))
+          (when (and (some? (:name info))
+                     (-> info :allow-restart not)
+                     (not allow-restart))
             (talk/send-text token id "You are already registered. To change your information, contact the teacher and send /whoami")
             (talk/stop-talk tx))
           (talk/send-text token id (str "Hi, I'm a bot for your course. "
@@ -96,7 +98,6 @@
         (talk/send-text token id "Renamed:")
         (send-whoami tx token id)
         (talk/stop-talk tx)))))
-
 
 (defn restart-talk [db {token :token :as conf}]
   (talk/def-talk db "restart"
