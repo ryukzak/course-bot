@@ -42,13 +42,13 @@
   (talk/def-command db "listgroups" "send me group list know by the bot"
     (fn [tx {{id :id} :from}] (send-list-groups tx token id) tx)))
 
-(defn start-talk [db {token :token groups-raw :groups}]
+(defn start-talk [db {token :token groups-raw :groups allow-restart :allow-restart}]
   (let [groups (-> groups-raw keys set)]
     (talk/def-talk db "start" "register student"
       :start
       (fn [tx {{id :id} :from}]
         (let [info (codax/get-at tx [id])]
-          (when (and (some? (:name info)) (not (:allow-restart info)))
+          (when (and (some? (:name info)) (not allow-restart))
             (talk/send-text token id "You are already registered. To change your information, contact the teacher and send /whoami")
             (talk/stop-talk tx))
           (talk/send-text token id (str "Hi, I'm a bot for your course. "

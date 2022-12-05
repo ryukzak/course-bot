@@ -2,5 +2,6 @@
  :token "TOKEN"
  :db-path "codax-db-test"
  :can-receive-reports [0]
+ :allow-restart false
  :groups {"gr1" {}
           "gr2" {}}}
