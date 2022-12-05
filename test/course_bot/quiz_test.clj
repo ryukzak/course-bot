@@ -260,3 +260,36 @@
                                "3;:test-quiz;50"
                                "4;;100"
                                ""]))))
+
+(talk/deftest stop-quiz-without-answers-talk-test [db *chat]
+  (let [conf (misc/get-config "conf-example")
+        start-talk (ttalk/mock-talk general/start-talk db conf)
+        startquiz-talk (ttalk/mock-talk quiz/startquiz-talk db conf)
+        quiz-talk (ttalk/mock-talk quiz/quiz-talk db conf)
+        stopquiz-talk (ttalk/mock-talk quiz/stopquiz-talk db conf)
+        report-talk (ttalk/mock-talk report/report-talk db conf
+                                     "ID" report/stud-id
+                                     "fail" (quiz/fail-tests conf)
+                                     "percent" (quiz/success-tests-percent conf))
+        do-test (fn [name id & answers]
+                  (quiz-talk id "/quiz")
+                  (ttalk/in-history *chat id (str "Хотите начать тест '" name "' ("
+                                                  (count answers) " вопроса(-ов))?"))
+                  (quiz-talk id "yes")
+                  (doall (map #(quiz-talk id %) answers))
+                  (ttalk/in-history *chat
+                                    [id "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."]
+                                    [0 (str "Quiz answers: " (str/join ", " answers))]))]
+
+    (start-user *chat start-talk 1 "Alice")
+
+    (startquiz-talk 0 "/startquiz test-quiz-3")
+    (startquiz-talk 0 "yes")
+    (ttalk/in-history *chat 0 "The quiz was started.")
+
+    (stopquiz-talk 0 "/stopquiz")
+    (ttalk/in-history *chat 0 "Are you sure to stop 'Test quiz 3' quiz?")
+    (stopquiz-talk 0 "yes")
+    (ttalk/in-history *chat
+                      [0 "The quiz 'Test quiz 3' was stopped"]
+                      [0 "Answers did not recieved."])))

@@ -124,6 +124,9 @@
                                                   [stud-id cur info]))
                                               (keys results))]
                            (talk/send-text token id (str "The quiz '" quiz-name "' was stopped"))
+                           (when (empty? results)
+                             (talk/send-text token id (str "Answers did not recieved."))
+                             (talk/stop-talk tx))
 
                            (doall (map  #(talk/send-text token id %)
                                         (map (fn [question scores]
