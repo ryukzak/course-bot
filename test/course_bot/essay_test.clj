@@ -255,7 +255,7 @@
     (myfeedback-talk 2 "/essay1myfeedback")
     (ttalk/in-history *chat
                       [2 "Rank: 3; Feedback: 333bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla"]
-                      [2 "You received 1 reviews."])
+                      [2 "You received 1 review."])
 
     (testing "send review again"
       (review-talk 1 "/essay1review")
