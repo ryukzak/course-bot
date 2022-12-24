@@ -49,6 +49,12 @@
   (essay/review-talk db conf "essay2")
   (essay/myfeedback-talk db conf "essay2")
 
+  (essay/submit-talk db conf "essay3")
+  (essay/status-talk db conf "essay3")
+  (essay/assignreviewers-talk db conf "essay3")
+  (essay/review-talk db conf "essay3")
+  (essay/myfeedback-talk db conf "essay3")
+
   (quiz/startquiz-talk db conf)
   (quiz/stopquiz-talk db conf)
   (quiz/quiz-talk db conf)
