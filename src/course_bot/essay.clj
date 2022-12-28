@@ -8,7 +8,7 @@
 (defn submit-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "submit")
         topics-msg (-> conf (get (keyword essay-code)) :topic-msg)
-        help (str "Sumbit " essay-code)]
+        help (str "Submit " essay-code)]
     (talk/def-talk db cmd help
       :start
       (fn [tx {{id :id} :from}]
