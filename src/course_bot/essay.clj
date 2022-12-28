@@ -126,7 +126,7 @@
       (fn [tx {{id :id} :from}]
         (let [assignments (stud-review-assignments tx id essay-code)]
           (when (empty? assignments)
-            (talk/send-text token id "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё вовремя или поспкешили.")
+            (talk/send-text token id "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё вовремя или поспешили.")
             (talk/stop-talk tx))
           (when-not (nil? (codax/get-at tx [id :essays essay-code :my-reviews]))
             (talk/send-text token id "You already sent reviews.")
