@@ -65,7 +65,9 @@
                       "group" report/stud-group
                       "lab1-group" (pres/report-presentation-group "lab1")
                       "lab1-rank" (pres/report-presentation-avg-rank conf "lab1")
-                      "lab1-score" (pres/report-presentation-score conf "lab1"))
+                      "lab1-score" (pres/report-presentation-score conf "lab1")
+                      "failed-tests" (quiz/fail-tests conf)
+                      "success-test-percent" (quiz/success-tests-percent conf))
 
   (handlers/command "help" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/helps)))
 

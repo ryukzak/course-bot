@@ -36,6 +36,53 @@
                          (codax/assoc-at tx [:quiz :current] quiz-key))
                  "no" (do (talk/send-text token id "In a next time.") (talk/stop-talk tx))))))
 
+(defn get-test-keys-for-score [conf]
+  (->> conf
+       :quiz
+       (filter #(-> % second :ignore-in-score not))
+       keys))
+
+(defn evaluate-answers [quiz ans]
+  (let [options (->> quiz (map :options))
+        bools (map (fn [opts ans] (-> opts
+                                      (get (- ans 1))
+                                      (get :correct false)))
+                   options
+                   (map #(Integer/parseInt %) ans))
+        scores (map #(if % 1 0) bools)
+        count-correct (reduce + scores)
+        count-questions (count options)]
+    {:details bools
+     :count-correct count-correct
+     :count-questions count-questions
+     :percent (Math/round (* 100.0 (/ count-correct count-questions)))}))
+
+(def fail-test-threshold 50)
+
+(defn fail-tests [conf]
+  (fn [_tx data id]
+    (->> conf
+         get-test-keys-for-score
+         (filter (fn [test] (let [questions (-> conf :quiz (get test) :questions)
+                                  answers (-> data :quiz :results (get test) (get id))]
+                              (-> (evaluate-answers questions answers)
+                                  :percent
+                                  (<= fail-test-threshold)))))
+         sort
+         (str/join ", "))))
+
+(defn success-tests-percent [conf]
+  (fn [_tx data id]
+    (let [tests (get-test-keys-for-score conf)
+          count-success (->> tests
+                             (filter (fn [test] (let [questions (-> conf :quiz (get test) :questions)
+                                                      answers (-> data :quiz :results (get test) (get id))]
+                                                  (-> (evaluate-answers questions answers) :percent
+                                                      (> fail-test-threshold)))))
+
+                             count)]
+      (Math/round (* 100.0 (/ count-success (count tests)))))))
+
 (defn result-stat [quiz results]
   (->> results
        vals
@@ -47,16 +94,6 @@
                        (map-indexed (fn [opt-index _text]
                                       (filter #(= % (str (+ 1 opt-index))) anss)))
                        (map #(str (count %))))))))
-
-(defn stud-results-inner [quiz ans id]
-  (let [options (map :options (:questions quiz))
-        bools (map (fn [opts ans] (-> opts
-                                      (get (- ans 1))
-                                      (get :correct false)))
-                   options
-                   (map #(Integer/parseInt %) ans))
-        scores (map #(if % 1 0) bools)]
-    [bools (reduce + scores) (count options)]))
 
 (defn stopquiz-talk [db {token :token :as conf}]
   (talk/talk db "stopquiz"
@@ -78,11 +115,15 @@
                  (case text
                    "yes" (let [results (codax/get-at tx [:quiz :results quiz-key])
                                per-studs (map (fn [stud-id]
-                                                (let [[_details cur max] (stud-results-inner quiz (get results stud-id) stud-id)
+                                                (let [{cur :count-correct max :count-questions} (evaluate-answers (:questions quiz)
+                                                                                                                  (get results stud-id))
                                                       info (str cur "/" max)]
                                                   [stud-id cur info]))
                                               (keys results))]
                            (talk/send-text token id (str "The quiz '" quiz-name "' was stopped"))
+                           (when (empty? results)
+                             (talk/send-text token id (str "Answers did not recieved."))
+                             (talk/stop-talk tx))
 
                            (doall (map  #(talk/send-text token id %)
                                         (map (fn [question scores]

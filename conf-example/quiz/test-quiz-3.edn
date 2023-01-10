@@ -1,9 +1,11 @@
-{:name "Test quiz 2"
- :ignore-in-score true
+{:name "Test quiz 3"
  :questions
  [{:ask "Q1"
    :options [{:text "a1"}
              {:text "a2" :correct true}]}
   {:ask "Q2"
    :options [{:text "a3" :correct true}
-             {:text "a4"}]}]}
+             {:text "a4"}]}
+  {:ask "Q3"
+   :options [{:text "a5" :correct true}
+             {:text "a6"}]}]}

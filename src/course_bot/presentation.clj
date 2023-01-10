@@ -42,6 +42,15 @@
   (fn [_tx data id]
     (-> data (get id) :presentation (get (keyword pres-key-name)) :group)))
 
+(defn report-presentation-classes [pres-key-name]
+  (fn [_tx data id]
+    (let [pres-key (keyword pres-key-name)
+          group (-> data (get id) :presentation (get pres-key) :group)
+          lessons (-> data :presentation (get pres-key) (get group))]
+      (->> lessons
+           (filter (fn [[_k v]] (-> v :stud-ids empty? not)))
+           count))))
+
 (defn submit-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "submit")
         pres-key (keyword pres-key-name)
@@ -97,8 +106,7 @@
   (->> (codax/get-at tx [])
        (filter (fn [[_id info]]
                  (and (some-> info :presentation (get pres-key) :on-review?)
-                      (not (some-> info :presentation (get pres-key) :approved?)))))
-       ))
+                      (not (some-> info :presentation (get pres-key) :approved?)))))))
 
 (defn topic [desc] (if (nil? desc) "nil" (-> desc str/split-lines first)))
 

@@ -203,7 +203,7 @@
                            ""
                            "The last essay -- worst."]
                           [1 "Correct?"]))
-      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.03 11:30 +0000"))]
+      (with-redefs [misc/str-time (fn [_] "2022.01.03 11:30 +0000")]
         (review-talk 1 "yes"))
       (ttalk/in-history *chat 1 "Your feedback has been saved and will be available to essay writers.")
 
@@ -229,7 +229,7 @@
                 :feedback "111bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla"})
              (codax/get-at! db [1 :essays "essay1" :my-reviews])))
 
-      (is (= "2022.01.03 12:30 +0100"
+      (is (= "2022.01.03 11:30 +0000"
              (codax/get-at! db [1 :essays "essay1" :my-reviews-submitted-at])))
 
       (is (= '({:rank 3
