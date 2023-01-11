@@ -132,6 +132,7 @@
             (map #(str "- " (-> % second :presentation (get pres-key) :description topic)
                        " (" (-> % second :name) ") - "
                        (cond
+                         (-> % second :presentation (get pres-key) :scheduled?) "SCHEDULED"
                          (-> % second :presentation (get pres-key) :on-review?) "ON-REVIEW"
                          (-> % second :presentation (get pres-key) :approved?) "APPROVED"
                          :else "REJECTED")))
