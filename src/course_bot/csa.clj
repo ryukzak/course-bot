@@ -36,6 +36,7 @@
   (pres/feedback-talk db conf "lab1")
   (pres/drop-talk db conf "lab1" false)
   (pres/drop-talk db conf "lab1" true)
+  (pres/all-scheduled-descriptions-dump-talk db conf "lab1")
 
   (essay/submit-talk db conf "essay1")
   (essay/status-talk db conf "essay1")

@@ -18,3 +18,4 @@ default-codax
 *.tar.gz
 .cpcache/
 *-report.csv
+*-descriptions.md

@@ -278,6 +278,7 @@
         schedule-talk (ttalk/mock-talk pres/schedule-talk db conf "lab1")
         agenda-talk (ttalk/mock-talk pres/agenda-talk db conf "lab1")
         soon-talk (ttalk/mock-talk pres/soon-talk db conf "lab1")
+        all-scheduled-descriptions-dump-talk (ttalk/mock-talk pres/all-scheduled-descriptions-dump-talk db conf "lab1")
         drop-talk (ttalk/mock-talk pres/drop-talk db conf "lab1" false)
         dropall-talk (ttalk/mock-talk pres/drop-talk db conf "lab1" true)]
 
@@ -343,6 +344,12 @@
         (schedule-talk 2 "2022.01.01 12:00 +0000")
         (ttalk/in-history *chat 2 "OK, you can check it by: /lab1agenda")
 
+        (submissions-talk 2 "/lab1submissions")
+        (ttalk/in-history *chat 2
+                          (str/join "\n" '("Submitted presentation in 'lgr1':"
+                                           "- pres 1 (Alice) - APPROVED"
+                                           "- pres 2 (Bob) - SCHEDULED")))
+
         (testing "try-to-schedule-again"
           (schedule-talk 2 "/lab1schedule")
           (ttalk/in-history *chat 2 "Already scheduled, check /lab1agenda."))
@@ -393,6 +400,17 @@
                             (str/join "\n" '("Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
                                              "1. pres 1 (Alice)"))
                             "Agenda 2022.02.02 12:00 +0000 (lgr2):\n"))))
+
+    (all-scheduled-descriptions-dump-talk 0 "/lab1descriptions")
+    (ttalk/in-history *chat
+                      [0 "File with all scheduled descriptions by groups:"]
+                      [0
+                       "# lgr1\n"
+                       "## Alice\n"
+                       "pres 1\n"
+                       "## Bob\n"
+                       "pres 2\n\n"
+                       "# lgr2\n\n"])
 
     (testing "soon-talk"
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:30 +0000"))]

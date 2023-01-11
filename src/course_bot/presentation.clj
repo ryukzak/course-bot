@@ -1,5 +1,6 @@
  (ns course-bot.presentation
-   (:require [clojure.string :as str])
+   (:require [clojure.java.io :as io]
+             [clojure.string :as str])
    (:require [codax.core :as codax])
    (:require [course-bot.talk :as talk]
              [course-bot.general :as general]
@@ -531,3 +532,30 @@
 (defn report-presentation-score [conf pres-key-name]
   (fn [tx _data id]
     (score tx conf (keyword pres-key-name) id)))
+
+(defn scheduled-descriptions-dump [data pres-key group]
+  (->> data
+       (filter #(and (-> % second :presentation (get pres-key) :group (= group))
+                     (-> % second :presentation (get pres-key) :scheduled?)))
+       (map #(let [name (-> % second :name)
+                   desc (-> % second :presentation (get pres-key) :description)]
+               (str "## " name "\n\n" desc)))
+       (str/join "\n\n")))
+
+(defn all-scheduled-descriptions-dump-talk [db {token :token :as conf} pres-id]
+  (let [pres-key (keyword pres-id)]
+    (talk/def-command db (str pres-id "descriptions") "all-scheduled-descriptions-dump (admin only)"
+      (fn [tx {{id :id} :from}]
+        (general/assert-admin tx conf id)
+
+        (talk/send-text token id "File with all scheduled descriptions by groups:")
+        (let [dt (.format (java.text.SimpleDateFormat. "yyyy-MM-dd-HH-mm-Z") (misc/today))
+              fn (str dt "-" pres-id "-descriptions.md")
+              groups (-> conf (get pres-key) :groups keys)
+              data (codax/get-at tx [])
+              text (->> groups
+                        (map #(str "# " % "\n\n" (scheduled-descriptions-dump data pres-key %)))
+                        (str/join "\n\n\n"))]
+          (spit fn text)
+          (talk/send-document token id (io/file fn)))
+        tx))))
