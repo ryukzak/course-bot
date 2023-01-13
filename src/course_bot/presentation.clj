@@ -516,10 +516,7 @@
       (or (empty? stud-ids) (nil? group)) nil
 
       (empty? feedback) (->> (map vector (sort stud-ids) scores)
-                             (filter #(-> % first (= stud-id)))
-                             first
-                             second ; [stud-id score]
-                             )
+                             (some (fn [[id score]] (when (= stud-id id) score))))
       (some? feedback)
       (let [ranks (->> stud-ids
                        (map (fn [id] {:stud-id id

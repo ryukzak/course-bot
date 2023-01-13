@@ -46,10 +46,12 @@
 
     (testing "simple-report"
       (report-talk 0 "/report")
-      (ttalk/in-history *chat [0 "Report file:"]
-                        [0
-                         "ID;name;group"
-                         "1;Bot Botovich;gr1\n"]))
+
+      (ttalk/match-history *chat
+                           (ttalk/text 0 "Report file:")
+                           (ttalk/csv 0
+                                      ["ID" "name" "group"]
+                                      ["1" "Bot Botovich" "gr1"])))
 
     (testing "second registration"
       (start-talk "/start")

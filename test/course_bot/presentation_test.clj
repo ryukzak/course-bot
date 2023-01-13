@@ -587,12 +587,12 @@
 
     (testing "report without feedback"
       (report-talk 0 "/report")
-      (ttalk/in-history *chat [0
-                               "ID;pres-group;feedback-avg;feedback;classes"
-                               "0;;;;0"
-                               "1;lgr1;;4;1"
-                               "2;lgr1;;2;1"
-                               "3;lgr1;;;1\n"]))
+      (ttalk/match-csv *chat 0
+                       ["ID" "pres-group" "feedback-avg" "feedback" "classes"]
+                       ["0" "" "" "" "0"]
+                       ["1" "lgr1" "" "4" "1"]
+                       ["2" "lgr1" "" "2" "1"]
+                       ["3" "lgr1" "" "" "1"]))
 
     (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
       (feedback-talk 1 "/lab1feedback")
@@ -650,13 +650,13 @@
 
       (testing "report"
         (report-talk 0 "/report")
-        (ttalk/in-history *chat [0
-                                 "ID;pres-group;feedback-avg;feedback;classes"
-                                 "0;;;;0"
-                                 "1;lgr1;1,5;2;1"
-                                 "2;lgr1;1,5;4;1"
-                                 "3;lgr1;;;1"
-                                 "4;;;;0" ""]))
+        (ttalk/match-csv *chat 0
+                         ["ID" "pres-group" "feedback-avg" "feedback" "classes"]
+                         ["0" "" "" "" "0"]
+                         ["1" "lgr1" "1,5" "2" "1"]
+                         ["2" "lgr1" "1,5" "4" "1"]
+                         ["3" "lgr1" "" "" "1"]
+                         ["4" "" "" "" "0"]))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
         (feedback-talk 3 "/lab1feedback")
@@ -693,10 +693,10 @@
 
     (testing "report"
       (report-talk 0 "/report")
-      (ttalk/in-history *chat [0
-                               "ID;pres-group;feedback-avg;feedback;classes"
-                               "0;;;;0"
-                               "1;lgr1;1,33;4;1"
-                               "2;lgr1;1,67;2;1"
-                               "3;lgr1;;;1"
-                               "4;;;;0" ""]))))
+      (ttalk/match-csv *chat 0
+                       ["ID" "pres-group" "feedback-avg" "feedback" "classes"]
+                       ["0" "" "" "" "0"]
+                       ["1" "lgr1" "1,33" "4" "1"]
+                       ["2" "lgr1" "1,67" "2" "1"]
+                       ["3" "lgr1" "" "" "1"]
+                       ["4" "" "" "" "0"]))))

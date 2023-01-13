@@ -30,27 +30,29 @@
     (register-user *chat start-talk 2 "u2")
     (essay-submit-talk 1 "/essay1submit")
 
-    (ttalk/in-history *chat [1 "Отправьте текст эссе 'essay1' одним сообщением. Тема(-ы):"
-                             ""
-                             "essay1-topics-text"])
+    (ttalk/match-text *chat 1
+                      "Отправьте текст эссе 'essay1' одним сообщением. Тема(-ы):"
+                      ""
+                      "essay1-topics-text")
     (essay-submit-talk 1 "u1 essay1 text")
-    (ttalk/in-history *chat
-                      [1 "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"]
-                      [1 "u1 essay1 text"]
-                      [1 ">>>>>>>>>>>>>>>>>>>>"]
-                      [1 "Загружаем (yes/no)?"])
+    (ttalk/match-history *chat
+                         (ttalk/text 1 "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<")
+                         (ttalk/text 1 "u1 essay1 text")
+                         (ttalk/text 1 ">>>>>>>>>>>>>>>>>>>>")
+                         (ttalk/text 1 "Загружаем (yes/no)?"))
 
     (testing "cancelation"
       (essay-submit-talk 1 "hmmm")
-      (ttalk/in-history *chat [1 "What (yes or no)?"])
+      (ttalk/match-text *chat 1 "What (yes or no)?")
       (essay-submit-talk 1 "no")
-      (ttalk/in-history *chat [1 "Cancelled."])
+      (ttalk/match-text *chat 1 "Cancelled.")
       (= nil (codax/get-at! db [1 :essays]))
 
       (essay-status-talk 1 "/essay1status")
-      (ttalk/in-history *chat [1 "Всего эссе: 0"
-                               "Человек сделало ревью: 0"
-                               "Есть комплект ревью на: 0 эссе."]))
+      (ttalk/match-text *chat 1
+                        "Всего эссе: 0"
+                        "Человек сделало ревью: 0"
+                        "Есть комплект ревью на: 0 эссе."))
 
     (testing "submit"
       (essay-submit-talk 1 "/essay1submit")
@@ -320,11 +322,11 @@
              (codax/get-at! db [2 :essays "essay1" :my-reviews-submitted-at])))
 
       (report-talk 0 "/report")
-      (ttalk/in-history *chat [0
-                               "ID;review-score;essay-score"
-                               "0;0;x"
-                               "1;3;3"
-                               "2;1,5;3"
-                               "3;1,5;3"
-                               "4;1,5;3"
-                               "5;0;x\n"]))))
+      (ttalk/match-csv *chat 0
+                       ["ID" "review-score" "essay-score"]
+                       ["0" "0" "x"]
+                       ["1" "3" "3"]
+                       ["2" "1,5" "3"]
+                       ["3" "1,5" "3"]
+                       ["4" "1,5" "3"]
+                       ["5" "0" "x"]))))

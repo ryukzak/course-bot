@@ -1,6 +1,7 @@
 (ns course-bot.talk-test
   (:require [clojure.test :refer :all]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [clojure.data.csv :as csv])
   (:require [codax.core :as codax])
   (:require [course-bot.talk :as talk]))
 
@@ -18,6 +19,34 @@
                     (take (count expect))
                     reverse)]
     (is (= expect actual))))
+
+(defn csv [tid & rows]
+  (if (number? tid)
+    (fn [{actual-id :id actual-msg :msg}]
+      (let [actual-data (csv/read-csv actual-msg :separator \;)]
+        (is (= tid actual-id) "wrong recipient")
+        (is (= rows actual-data) "wrong data")))
+    (apply (partial csv 1) rows)))
+
+(defn text [tid & lines]
+  (if (number? tid)
+    (fn [{actual-id :id actual-msg :msg}]
+      (is (= tid actual-id) "wrong recipient")
+      (is (= (str/join "\n" lines) actual-msg) "wrong message"))
+    (apply (partial text 1) lines)))
+
+(defn match-history [*chat & asserts]
+  (doall (map #(%1 %2)
+              asserts
+              (->> @*chat (take (count asserts)) reverse))))
+
+(defn match-text [*chat tid & lines]
+  (if (number? tid)
+    (match-history *chat (apply (partial text tid) lines))
+    (apply (partial match-text *chat 1 tid) lines)))
+
+(defn match-csv [*chat tid & rows]
+  (match-history *chat (apply (partial csv tid) rows)))
 
 (deftest test-talk-return-value
   (let [test-db (codax/open-database! "codax-db-test")

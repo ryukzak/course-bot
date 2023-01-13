@@ -3,7 +3,8 @@
             [codax.core :as c]
             [course-bot.presentation :as pres]
             [course-bot.misc :as misc]
-            [course-bot.general :as general])
+            [course-bot.general :as general]
+            [clojure.string :as str])
   (:require [clojure.java.io :as io]
             [clojure.data.csv :as csv])
   (:require [course-bot.talk :as talk]
