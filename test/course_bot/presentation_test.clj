@@ -585,6 +585,15 @@
     (is (= {:lab1 {"lgr1" {"2022.01.01 12:00 +0000" {:stud-ids '(2 1)}}}}
            (codax/get-at! db [:presentation])))
 
+    (testing "report without feedback"
+      (report-talk 0 "/report")
+      (ttalk/in-history *chat [0
+                               "ID;pres-group;feedback-avg;feedback;classes"
+                               "0;;;;0"
+                               "1;lgr1;;4;1"
+                               "2;lgr1;;2;1"
+                               "3;lgr1;;;1\n"]))
+
     (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
       (feedback-talk 1 "/lab1feedback")
       (ttalk/in-history *chat 1 "Feedback collecting disabled (too early or too late)."))

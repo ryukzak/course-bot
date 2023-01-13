@@ -503,25 +503,32 @@
       (let [avg (/ (->> ranks (map :rank) (apply +)) (count ranks))]
         (Double/parseDouble (format "%.2f" (double avg)))))))
 
-(defn score [tx conf pres-key stud-id]
-  "by the configuration"
-  (let [scores (-> conf (get pres-key) :feedback-scores)
+(defn score "by the configuration" [tx conf pres-key stud-id]
+  (let [all-scores (-> conf (get pres-key) :feedback-scores)
         group (codax/get-at tx [stud-id :presentation pres-key :group])
-        feedback (some
-                  (fn [[_dt fb]] (when (some #(= % stud-id) (:stud-ids fb)) fb))
-                  (codax/get-at tx [:presentation pres-key group]))]
-    (when (and (some? group) (some? feedback))
-      (let [stud-ids (-> feedback :stud-ids)
-            ranks (->> stud-ids
+
+        {stud-ids :stud-ids feedback :feedback}
+        (some
+         (fn [[_dt fb]] (when (some #(= % stud-id) (:stud-ids fb)) fb))
+         (codax/get-at tx [:presentation pres-key group]))
+        scores (get all-scores (count stud-ids))]
+    (cond
+      (or (empty? stud-ids) (nil? group)) nil
+
+      (empty? feedback) (->> (map vector (sort stud-ids) scores)
+                             (filter #(-> % first (= stud-id)))
+                             first
+                             second ; [stud-id score]
+                             )
+      (some? feedback)
+      (let [ranks (->> stud-ids
                        (map (fn [id] {:stud-id id
                                       :avg-rank (avg-rank tx pres-key id)}))
                        (sort-by :avg-rank)
                        (map-indexed (fn [idx rank] (assoc rank :rank (+ 1 idx)))))
 
             rank (some #(when (= stud-id (:stud-id %)) (:rank %)) ranks)]
-        (-> scores
-            (get (count ranks))
-            (nth (- rank 1)))))))
+        (-> scores (nth (- rank 1)))))))
 
 (defn report-presentation-avg-rank [conf pres-key-name]
   (fn [tx _data id]
