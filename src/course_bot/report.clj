@@ -11,19 +11,6 @@
             [course-bot.presentation :as pres]
             [course-bot.essay :as essay]))
 
-(defn essay-result [tx id name]
-  (let [scores (->> (essay/my-reviews tx name id)
-                    (map #(subs % 24 25))
-                    (map #(Integer/parseInt %))
-                    (map #(- 6 %)))]
-    (if (empty? scores) "-"
-        (-> (/ (apply + scores) (count scores))
-            float
-            Math/round))))
-
-(defn essay-review [tx id name]
-  (boolean (seq (codax/get-at tx [id :essays name :my-reviews]))))
-
 (defn stud-id [_tx _data id] id)
 (defn stud-name [_tx data id] (-> data (get id) :name))
 (defn stud-group [_tx data id] (-> data (get id) :group))

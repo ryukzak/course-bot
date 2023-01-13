@@ -68,7 +68,13 @@
                       "lab1-rank" (pres/report-presentation-avg-rank conf "lab1")
                       "lab1-score" (pres/report-presentation-score conf "lab1")
                       "failed-tests" (quiz/fail-tests conf)
-                      "success-test-percent" (quiz/success-tests-percent conf))
+                      "success-test-percent" (quiz/success-tests-percent conf)
+                      "essay1" (essay/essay-score conf "essay1")
+                      "essay1-reviews" (essay/review-score conf "essay1")
+                      "essay2" (essay/essay-score conf "essay2")
+                      "essay2-reviews" (essay/review-score conf "essay2")
+                      "essay3" (essay/essay-score conf "essay3")
+                      "essay3-reviews" (essay/review-score conf "essay3"))
 
   (handlers/command "help" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/helps)))
 

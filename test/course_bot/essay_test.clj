@@ -2,12 +2,12 @@
   (:require [clojure.test :refer :all]
             [clojure.string :as str])
   (:require [codax.core :as codax])
-  (:require
-   [course-bot.general :as general]
-   [course-bot.essay :as essay]
-   [course-bot.misc :as misc]
-   [course-bot.talk :as talk]
-   [course-bot.talk-test :as ttalk]))
+  (:require [course-bot.general :as general]
+            [course-bot.essay :as essay]
+            [course-bot.misc :as misc]
+            [course-bot.talk :as talk]
+            [course-bot.report :as report]
+            [course-bot.talk-test :as ttalk]))
 
 (defn register-user [*chat start-talk id name]
   (testing "register user"
@@ -87,7 +87,11 @@
         essay-status-talk (ttalk/mock-talk essay/status-talk db conf "essay1")
         assignreviewers-talk (ttalk/mock-talk essay/assignreviewers-talk db conf "essay1")
         review-talk (ttalk/mock-talk essay/review-talk db conf "essay1")
-        myfeedback-talk (ttalk/mock-talk essay/myfeedback-talk db conf "essay1")]
+        myfeedback-talk (ttalk/mock-talk essay/myfeedback-talk db conf "essay1")
+        report-talk (ttalk/mock-talk report/report-talk db conf
+                                     "ID" report/stud-id
+                                     "review-score" (essay/review-score conf "essay1")
+                                     "essay-score" (essay/essay-score conf "essay1"))]
 
     (testing "prepare users and their essays"
       (doall (map #(register-user *chat start-talk %1 %2)
@@ -210,7 +214,7 @@
       (essay-status-talk 1 "/essay1status")
       (ttalk/in-history *chat [1 "Всего эссе: 4"
                                "Человек сделало ревью: 1"
-                                "Есть комплект ревью на: 0 эссе."])
+                               "Есть комплект ревью на: 0 эссе."])
 
       (is (= '({:rank 3
                 :index 2
@@ -266,17 +270,18 @@
       (ttalk/in-history *chat 1 "You already sent reviews."))
 
     (testing "finish all reviews"
-      (doall (map (fn [id]
-                    (review-talk id "/essay1review")
-                    (review-talk id (str "1 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
-                    (ttalk/in-history *chat id "ok")
-                    (review-talk id (str "2 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
-                    (ttalk/in-history *chat id "ok")
-                    (review-talk id (str "3 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
-                    (ttalk/in-history *chat id "Correct?")
-                    (review-talk id "yes")
-                    (ttalk/in-history *chat id "Your feedback has been saved and will be available to essay writers."))
-                  [2 3 4])))
+      (with-redefs [misc/str-time (fn [_] "2022.01.15 12:00 +0100")]
+        (doall (map (fn [id]
+                      (review-talk id "/essay1review")
+                      (review-talk id (str "1 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
+                      (ttalk/in-history *chat id "ok")
+                      (review-talk id (str "2 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
+                      (ttalk/in-history *chat id "ok")
+                      (review-talk id (str "3 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
+                      (ttalk/in-history *chat id "Correct?")
+                      (review-talk id "yes")
+                      (ttalk/in-history *chat id "Your feedback has been saved and will be available to essay writers."))
+                    [2 3 4]))))
 
     (essay-status-talk 1 "/essay1status")
     (ttalk/in-history *chat [1 "Всего эссе: 4"
@@ -305,4 +310,21 @@
                       [1 "Rank: 3; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 4"]
                       [1 "Rank: 2; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 3"]
                       [1 "Rank: 1; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 2"]
-                      [1 "You received 3 reviews."])))
+                      [1 "You received 3 reviews."])
+
+    (testing "report"
+      (is (= "2022.01.03 11:30 +0000"
+             (codax/get-at! db [1 :essays "essay1" :my-reviews-submitted-at])))
+      (is (= (-> conf :essay1 :review-deadline) "2022.01.14 12:00 +0100"))
+      (is (= "2022.01.15 12:00 +0100"
+             (codax/get-at! db [2 :essays "essay1" :my-reviews-submitted-at])))
+
+      (report-talk 0 "/report")
+      (ttalk/in-history *chat [0
+                               "ID;review-score;essay-score"
+                               "0;0;x"
+                               "1;3;3"
+                               "2;1,5;3"
+                               "3;1,5;3"
+                               "4;1,5;3"
+                               "5;0;x\n"]))))
