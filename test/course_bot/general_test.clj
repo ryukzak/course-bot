@@ -1,61 +1,69 @@
 (ns course-bot.general-test
-  (:require [clojure.test :refer :all])
-  (:require [codax.core :as codax])
+  (:require [clojure.test :refer :all]
+            [clojure.test :as test])
+  (:require [codax.core :as codax]
+            [morse.handlers :as handlers])
   (:require [course-bot.general :as general]
             [course-bot.talk :as talk]
             [course-bot.report :as report]
             [course-bot.talk-test :as ttalk]
+            [course-bot.talk-test :as tt]
             [course-bot.misc :as misc]))
 
 (declare db *chat start-talk-test restart-talk-test)
 
-(talk/deftest start-talk-test [db *chat]
+(test/deftest start-talk-test
   (let [conf (misc/get-config "conf-example")
-        start-talk (ttalk/mock-talk general/start-talk db conf)
-        listgroup-talk (ttalk/mock-talk general/listgroups-talk db conf)
-        report-talk (ttalk/mock-talk report/report-talk db conf
-                                     "ID" report/stud-id
-                                     "name" report/stud-name
-                                     "group" report/stud-group)]
-    (start-talk "bla-bla")
-    (is (= '() @*chat))
+        db (tt/test-database)
+        *chat (atom (list))
+        talk (tt/handlers (general/start-talk db conf)
+                          (general/listgroups-talk db conf)
+                          (report/report-talk db conf
+                                              "ID" report/stud-id
+                                              "name" report/stud-name
+                                              "group" report/stud-group))]
+    (tt/with-mocked-morse *chat
+      (talk "bla-bla")
+      (is (= '() @*chat))
 
-    (testing "registration"
-      (start-talk "/start")
-      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?")
+      (testing "registration"
+        (talk "/start")
+        (tt/match-text *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?")
 
-      (start-talk "Bot Botovich")
-      (ttalk/in-history *chat "What is your group (gr1, gr2)?")
+        (talk "Bot Botovich")
+        (tt/match-text *chat "What is your group (gr1, gr2)?")
 
-      (start-talk "wrong group")
-      (ttalk/in-history *chat "I don't know this group. Please, repeat it (gr1, gr2):")
+        (talk "wrong group")
+        (tt/match-text *chat "I don't know this group. Please, repeat it (gr1, gr2):")
 
-      (start-talk "gr1")
-      (ttalk/in-history *chat "Hi Bot Botovich!"
-                        "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
-                        "Send /help for help.")
+        (talk "gr1")
+        (tt/match-history *chat
+                          (tt/text 1 "Hi Bot Botovich!")
+                          (tt/text 1 "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
+                          (tt/text 1 "Send /help for help."))
 
-      (is (= false (codax/get-at! db [1 :allow-restart])))
-      (is (= "gr1" (codax/get-at! db [1 :group])))
-      (is (= "Bot Botovich" (codax/get-at! db [1 :name])))
-      (is (some? (codax/get-at! db [1 :reg-date]))))
+        (is (= false (codax/get-at! db [1 :allow-restart])))
+        (is (= "gr1" (codax/get-at! db [1 :group])))
+        (is (= "Bot Botovich" (codax/get-at! db [1 :name])))
+        (is (some? (codax/get-at! db [1 :reg-date]))))
 
-    (testing "group list"
-      (listgroup-talk "/listgroups")
-      (ttalk/in-history *chat "gr1 group:\n1) Bot Botovich (@, 1)"))
+      (testing "group list"
+        (talk "/listgroups")
+        (tt/match-text *chat
+                       "gr1 group:"
+                       "1) Bot Botovich (@, 1)"))
 
-    (testing "simple-report"
-      (report-talk 0 "/report")
+      (testing "simple-report"
+        (talk 0 "/report")
+        (tt/match-history *chat
+                          (tt/text 0 "Report file:")
+                          (tt/csv 0
+                                  ["ID" "name" "group"]
+                                  ["1" "Bot Botovich" "gr1"])))
 
-      (ttalk/match-history *chat
-                           (ttalk/text 0 "Report file:")
-                           (ttalk/csv 0
-                                      ["ID" "name" "group"]
-                                      ["1" "Bot Botovich" "gr1"])))
-
-    (testing "second registration"
-      (start-talk "/start")
-      (ttalk/in-history *chat "You are already registered. To change your information, contact the teacher and send /whoami"))))
+      (testing "second registration"
+        (talk "/start")
+        (tt/match-text *chat "You are already registered. To change your information, contact the teacher and send /whoami")))))
 
 (talk/deftest restart-talk-test [db *chat]
   (let [conf (misc/get-config "conf-example")

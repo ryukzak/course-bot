@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [clojure.string :as str]
             [clojure.data.csv :as csv])
-  (:require [codax.core :as codax])
+  (:require [codax.core :as codax]
+            [morse.handlers :as handlers])
   (:require [course-bot.talk :as talk]))
 
 (defn mock-talk [talk-maker & args]
@@ -58,3 +59,29 @@
     ;; handler should return nil value to pass
     (is (thrown? clojure.lang.ExceptionInfo (test-talk2 {:message {:text "/cmd"}})))
     (is (= nil (test-talk3 {:message {:text "/cmd"}})))))
+
+(defmacro with-mocked-morse [*chat-init & body]
+  (let [*chat *chat-init]
+    `(with-redefs [talk/send-text (fn [token# id# msg#]
+                                    (assert (= "TOKEN" token#))
+                                    (swap! ~*chat conj {:id id# :msg msg#}))
+                   talk/send-yes-no-kbd (fn [token# id# msg#] (swap! ~*chat conj {:id id# :msg msg#}))
+                   talk/send-document (fn [token# id# file#] (swap! ~*chat conj {:id id# :msg (slurp file#)}))]
+       ~@body)))
+
+(defn test-database []
+  (let [test-db "test-databases/example-database"]
+    (codax/destroy-database! test-db)
+    (codax/open-database! test-db)))
+
+(defn atom? [v] (instance? clojure.lang.Atom v))
+
+(defn handlers [& handlers]
+  (fn rec
+    ([msg] (rec nil 1 msg))
+    ([*chat-or-id msg]
+     (if (atom? *chat-or-id)
+       (rec *chat-or-id 1 msg)
+       (rec nil *chat-or-id msg)))
+    ([_*chat id msg] (let [handler (apply handlers/handlers handlers)]
+                       (handler {:message {:from {:id id} :text msg}})))))
