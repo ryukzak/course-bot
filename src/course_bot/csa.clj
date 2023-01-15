@@ -67,6 +67,7 @@
                       "lab1-group" (pres/report-presentation-group "lab1")
                       "lab1-rank" (pres/report-presentation-avg-rank conf "lab1")
                       "lab1-score" (pres/report-presentation-score conf "lab1")
+                      "lab1-count" (pres/lesson-count "lab1")
                       "failed-tests" (quiz/fail-tests conf)
                       "success-test-percent" (quiz/success-tests-percent conf)
                       "essay1" (essay/essay-score conf "essay1")

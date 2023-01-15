@@ -537,6 +537,15 @@
   (fn [tx _data id]
     (score tx conf (keyword pres-key-name) id)))
 
+(defn lesson-count [pres-name]
+  (fn [_tx data id]
+    (let [pres-key (keyword pres-name)
+          group (-> data (get id) :presentation (get pres-key) :group)
+          schedule (-> data :presentation (get pres-key) (get group))]
+      (->> schedule
+           (filter #(-> % second :stud-ids empty? not))
+           count))))
+
 (defn scheduled-descriptions-dump [data pres-key group]
   (->> data
        (filter #(and (-> % second :presentation (get pres-key) :group (= group))
