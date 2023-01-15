@@ -30,7 +30,7 @@
       (talk/send-document token id (io/file fn)))))
 
 (defn report-talk [db {token :token :as conf} & fields]
-  (talk/def-command db "report" "receive report)"
+  (talk/def-command db "report" "receive report"
     (fn [tx {{id :id} :from}]
       (when-not (some #(= id %) (-> conf :can-receive-reports))
         (talk/send-text token id "That action was restricted for specific users.")

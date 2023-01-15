@@ -144,7 +144,7 @@
 
     (testing "without essay"
       (review-talk 5 "/essay1review")
-      (ttalk/in-history *chat 5 "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё вовремя или поспкешили."))
+      (ttalk/in-history *chat 5 "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё эссе вовремя или поспешили с отправкой ревью."))
 
     (testing "make a review"
       (review-talk 1 "/essay1review")
