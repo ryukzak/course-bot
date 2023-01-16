@@ -81,9 +81,9 @@
                                      hint
                                      (str "Please, provide description for your '"
                                           name "' (in one message):")))
-          (talk/change-branch tx :recieve-description)))
+          (talk/change-branch tx :receive-description)))
 
-      :recieve-description
+      :receive-description
       (fn [tx {{id :id} :from text :text}]
         (talk/send-text token id "Your description:")
         (talk/send-text token id text)
