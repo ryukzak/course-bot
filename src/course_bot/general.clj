@@ -38,9 +38,11 @@
                       msg (str group " group:\n" (str/join "\n" studs))]
                   (talk/send-text token id msg))))))))
 
-(defn listgroups-talk [db {token :token}]
+(defn listgroups-talk [db {token :token :as conf}]
   (talk/def-command db "listgroups" "send me group list know by the bot"
-    (fn [tx {{id :id} :from}] (send-list-groups tx token id) tx)))
+    (fn [tx {{id :id} :from}]
+        (assert-admin tx conf id)
+        (send-list-groups tx token id) tx)))
 
 (defn start-talk [db {token :token groups-raw :groups allow-restart :allow-restart}]
   (let [groups (-> groups-raw keys set)]
