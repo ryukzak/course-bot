@@ -47,11 +47,16 @@
         (is (= "Bot Botovich" (codax/get-at! db [1 :name])))
         (is (some? (codax/get-at! db [1 :reg-date]))))
 
-      (testing "group list"
-        (talk "/listgroups")
-        (tt/match-text *chat
+      (testing "group list for admin"
+        (talk 0 "/listgroups")
+        (tt/match-text *chat 0
                        "gr1 group:"
                        "1) Bot Botovich (@, 1)"))
+
+      (testing "group list"
+        (talk 1 "/listgroups")
+        (tt/match-text *chat 1
+                       "That action requires admin rights."))
 
       (testing "simple-report"
         (talk 0 "/report")
