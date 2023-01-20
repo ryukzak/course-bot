@@ -1,8 +1,24 @@
 (ns course-bot.general
   (:require [clojure.string :as str])
-  (:require [codax.core :as codax])
+  (:require [codax.core :as codax]
+            [taoensso.tempura :as tempura])
   (:require [course-bot.talk :as talk]))
 
+(def *tr-options-dict (atom {}))
+(defn add-dict [dict]
+  (swap! *tr-options-dict (partial merge-with merge) dict))
+
+(def *tr-locales (atom [:en]))
+(defn set-locales [langs]
+  (compare-and-set! *tr-locales @*tr-locales langs)
+  @*tr-locales)
+
+(defn tr [& in]
+  (let [resource (conj (apply vector in)
+                       (str "missing resource: " (str/join " " in)))]
+    (tempura/tr {:dict @*tr-options-dict}
+                @*tr-locales
+                resource)))
 (defn assert-admin
   ([tx {token :token admin-chat-id :admin-chat-id} id]
    (when-not (= id admin-chat-id)
