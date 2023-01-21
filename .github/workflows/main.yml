@@ -29,6 +29,17 @@ jobs:
         uses: DeLaGuardo/setup-clojure@9.5
         with:
           cli: 1.11.1.1155
+          
+      - name: Setup clj-kondo
+        uses: DeLaGuardo/setup-clj-kondo@master
+        with:
+          version: '2021.12.16'
+          
+      - name: clj-kondo lint
+        run: clj-kondo --lint deps.edn --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
+          
+      - name: cljfmt check
+        run: clojure -Sdeps '{:deps {cljfmt {:mvn/version "0.9.2"}}}' -M -m cljfmt.main check
 
       - name: Tests
         run: |
