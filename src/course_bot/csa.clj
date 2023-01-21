@@ -1,14 +1,24 @@
 (ns course-bot.csa
   (:require [morse.handlers :as handlers]
             [morse.polling :as polling]
-            [codax.core :as codax]
-            [course-bot.report :as report])
+            [codax.core :as codax])
   (:require [course-bot.misc :as misc]
             [course-bot.quiz :as quiz]
+            [course-bot.report :as report]
             [course-bot.presentation :as pres]
-            [course-bot.general :as general]
+            [course-bot.general :as general :refer [tr]]
             [course-bot.essay :as essay]
             [course-bot.talk :as talk]))
+
+(general/set-locales [:ru :en])
+(general/add-dict
+ {:en
+  {:csa
+   {:start "Bot activated, my Lord!"
+    :restart "Restart bot"
+    :dot "."
+    :stop "Bot is dead, my Lord!"
+    :unknown-_ "Unknown message: %s"}}})
 
 (def conf (misc/get-config "../edu-csa-internal"))
 
@@ -80,18 +90,17 @@
   (handlers/command "help" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/helps)))
 
   (handlers/message {{id :id} :chat :as message}
-                    (println "Unknown message: " message)
-                    (talk/send-text token id "Unknown message")))
+                    (let [err (format (tr :bot/unknown-_) message)]
+                      (println err)
+                      (talk/send-text token id err))))
 
-(defn run
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Bot activated, my Lord!")
+(defn run [& args]
+  (println (tr :csa/start))
   (loop [channel (polling/start token bot-api)]
     (Thread/sleep 500)
-    (print ".") (flush)
+    (print (tr :csa/dot)) (flush)
     (if (.closed? channel)
-      (do (print "Restart bot")
+      (do (print (tr :csa/stop))
           (recur (polling/start token bot-api)))
       (recur channel)))
-  (println "Bot is dead, my Lord!"))
+  (println (tr :csa/stop)))
