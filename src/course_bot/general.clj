@@ -19,10 +19,17 @@
     (tempura/tr {:dict @*tr-options-dict}
                 @*tr-locales
                 resource)))
+
+(add-dict
+ {:en
+  {:general
+   {:who-am-i "Name: %s Group: %s Telegram ID: %s"
+    :need-admin "That action requires admin rights."}}})
+
 (defn assert-admin
   ([tx {token :token admin-chat-id :admin-chat-id} id]
    (when-not (= id admin-chat-id)
-     (talk/send-text token id "That action requires admin rights.")
+     (talk/send-text token id (tr :general/need-admin))
      (talk/stop-talk tx))))
 
 (defn send-whoami

@@ -3,8 +3,16 @@
              [clojure.string :as str])
    (:require [codax.core :as codax])
    (:require [course-bot.talk :as talk]
-             [course-bot.general :as general]
+             [course-bot.general :as general :refer [tr]]
              [course-bot.misc :as misc]))
+
+(general/add-dict
+ {:en
+  {:pres
+   {:nothing-to-check "Nothing to check."}}
+  :ru
+  {:pres
+   {:nothing-to-check "Нет ничего на проверку"}}})
 
 (defn send-please-set-group [token id pres-key-name name]
   (talk/send-text token id (str "Please, set your '" name "' group "
@@ -152,7 +160,7 @@
         (let [submitions (wait-for-reviews tx pres-key)
               submition (first submitions)]
           (when (nil? submition)
-            (talk/send-text token id "Nothing to check.")
+            (talk/send-text token id (tr :pres/nothing-to-check))
             (talk/stop-talk tx))
           (let [[stud-id info] submition
                 group (-> info :presentation (get pres-key) :group)
