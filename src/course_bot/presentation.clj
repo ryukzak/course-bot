@@ -501,7 +501,7 @@
                    (filter #(-> % :id (= stud-id))))]
     (when (> (count ranks) 0)
       (let [avg (/ (->> ranks (map :rank) (apply +)) (count ranks))]
-        (Double/parseDouble (format "%.2f" (double avg)))))))
+        (misc/round-2 avg)))))
 
 (defn score "by the configuration" [tx conf pres-key stud-id]
   (let [all-scores (-> conf (get pres-key) :feedback-scores)
