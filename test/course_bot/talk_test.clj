@@ -6,21 +6,6 @@
             [morse.handlers :as handlers])
   (:require [course-bot.talk :as talk]))
 
-(defn mock-talk [talk-maker & args]
-  (let [do-talk (apply talk-maker args)]
-    (fn ([msg] (do-talk {:message {:from {:id 1} :text msg}}))
-      ([id msg] (do-talk {:message {:from {:id id} :text msg}})))))
-
-(defn in-history [*chat & msgs]
-  (let [[def-id msgs] (if (number? (first msgs)) [(first msgs) (rest msgs)] [1 msgs])
-        expect (->> msgs
-                    (map #(let [id (if (vector? %) (first %) def-id)
-                                text (if (vector? %) (str/join "\n" (rest %)) %)]  {:id id :msg text})))
-        actual (->> @*chat
-                    (take (count expect))
-                    reverse)]
-    (is (= expect actual))))
-
 (defn csv [tid & rows]
   (if (number? tid)
     (fn [{actual-id :id actual-msg :msg}]

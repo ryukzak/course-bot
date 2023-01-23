@@ -1,18 +1,12 @@
 (ns course-bot.general-test
-  (:require [clojure.test :refer :all]
-            [clojure.test :as test])
-  (:require [codax.core :as codax]
-            [morse.handlers :as handlers])
+  (:require [clojure.test :refer :all])
+  (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
-            [course-bot.talk :as talk]
             [course-bot.report :as report]
-            [course-bot.talk-test :as ttalk]
             [course-bot.talk-test :as tt]
             [course-bot.misc :as misc]))
 
-(declare db *chat start-talk-test restart-talk-test)
-
-(test/deftest start-talk-test
+(deftest start-talk-test
   (let [conf (misc/get-config "conf-example")
         db (tt/test-database)
         *chat (atom (list))
@@ -70,90 +64,98 @@
         (talk "/start")
         (tt/match-text *chat "You are already registered. To change your information, contact the teacher and send /whoami")))))
 
-(talk/deftest restart-talk-test [db *chat]
+(deftest restart-talk-test
   (let [conf (misc/get-config "conf-example")
-        start-talk (ttalk/mock-talk general/start-talk db conf)
-        whoami-talk (ttalk/mock-talk general/whoami-talk db conf)
-        restart-talk (ttalk/mock-talk general/restart-talk db conf)]
-    (restart-talk "bla-bla")
-    (is (= '() @*chat))
+        db (tt/test-database)
+        *chat (atom (list))
+        talk (tt/handlers (general/start-talk db conf)
+                          (general/whoami-talk db conf)
+                          (general/restart-talk db conf))]
+    (tt/with-mocked-morse *chat
+      (talk "bla-bla")
+      (is (= '() @*chat))
 
-    (testing "wrong requests"
-      (restart-talk "/restart")
-      (ttalk/in-history *chat "That action requires admin rights.")
+      (testing "wrong requests"
+        (talk "/restart")
+        (tt/match-text *chat "That action requires admin rights.")
 
-      (restart-talk 0 "/restart")
-      (ttalk/in-history *chat 0 "Wrong input. Expect: /restart 12345")
+        (talk 0 "/restart")
+        (tt/match-text *chat 0 "Wrong input. Expect: /restart 12345")
 
-      (restart-talk 0 "/restart 1")
-      (ttalk/in-history *chat 0 "User with specific telegram id not found."))
+        (talk 0 "/restart 1")
+        (tt/match-text *chat 0 "User with specific telegram id not found."))
 
-    (testing "register user for restart"
-      (start-talk "/start")
-      (start-talk "Bot Botovich")
-      (start-talk "gr1")
-      (whoami-talk "/whoami")
-      (ttalk/in-history *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
-      (start-talk "/start")
-      (ttalk/in-history *chat "You are already registered. To change your information, contact the teacher and send /whoami"))
+      (testing "register user for restart"
+        (talk "/start")
+        (talk "Bot Botovich")
+        (talk "gr1")
+        (talk "/whoami")
+        (tt/match-text *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
+        (talk "/start")
+        (tt/match-text *chat "You are already registered. To change your information, contact the teacher and send /whoami"))
 
-    (testing "try but not actually restart"
-      (restart-talk 0 "/restart 1")
-      (ttalk/in-history *chat 0 "Restart this student?")
+      (testing "try but not actually restart"
+        (talk 0 "/restart 1")
+        (tt/match-text *chat 0 "Restart this student?")
 
-      (restart-talk 0 "emm")
-      (ttalk/in-history *chat 0 "Please yes or no?")
+        (talk 0 "emm")
+        (tt/match-text *chat 0 "Please yes or no?")
 
-      (restart-talk 0 "no")
-      (ttalk/in-history *chat 0 "Not restarted."))
+        (talk 0 "no")
+        (tt/match-text *chat 0 "Not restarted."))
 
-    (testing "restart"
-      (restart-talk 0 "/restart 1")
-      (restart-talk 0 "yes")
-      (ttalk/in-history *chat
-                        [0 "Restarted and notified: 1"]
-                        [1 "You can use /start once more."])
+      (testing "restart"
+        (talk 0 "/restart 1")
+        (talk 0 "yes")
+        (tt/match-history *chat
+                          (tt/text 0 "Restarted and notified: 1")
+                          (tt/text 1 "You can use /start once more."))
 
-      (start-talk "/start")
-      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))))
+        (talk "/start")
+        (tt/match-text *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?")))))
 
-(talk/deftest restart-permitted-test [db *chat]
+(deftest restart-permitted-test
   (let [conf (assoc (misc/get-config "conf-example") :allow-restart true)
-        start-talk (ttalk/mock-talk general/start-talk db conf)
-        whoami-talk (ttalk/mock-talk general/whoami-talk db conf)
-        restart-talk (ttalk/mock-talk general/restart-talk db conf)]
+        db (tt/test-database)
+        *chat (atom (list))
+        talk (tt/handlers (general/start-talk db conf)
+                          (general/whoami-talk db conf)
+                          (general/restart-talk db conf))]
+    (tt/with-mocked-morse *chat
 
-    (testing "register user for restart"
-      (start-talk "/start")
-      (start-talk "Bot Botovich")
-      (start-talk "gr1")
-      (whoami-talk "/whoami")
-      (ttalk/in-history *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
-      (start-talk "/start")
-      (ttalk/in-history *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))))
+      (testing "register user for restart"
+        (talk "/start")
+        (talk "Bot Botovich")
+        (talk "gr1")
+        (talk "/whoami")
+        (tt/match-text *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
+        (talk "/start")
+        (tt/match-text *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?")))))
 
-(talk/deftest renameme-talk-test [db *chat]
+(deftest renameme-talk-test
   (let [conf (misc/get-config "conf-example")
-        start-talk (ttalk/mock-talk general/start-talk db conf)
-        whoami-talk (ttalk/mock-talk general/whoami-talk db conf)
-        renameme-talk (ttalk/mock-talk general/renameme-talk db conf)]
+        db (tt/test-database)
+        *chat (atom (list))
+        talk (tt/handlers (general/start-talk db conf)
+                          (general/whoami-talk db conf)
+                          (general/renameme-talk db conf))]
+    (tt/with-mocked-morse *chat
+      (talk "/renameme")
+      (tt/match-text *chat "You should be registered to rename yourself!")
 
-    (renameme-talk "/renameme")
-    (ttalk/in-history *chat "You should be registered to rename yourself!")
+      (talk "/start")
+      (talk "Bot Botovich")
+      (talk "gr1")
+      (talk "/whoami")
+      (tt/match-text *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
 
-    (start-talk "/start")
-    (start-talk "Bot Botovich")
-    (start-talk "gr1")
-    (whoami-talk "/whoami")
-    (ttalk/in-history *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
+      (talk "/renameme")
+      (tt/match-text *chat "What is your new name?")
 
-    (renameme-talk "/renameme")
-    (ttalk/in-history *chat "What is your new name?")
+      (talk "Buddy")
+      (tt/match-history *chat
+                        (tt/text 1 "Renamed:")
+                        (tt/text 1 "Name: Buddy; Group: gr1; Telegram ID: 1"))
 
-    (renameme-talk "Buddy")
-    (ttalk/in-history *chat
-                      "Renamed:"
-                      "Name: Buddy; Group: gr1; Telegram ID: 1")
-
-    (whoami-talk "/whoami")
-    (ttalk/in-history *chat "Name: Buddy; Group: gr1; Telegram ID: 1")))
+      (talk "/whoami")
+      (tt/match-text *chat "Name: Buddy; Group: gr1; Telegram ID: 1"))))
