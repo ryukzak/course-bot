@@ -1,20 +1,13 @@
 (ns course-bot.core
-  (:require [codax.core :as c]
-            [clojure.data.csv :as csv])
+  (:require [codax.core :as c])
 
-  (:require [clojure.java.io :as io])
-  (:require [course-bot.dialog :as d]
-            [course-bot.talk :as talk]
-            [course-bot.quiz :as quiz]
+  (:require [course-bot.talk :as talk]
             [course-bot.essay :as essay]
             [course-bot.general :as general]
-            [course-bot.presentation :as pres]
             [course-bot.report :as report])
   (:require [morse.handlers :as h]
             [morse.api :as t]
             [morse.polling :as p])
-  (:require [clojure.string :as str]
-            [clojure.pprint :refer [pprint]])
   (:gen-class))
 
 ;; depricated
@@ -119,7 +112,7 @@ essay3results - результаты рассмотрения моего тре�
 
 (defn -main
   "I don't do a whole lot ... yet."
-  [& args]
+  []
   (println "Bot activated, my Lord!")
   (loop [channel (p/start token bot-api)]
     (Thread/sleep 1000)

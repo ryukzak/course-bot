@@ -1,8 +1,7 @@
 (ns course-bot.general-test
   (:require [clojure.test :refer :all]
             [clojure.test :as test])
-  (:require [codax.core :as codax]
-            [morse.handlers :as handlers])
+  (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.talk :as talk]
             [course-bot.report :as report]

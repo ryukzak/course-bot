@@ -94,7 +94,7 @@
                       (println err)
                       (talk/send-text token id err))))
 
-(defn run [& args]
+(defn run []
   (println (tr :csa/start))
   (loop [channel (polling/start token bot-api)]
     (Thread/sleep 500)

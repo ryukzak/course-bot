@@ -1,6 +1,5 @@
 (ns course-bot.essay-test
-  (:require [clojure.test :refer :all]
-            [clojure.string :as str])
+  (:require [clojure.test :refer :all])
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.essay :as essay]

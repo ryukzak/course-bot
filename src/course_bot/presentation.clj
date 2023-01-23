@@ -57,7 +57,7 @@
           group (-> data (get id) :presentation (get pres-key) :group)
           lessons (-> data :presentation (get pres-key) (get group))]
       (->> lessons
-           (filter (fn [[_k v]] (-> v :stud-ids empty? not)))
+           (filter (fn [[_k v]] (-> v :stud-ids seq)))
            count))))
 
 (defn submit-talk [db {token :token :as conf} pres-key-name]
@@ -551,7 +551,7 @@
           group (-> data (get id) :presentation (get pres-key) :group)
           schedule (-> data :presentation (get pres-key) (get group))]
       (->> schedule
-           (filter #(-> % second :stud-ids empty? not))
+           (filter #(-> % second :stud-ids seq))
            count))))
 
 (defn scheduled-descriptions-dump [data pres-key group]
