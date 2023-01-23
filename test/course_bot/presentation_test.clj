@@ -404,13 +404,19 @@
     (all-scheduled-descriptions-dump-talk 0 "/lab1descriptions")
     (ttalk/in-history *chat
                       [0 "File with all scheduled descriptions by groups:"]
-                      [0
-                       "# lgr1\n"
-                       "## Alice\n"
-                       "pres 1\n"
-                       "## Bob\n"
-                       "pres 2\n\n"
-                       "# lgr2\n\n"])
+                      [0 "# lgr1"
+                       ""
+                       "## (Alice -- pres 1)"
+                       ""
+                       "pres 1"
+                       ""
+                       "## (Bob -- pres 2)"
+                       ""
+                       "pres 2"
+                       ""
+                       ""
+                       "# lgr2\n\n"
+                       ])
 
     (testing "soon-talk"
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:30 +0000"))]

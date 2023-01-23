@@ -560,7 +560,7 @@
                      (-> % second :presentation (get pres-key) :scheduled?)))
        (map #(let [name (-> % second :name)
                    desc (-> % second :presentation (get pres-key) :description)]
-               (str "## " name "\n\n" desc)))
+               (str "## (" name " -- " (topic desc) ")\n\n" desc)))
        (str/join "\n\n")))
 
 (defn all-scheduled-descriptions-dump-talk [db {token :token :as conf} pres-id]
