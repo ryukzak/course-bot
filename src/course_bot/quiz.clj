@@ -156,7 +156,7 @@
         re (re-pattern (str "^["
                             (str/join "" question-range)
                             "]$"))]
-    (seq (re-seq re text))))
+    (not (empty? (re-seq re text)))))
 
 (defn quiz-talk [db {token :token :as conf}]
   (talk/talk db "quiz" "начать прохождение теста, если он запущен"
