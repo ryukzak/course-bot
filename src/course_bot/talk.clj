@@ -1,6 +1,5 @@
 (ns course-bot.talk
-  (:require [clojure.string :as str]
-            [clojure.test :as test])
+  (:require [clojure.string :as str])
   (:require [codax.core :as codax]
             [morse.handlers :as handlers]
             [morse.api :as morse]
@@ -64,37 +63,36 @@
       (swap! *helps assoc name help))
     (fn talk-top [update]
       (let [res (atom nil)]
-        (try
-          (declare tx)
-          (codax/with-write-transaction [db tx]
-            (let [id (-> update :message :from :id)
-                  msg (:message update)
-                  {current-talk :current-talk
-                   current-branch :current-branch
-                   state :state} (codax/get-at tx [id :talk])]
-              (try
-                (let [tmp (cond
-                            (handlers/command? update name) (start-handler tx msg)
+        (declare tx)
+        (codax/with-write-transaction [db tx]
+          (let [id (-> update :message :from :id)
+                msg (:message update)
+                {current-talk :current-talk
+                 current-branch :current-branch
+                 state :state} (codax/get-at tx [id :talk])]
+            (try
+              (let [tmp (cond
+                          (handlers/command? update name) (start-handler tx msg)
 
-                            (str/starts-with? (-> msg :text) "/") nil
+                          (str/starts-with? (-> msg :text) "/") nil
 
-                            (and (= current-talk name) (contains? handlers current-branch))
-                            (if (nil? state)
-                              ((get handlers current-branch) tx msg)
-                              ((get handlers current-branch) tx msg state)))]
-                  (swap! res (constantly tmp))
-                  (if (nil? @res) tx @res))
-                (catch clojure.lang.ExceptionInfo e
-                  (swap! res (constantly :ok))
-                  (case (ex-message e)
-                    "Change branch" (set-talk-branch (-> e ex-data :tx)
-                                                     id name
-                                                     (-> e ex-data :next-branch)
-                                                     (-> e ex-data :state))
-                    "Stop talk" (set-talk-branch (-> e ex-data :tx) id nil nil nil)
-                    "Wait talk" (-> e ex-data :tx)
-                    (throw e))))))
-          @res)))))
+                          (and (= current-talk name) (contains? handlers current-branch))
+                          (if (nil? state)
+                            ((get handlers current-branch) tx msg)
+                            ((get handlers current-branch) tx msg state)))]
+                (swap! res (constantly tmp))
+                (if (nil? @res) tx @res))
+              (catch clojure.lang.ExceptionInfo e
+                (swap! res (constantly :ok))
+                (case (ex-message e)
+                  "Change branch" (set-talk-branch (-> e ex-data :tx)
+                                                   id name
+                                                   (-> e ex-data :next-branch)
+                                                   (-> e ex-data :state))
+                  "Stop talk" (set-talk-branch (-> e ex-data :tx) id nil nil nil)
+                  "Wait talk" (-> e ex-data :tx)
+                  (throw e))))))
+        @res))))
 
 (defmacro def-talk [& args] `(talk ~@args))
 

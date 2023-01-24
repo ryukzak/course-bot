@@ -220,7 +220,7 @@
             str
             (str/replace #"\." ","))))))
 
-(defn essay-score "hardcoded: rank + 1" [conf essay-code]
+(defn essay-score "hardcoded: rank + 1" [essay-code]
   (fn [_tx data id]
     (let [reviews (-> data (get id) :essays (get essay-code) :received-review)
           scores (->> reviews (map :rank))]

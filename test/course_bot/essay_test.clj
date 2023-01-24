@@ -95,7 +95,7 @@
                           (report/report-talk db conf
                                               "ID" report/stud-id
                                               "review-score" (essay/review-score conf "essay1")
-                                              "essay-score" (essay/essay-score conf "essay1")))]
+                                              "essay-score" (essay/essay-score "essay1")))]
 
     (tt/with-mocked-morse *chat
       (testing "prepare users and their essays"
