@@ -43,11 +43,6 @@
       (keyword (first args))
       nil)))
 
-(defn id-from-arg [text]
-  (let [args (command-args text)]
-    (when (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
-      (Integer/parseInt (first args)))))
-
 (def *helps (atom {}))
 
 (defn helps []
