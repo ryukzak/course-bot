@@ -1,5 +1,5 @@
 (ns course-bot.talk-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [clojure.string :as str]
             [clojure.data.csv :as csv])
   (:require [codax.core :as codax]

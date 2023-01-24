@@ -1,5 +1,5 @@
 (ns course-bot.essay-test
-  (:require [clojure.test :refer :all])
+  (:require [clojure.test :refer [deftest testing is]])
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.essay :as essay]

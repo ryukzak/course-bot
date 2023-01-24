@@ -1,5 +1,5 @@
 (ns course-bot.quiz-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
             [clojure.string :as str])
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
