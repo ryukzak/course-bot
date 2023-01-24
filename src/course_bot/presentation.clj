@@ -509,7 +509,7 @@
                    (filter #(-> % :id (= stud-id))))]
     (when (> (count ranks) 0)
       (let [avg (/ (->> ranks (map :rank) (apply +)) (count ranks))]
-        (Double/parseDouble (format "%.2f" (double avg)))))))
+        (misc/round-2 avg)))))
 
 (defn score "by the configuration" [tx conf pres-key stud-id]
   (let [all-scores (-> conf (get pres-key) :feedback-scores)
@@ -560,7 +560,7 @@
                      (-> % second :presentation (get pres-key) :scheduled?)))
        (map #(let [name (-> % second :name)
                    desc (-> % second :presentation (get pres-key) :description)]
-               (str "## " name "\n\n" desc)))
+               (str "## (" name " -- " (topic desc) ")\n\n" desc)))
        (str/join "\n\n")))
 
 (defn all-scheduled-descriptions-dump-talk [db {token :token :as conf} pres-id]

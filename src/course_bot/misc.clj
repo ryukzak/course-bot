@@ -36,3 +36,5 @@
 
 (defn normalize-time [dt]
   (str-time (read-time dt)))
+
+(defn round-2 [num] (double (/ (Math/round (* 100.0 num)) 100)))
