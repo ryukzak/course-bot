@@ -667,6 +667,7 @@
                (codax/get-at! db [:presentation
                                   :lab1 "lgr1"
                                   "2022.01.01 12:00 +0000"])))
+        (declare tx)
 
         (codax/with-read-transaction [db tx]
           (is (= 1.5 (pres/avg-rank tx :lab1 1)))
