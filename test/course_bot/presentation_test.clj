@@ -554,7 +554,7 @@
                           (report/report-talk db conf
                                               "ID" report/stud-id
                                               "pres-group" (pres/report-presentation-group "lab1")
-                                              "feedback-avg" (pres/report-presentation-avg-rank conf "lab1")
+                                              "feedback-avg" (pres/report-presentation-avg-rank "lab1")
                                               "feedback" (pres/report-presentation-score conf "lab1")
                                               "classes" (pres/report-presentation-classes "lab1")
                                               "lesson-counter" (pres/lesson-count "lab1")))]
