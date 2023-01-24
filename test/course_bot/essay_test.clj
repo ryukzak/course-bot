@@ -97,7 +97,6 @@
                                               "review-score" (essay/review-score conf "essay1")
                                               "essay-score" (essay/essay-score conf "essay1")))]
 
-
     (tt/with-mocked-morse *chat
       (testing "prepare users and their essays"
         (doall (map #(register-user *chat talk %1 %2)

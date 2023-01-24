@@ -16,7 +16,6 @@
     (talk id "/start")
     (tt/match-text *chat id "You are already registered. To change your information, contact the teacher and send /whoami")))
 
-
 (deftest setgroup-talk-test
   (let [conf (misc/get-config "conf-example")
         db (tt/test-database)
@@ -80,8 +79,6 @@
                :group "lgr1"
                :on-review? true}}
              (codax/get-at! db [1 :presentation]))))))
-
-
 
 (deftest check-and-submissions-talks-test
   (let [conf (misc/get-config "conf-example")
