@@ -24,8 +24,7 @@
     :essays " essays."
     :assignment-error "ERROR: can't find assignment for some reason!"
     :assignment-count "Assignment count: "
-    :assignment-examples "Examples: " 
-    }}
+    :assignment-examples "Examples: "}}
   :ru
   {:essay
    {:submit "Отправить "
@@ -44,8 +43,7 @@
     :essays " эссе."
     :assignment-error "ОШИБКА: почему-то не удается найти задание!"
     :assignment-count "Количество заданий:"
-    :assignment-examples "Примеры: " 
-    }}})
+    :assignment-examples "Примеры: "}}})
 
 (defn submit-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "submit")
