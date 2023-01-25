@@ -24,7 +24,7 @@
     :essays " essays."
     :assignment-error "ERROR: can't find assignment for some reason!"
     :assignment-count "Assignment count: "
-    :assignment-count "Examples: " 
+    :assignment-examples "Examples: " 
     }}
   :ru
   {:essay
