@@ -454,9 +454,7 @@
         pres-key (keyword pres-key-name)
         name (-> conf (get pres-key) :name)
         help (str "for teacher, drop '" name "' for specific student ("
-                  (if drop-all "all" "only schedule") ")")
-        groups (-> conf (get pres-key) :groups)
-        groups-text (->> groups keys sort (str/join ", "))]
+                  (if drop-all "all" "only schedule") ")")]
     (talk/def-talk db cmd help
 
       :start
@@ -535,7 +533,7 @@
             rank (some #(when (= stud-id (:stud-id %)) (:rank %)) ranks)]
         (-> scores (nth (- rank 1)))))))
 
-(defn report-presentation-avg-rank [conf pres-key-name]
+(defn report-presentation-avg-rank [pres-key-name]
   (fn [tx _data id]
     (-> (avg-rank tx (keyword pres-key-name) id)
         str

@@ -1,5 +1,5 @@
 (ns course-bot.essay-test
-  (:require [clojure.test :refer :all])
+  (:require [clojure.test :refer [deftest testing is]])
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.essay :as essay]
@@ -95,8 +95,7 @@
                           (report/report-talk db conf
                                               "ID" report/stud-id
                                               "review-score" (essay/review-score conf "essay1")
-                                              "essay-score" (essay/essay-score conf "essay1")))]
-
+                                              "essay-score" (essay/essay-score "essay1")))]
 
     (tt/with-mocked-morse *chat
       (testing "prepare users and their essays"

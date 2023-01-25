@@ -64,8 +64,8 @@
 (defn listgroups-talk [db {token :token :as conf}]
   (talk/def-command db "listgroups" "send me group list know by the bot"
     (fn [tx {{id :id} :from}]
-        (assert-admin tx conf id)
-        (send-list-groups tx token id) tx)))
+      (assert-admin tx conf id)
+      (send-list-groups tx token id) tx)))
 
 (defn start-talk [db {token :token groups-raw :groups allow-restart :allow-restart}]
   (let [groups (-> groups-raw keys set)]
@@ -104,7 +104,7 @@
           (talk/send-text token id "Send /help for help.")
           (talk/stop-talk tx))))))
 
-(defn renameme-talk [db {token :token groups-raw :groups}]
+(defn renameme-talk [db {token :token}]
   (talk/def-talk db "renameme" "rename me"
     :start
     (fn [tx {{id :id} :from}]
@@ -116,7 +116,7 @@
         (talk/change-branch tx :get-name)))
 
     :get-name
-    (fn [tx {{id :id :as chat} :from text :text}]
+    (fn [tx {{id :id} :from text :text}]
       (let [tx (-> tx
                    (codax/assoc-at [id :name] text)
                    (codax/assoc-at [id :rename-date] (str (new java.util.Date))))]

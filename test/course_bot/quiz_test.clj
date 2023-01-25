@@ -1,5 +1,5 @@
 (ns course-bot.quiz-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
             [clojure.string :as str])
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
@@ -290,17 +290,7 @@
                              (report/report-talk db conf
                                                  "ID" report/stud-id
                                                  "fail" (quiz/fail-tests conf)
-                                                 "percent" (quiz/success-tests-percent conf)))
-        do-test (fn [name id & answers]
-                  (talk id "/quiz")
-                  (tt/match-text *chat id
-                                 (str "Хотите начать тест '" name "' ("
-                                      (count answers) " вопроса(-ов))?"))
-                  (talk id "yes")
-                  (doall (map #(talk id %) answers))
-                  (tt/match-history *chat
-                                    (tt/text id "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт.")
-                                    (tt/text 0 (str "Quiz answers: " (str/join ", " answers)))))]
+                                                 "percent" (quiz/success-tests-percent conf)))]
     (tt/with-mocked-morse *chat
 
       (start-user *chat talk 1 "Alice")

@@ -1,5 +1,5 @@
 (ns course-bot.presentation-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
             [clojure.string :as str])
   (:require [codax.core :as codax])
   (:require [course-bot.presentation :as pres]
@@ -15,7 +15,6 @@
     (talk id "gr1")
     (talk id "/start")
     (tt/match-text *chat id "You are already registered. To change your information, contact the teacher and send /whoami")))
-
 
 (deftest setgroup-talk-test
   (let [conf (misc/get-config "conf-example")
@@ -80,8 +79,6 @@
                :group "lgr1"
                :on-review? true}}
              (codax/get-at! db [1 :presentation]))))))
-
-
 
 (deftest check-and-submissions-talks-test
   (let [conf (misc/get-config "conf-example")
@@ -557,7 +554,7 @@
                           (report/report-talk db conf
                                               "ID" report/stud-id
                                               "pres-group" (pres/report-presentation-group "lab1")
-                                              "feedback-avg" (pres/report-presentation-avg-rank conf "lab1")
+                                              "feedback-avg" (pres/report-presentation-avg-rank "lab1")
                                               "feedback" (pres/report-presentation-score conf "lab1")
                                               "classes" (pres/report-presentation-classes "lab1")
                                               "lesson-counter" (pres/lesson-count "lab1")))]
@@ -667,6 +664,7 @@
                (codax/get-at! db [:presentation
                                   :lab1 "lgr1"
                                   "2022.01.01 12:00 +0000"])))
+        (declare tx)
 
         (codax/with-read-transaction [db tx]
           (is (= 1.5 (pres/avg-rank tx :lab1 1)))
