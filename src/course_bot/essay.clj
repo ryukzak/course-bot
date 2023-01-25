@@ -136,7 +136,7 @@
         (general/assert-admin tx conf id)
         (let [update (assign-reviews tx essay-code 3)]
           (when (nil? update)
-            (talk/send-text token id (tr :essay/assignment-error)
+            (talk/send-text token id (tr :essay/assignment-error))
             (talk/stop-talk tx))
           (talk/send-text token id
                           (str (tr :essay/assignment-count) (count update) "; "
