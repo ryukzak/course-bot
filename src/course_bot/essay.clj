@@ -74,7 +74,7 @@
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
         (talk/when-parse-yes-or-no
          tx token id text
-         (talk/send-text token id (tr :essay/:thank-you-your-essay-submited))
+         (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
          (-> tx
              (codax/assoc-at [id :essays essay-code :text] essay-text)
              talk/stop-talk))))))

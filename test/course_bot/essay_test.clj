@@ -56,7 +56,7 @@
       (testing "submit"
         (talk 1 "/essay1submit")
         (talk 1 "u1 essay1 text")
-        (tt/match-text *chat 1 "Is loading? (yes/no)")
+        (tt/match-text *chat 1 "Is loading (yes/no)?")
         (talk 1 "yes")
         (tt/match-text *chat 1 "Thank you, the text has been uploaded and will be submitted for review soon.")
         (talk 1 "/essay1status")
