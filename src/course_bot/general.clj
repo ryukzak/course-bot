@@ -23,7 +23,7 @@
 (add-dict
  {:en
   {:general
-   {:who-am-i "Name: %s Group: %s Telegram ID: %s"
+   {:who-am-i-3 "Name: %s; Group: %s; Telegram ID: %s"
     :need-admin "That action requires admin rights."}}})
 
 (defn assert-admin
@@ -36,9 +36,7 @@
   ([tx token id] (send-whoami tx token id id))
   ([tx token id about]
    (let [{name :name group :group} (codax/get-at tx [about])]
-     (talk/send-text token id (str "Name: " name "; "
-                                   "Group: " group "; "
-                                   "Telegram ID: " about)))))
+     (talk/send-text token id (format (tr :general/who-am-i-3) name group about)))))
 
 (defn whoami-talk [db {token :token}]
   (talk/def-command db "whoami" "send me my registration info"
