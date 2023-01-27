@@ -43,8 +43,7 @@
     :essay-feedback-saved "Your feedback has been saved and will be available to essay writers."
     :essay-feedback "Feedback: "
     :feedback-on-your-essay "feedback on your essay "
-    :number-of-reviews-1 "You received %d reviews."
-    }}
+    :number-of-reviews-1 "You received %d reviews."}}
   :ru
   {:essay
    {:submit "Отправить "
@@ -60,7 +59,7 @@
     :set-of-reviews "Есть комплект ревью на: "
     :essays " эссе."
     :assignment-error "ОШИБКА: почему-то не удается найти задание!"
-    :assignment-count "Количество заданий:"
+    :assignment-count "Количество заданий: "
     :assignment-examples "Примеры: "
     :first-essay-best "Первое эссе -- лучшее.\n\n"
     :rank-1 "Ранг: %d, "
