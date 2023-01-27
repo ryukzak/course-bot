@@ -193,12 +193,12 @@
   (str (tr :essay/first-essay-best)
        (str/join "\n\n---\n\n"
                  (map #(str (format (tr :essay/preview-reviews-3) (:rank %) (+ 1 (:index %)) (:feedback %)) (let [essay (-> assignments (nth (:index %)) second)]
-                                                              (subs essay 0 (min (count essay) 40))) "...)")
+                                                                                                              (subs essay 0 (min (count essay) 40))) "...)")
                       (sort-by :rank reviews)))
        (tr :essay/the-last-essay-worst)))
 
 (defn review-talk [db {token :token :as conf} essay-code]
-   (let [cmd (str essay-code "review")
+  (let [cmd (str essay-code "review")
         help (str (tr :essay/write-review-for) essay-code)]
     (talk/def-talk db cmd help
       :start
