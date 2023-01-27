@@ -47,8 +47,8 @@
   :ru
   {:essay
    {:submit "Отправить "
-    :your-essay-already-uploaded "Ваше эссе '%s' уже загружено."
-    :send-essay-text-in-one-message "Отправьте текст эссе '%s' одним сообщением."
+    :your-essay-already-uploaded-1 "Ваше эссе '%s' уже загружено."
+    :send-essay-text-in-one-message-1 "Отправьте текст эссе '%s' одним сообщением."
     :themes " Тема(-ы):\n\n"
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Загружаем (yes/no)?"
