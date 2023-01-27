@@ -9,8 +9,8 @@
  {:en
   {:essay
    {:submit "Submit "
-    :your-essay-already-uploaded "Your essay '%s' already uploaded."
-    :send-essay-text-in-one-message "Submit your essay text '%s' in one message."
+    :your-essay-already-uploaded-1 "Your essay '%s' already uploaded."
+    :send-essay-text-in-one-message-1 "Submit your essay text '%s' in one message."
     :themes " Theme(s):\n\n"
     :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Is loading (yes/no)?"
@@ -50,9 +50,9 @@
       (fn [tx {{id :id} :from}]
         (let [submitted? (codax/get-at tx [id :essays essay-code :text])]
           (when submitted?
-            (talk/send-text token id (str (format(tr :essay/your-essay-already-uploaded) essay-code)))
+            (talk/send-text token id (str (format(tr :essay/your-essay-already-uploaded-1) essay-code)))
             (talk/stop-talk tx))
-          (talk/send-text token id (str (format(tr :essay/send-essay-text-in-one-message) essay-code)
+          (talk/send-text token id (str (format(tr :essay/send-essay-text-in-one-message-1) essay-code)
                                         (when topics-msg (str (tr :essay/themes) topics-msg))))
           (talk/change-branch tx :submit)))
 
