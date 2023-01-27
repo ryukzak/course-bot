@@ -1,38 +1,74 @@
 (ns course-bot.essay
   (:require [course-bot.talk :as talk]
-            [course-bot.general :as general]
+            [course-bot.general :as general :refer [tr]]
             [course-bot.misc :as misc])
   (:require [codax.core :as codax])
   (:require [clojure.string :as str]))
 
+(general/add-dict
+ {:en
+  {:essay
+   {:submit "Submit "
+    :your-essay-already-uploaded-1 "Your essay '%s' already uploaded."
+    :send-essay-text-in-one-message-1 "Submit your essay text '%s' in one message."
+    :themes " Theme(s):\n\n"
+    :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
+    :is-loading-question "Is loading (yes/no)?"
+    :thank-you-your-essay-submited "Thank you, the text has been uploaded and will be submitted for review soon."
+    :status " status"
+    :total-essays "Total essays: "
+    :number-of-reviewers "Number of people who reviewed: "
+    :set-of-reviews "There is a set of reviews for: "
+    :essays " essays."
+    :assignment-error "ERROR: can't find assignment for some reason!"
+    :assignment-count "Assignment count: "
+    :assignment-examples "Examples: "}}
+  :ru
+  {:essay
+   {:submit "Отправить "
+    :your-essay-already-uploaded "Ваше эссе '%s' уже загружено."
+    :send-essay-text-in-one-message "Отправьте текст эссе '%s' одним сообщением."
+    :themes " Тема(-ы):\n\n"
+    :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
+    :is-loading-question "Загружаем (yes/no)?"
+    :thank-you-your-essay-submited "Спасибо, текст загружен и скоро попадёт на рецензирование."
+    :status " статус"
+    :total-essays "Всего эссе: "
+    :number-of-reviewers "Человек сделало ревью: "
+    :set-of-reviews "Есть комплект ревью на: "
+    :essays " эссе."
+    :assignment-error "ОШИБКА: почему-то не удается найти задание!"
+    :assignment-count "Количество заданий:"
+    :assignment-examples "Примеры: "}}})
+
 (defn submit-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "submit")
         topics-msg (-> conf (get (keyword essay-code)) :topic-msg)
-        help (str "Sumbit " essay-code)]
+        help (str (tr :essay/submit) essay-code)]
     (talk/def-talk db cmd help
       :start
       (fn [tx {{id :id} :from}]
         (let [submitted? (codax/get-at tx [id :essays essay-code :text])]
           (when submitted?
-            (talk/send-text token id (str "Ваше эссе '" essay-code "' уже загружено"))
+            (talk/send-text token id (str (format (tr :essay/your-essay-already-uploaded-1) essay-code)))
             (talk/stop-talk tx))
-          (talk/send-text token id (str "Отправьте текст эссе '" essay-code "' одним сообщением."
-                                        (when topics-msg (str " Тема(-ы):\n\n" topics-msg))))
+          (talk/send-text token id (str (format (tr :essay/send-essay-text-in-one-message-1) essay-code)
+                                        (when topics-msg (str (tr :essay/themes) topics-msg))))
           (talk/change-branch tx :submit)))
 
       :submit
       (fn [tx {{id :id} :from text :text}]
-        (talk/send-text token id "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<")
+        (talk/send-text token id (tr :essay/text-of-your-essay))
         (talk/send-text token id text)
         (talk/send-text token id ">>>>>>>>>>>>>>>>>>>>")
-        (talk/send-yes-no-kbd token id (str "Загружаем (yes/no)?"))
+        (talk/send-yes-no-kbd token id (str (tr :essay/is-loading-question)))
         (talk/change-branch tx :approve {:essay-text text}))
 
       :approve
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
         (talk/when-parse-yes-or-no
          tx token id text
-         (talk/send-text token id "Спасибо, текст загружен и скоро попадёт на рецензирование.")
+         (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
          (-> tx
              (codax/assoc-at [id :essays essay-code :text] essay-text)
              talk/stop-talk))))))
@@ -43,23 +79,23 @@
 
 (defn status-talk [db {token :token} essay-code]
   (talk/def-talk db (str essay-code "status")
-    (str essay-code " статус")
+    (str essay-code (tr :essay/status))
     :start
     (fn [tx {{id :id} :from}]
       (let [essays (get-essays tx essay-code)]
         (talk/send-text token id
                         (str
-                         "Всего эссе: " (count essays) "\n"
-                         "Человек сделало ревью: "
+                         (tr :essay/total-essays) (count essays) "\n"
+                         (tr :essay/number-of-reviewers)
                          (->> essays
                               (filter #(-> % second :essays (get essay-code) :my-reviews count (> 0)))
                               count) "\n"
-                         "Есть комплект ревью на: "
+                         (tr :essay/set-of-reviews)
                          (->> essays
                               vals
                               (map #(-> % :essays (get essay-code) :received-review))
                               (filter #(= 3 (count %)))
-                              count) " эссе.")))
+                              count) (tr :essay/essays))))
 
       (talk/stop-talk tx))))
 
@@ -94,11 +130,11 @@
         (general/assert-admin tx conf id)
         (let [update (assign-reviews tx essay-code 3)]
           (when (nil? update)
-            (talk/send-text token id "ERROR: can't find assignment for some reason!")
+            (talk/send-text token id (tr :essay/assignment-error))
             (talk/stop-talk tx))
           (talk/send-text token id
-                          (str "Assignment count: " (count update) "; "
-                               "Examples: " (some-> update first second :essays (get essay-code) :request-review)))
+                          (str (tr :essay/assignment-count) (count update) "; "
+                               (tr :essay/assignment-examples) (some-> update first second :essays (get essay-code) :request-review)))
           (reduce (fn [tx' [id desc]]
                     (codax/assoc-at tx' [id] desc))
                   tx update))))))

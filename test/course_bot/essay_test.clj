@@ -30,15 +30,15 @@
       (talk 1 "/essay1submit")
 
       (tt/match-text *chat 1
-                     "Отправьте текст эссе 'essay1' одним сообщением. Тема(-ы):"
+                     "Submit your essay text 'essay1' in one message. Theme(s):"
                      ""
                      "essay1-topics-text")
       (talk 1 "u1 essay1 text")
       (tt/match-history *chat
-                        (tt/text 1 "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<")
+                        (tt/text 1 "The text of your essay\n<<<<<<<<<<<<<<<<<<<<")
                         (tt/text 1 "u1 essay1 text")
                         (tt/text 1 ">>>>>>>>>>>>>>>>>>>>")
-                        (tt/text 1 "Загружаем (yes/no)?"))
+                        (tt/text 1 "Is loading (yes/no)?"))
 
       (testing "cancelation"
         (talk 1 "hmmm")
@@ -49,37 +49,37 @@
 
         (talk 1 "/essay1status")
         (tt/match-text *chat 1
-                       "Всего эссе: 0"
-                       "Человек сделало ревью: 0"
-                       "Есть комплект ревью на: 0 эссе."))
+                       "Total essays: 0"
+                       "Number of people who reviewed: 0"
+                       "There is a set of reviews for: 0 essays."))
 
       (testing "submit"
         (talk 1 "/essay1submit")
         (talk 1 "u1 essay1 text")
-        (tt/match-text *chat 1 "Загружаем (yes/no)?")
+        (tt/match-text *chat 1 "Is loading (yes/no)?")
         (talk 1 "yes")
-        (tt/match-text *chat 1 "Спасибо, текст загружен и скоро попадёт на рецензирование.")
+        (tt/match-text *chat 1 "Thank you, the text has been uploaded and will be submitted for review soon.")
         (talk 1 "/essay1status")
-        (tt/match-text *chat 1 "Всего эссе: 1"
-                       "Человек сделало ревью: 0"
-                       "Есть комплект ревью на: 0 эссе.")
+        (tt/match-text *chat 1 "Total essays: 1"
+                       "Number of people who reviewed: 0"
+                       "There is a set of reviews for: 0 essays.")
         (is (= {:text "u1 essay1 text"}
                (codax/get-at! db [1 :essays "essay1"]))))
 
       (testing "re-submit"
         (talk 1 "/essay1submit")
-        (tt/match-text *chat 1 "Ваше эссе 'essay1' уже загружено"))
+        (tt/match-text *chat 1 "Your essay 'essay1' already uploaded."))
 
       (testing "submit without topic"
         (talk 2 "/essay2submit")
-        (tt/match-text *chat 2 "Отправьте текст эссе 'essay2' одним сообщением.")))))
+        (tt/match-text *chat 2 "Submit your essay text 'essay2' in one message.")))))
 
 (defn essay-submit [*chat essay-submit-talk id]
   (essay-submit-talk id "/essay1submit")
   (essay-submit-talk id (str "user" id " essay1 text"))
-  (tt/match-text *chat id "Загружаем (yes/no)?")
+  (tt/match-text *chat id "Is loading (yes/no)?")
   (essay-submit-talk id "yes")
-  (tt/match-text *chat id "Спасибо, текст загружен и скоро попадёт на рецензирование."))
+  (tt/match-text *chat id "Thank you, the text has been uploaded and will be submitted for review soon."))
 
 (deftest essay-assign-review-myfeedback-talk-test
   (let [conf (misc/get-config "conf-example")
@@ -107,9 +107,9 @@
                     [1 2 3 4]))
 
         (talk 1 "/essay1status")
-        (tt/match-text *chat 1 "Всего эссе: 4"
-                       "Человек сделало ревью: 0"
-                       "Есть комплект ревью на: 0 эссе."))
+        (tt/match-text *chat 1 "Total essays: 4"
+                       "Number of people who reviewed: 0"
+                       "There is a set of reviews for: 0 essays."))
 
       (testing "non-admin"
         (talk 1 "/essay1assignreviewers")
@@ -217,9 +217,9 @@
         (tt/match-text *chat 1 "Your feedback has been saved and will be available to essay writers.")
 
         (talk 1 "/essay1status")
-        (tt/match-text *chat 1 "Всего эссе: 4"
-                       "Человек сделало ревью: 1"
-                       "Есть комплект ревью на: 0 эссе.")
+        (tt/match-text *chat 1 "Total essays: 4"
+                       "Number of people who reviewed: 1"
+                       "There is a set of reviews for: 0 essays.")
 
         (is (= '({:rank 3
                   :index 2
@@ -289,9 +289,9 @@
                       [2 3 4]))))
 
       (talk 1 "/essay1status")
-      (tt/match-text *chat 1 "Всего эссе: 4"
-                     "Человек сделало ревью: 4"
-                     "Есть комплект ревью на: 4 эссе.")
+      (tt/match-text *chat 1 "Total essays: 4"
+                     "Number of people who reviewed: 4"
+                     "There is a set of reviews for: 4 essays.")
 
       (is (= '({:rank 3
                 :index 2
