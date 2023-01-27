@@ -9,10 +9,8 @@
  {:en
   {:essay
    {:submit "Submit "
-    :your-essay "Your essay '"
-    :already-uploaded "' already uploaded."
-    :send-essay-text "Submit your essay text '"
-    :one-message "' in one message."
+    :your-essay-already-uploaded "Your essay '%s' already uploaded."
+    :send-essay-text-in-one-message "Submit your essay text '%s' in one message."
     :themes " Theme(s):\n\n"
     :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Is loading (yes/no)?"
@@ -28,10 +26,8 @@
   :ru
   {:essay
    {:submit "Отправить "
-    :your-essay "Ваше эссе '"
-    :already-uploaded "' уже загружено."
-    :send-essay-text "Отправьте текст эссе '"
-    :one-message "' одним сообщением."
+    :your-essay-already-uploaded "Ваше эссе '%s' уже загружено."
+    :send-essay-text-in-one-message "Отправьте текст эссе '%s' одним сообщением."
     :themes " Тема(-ы):\n\n"
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Загружаем (yes/no)?"
@@ -54,9 +50,9 @@
       (fn [tx {{id :id} :from}]
         (let [submitted? (codax/get-at tx [id :essays essay-code :text])]
           (when submitted?
-            (talk/send-text token id (str (tr :essay/your-essay) essay-code (tr :essay/already-uploaded)))
+            (talk/send-text token id (str (format(tr :essay/your-essay-already-uploaded) essay-code)))
             (talk/stop-talk tx))
-          (talk/send-text token id (str (tr :essay/send-essay-text) essay-code (tr :essay/one-message)
+          (talk/send-text token id (str (format(tr :essay/send-essay-text-in-one-message) essay-code)
                                         (when topics-msg (str (tr :essay/themes) topics-msg))))
           (talk/change-branch tx :submit)))
 
