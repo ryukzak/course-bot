@@ -10,6 +10,8 @@
  :linters {:not-empty? {:level :off}}
 
  :aliases {:dev {:jvm-opts ["-XX:-OmitStackTraceInFastThrow"]}
+           :lint {:main-opts ["-m" "clj-kondo.main" "--lint" "src" "--lint" "test" "--config" "deps.edn"]}
+           :fmt {:main-opts ["-m" "cljfmt.main" "check"]}
            :test {:extra-paths ["test"]
                   :extra-deps {io.github.cognitect-labs/test-runner
                                {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
