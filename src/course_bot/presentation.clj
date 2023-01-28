@@ -10,134 +10,132 @@
  {:en
   {:pres
    {:nothing-to-check "Nothing to check."
-    :group-is-already-set-error "Your %s group is already set: %s"
-    :select-group "Please, select your %s group: %s"
-    :missing-group "I don't know this group. Try again (%s)"
-    :group-is-already-set "Your %s group set: %s"
+    :group-is-already-set-error-2 "Your %s group is already set: %s"
+    :select-group-2 "Please, select your %s group: %s"
+    :missing-group-1 "I don't know this group. Try again (%s)"
+    :group-is-already-set-2 "Your %s group set: %s"
     :on-review "On review, you will be informed when it is finished."
-    :provide-description "Please, provide description for your '%s' (in one message):"
+    :provide-description-1 "Please, provide description for your '%s' (in one message):"
     :your-description "Your description:"
     :do-you-approve "Do you approve it?"
     :teacher-will-check "Registered, the teacher will check it soon."
     :later "You can do this later."
     :yes-or-no "Please, yes or no?"
-    :wait-for-review "Wait for review: %s"
+    :wait-for-review-1 "Wait for review: %s"
     :remarks "Remarks:"
-    :receive-from-stud-topic "We receive from the student (group %s): \n\nTopic: %s"
-    :ok-stud-will-receive-approve "OK, student will receive his approve.\n\n/%s"
-    :approved-description "'%s' description was approved."
+    :receive-from-stud-topic-2 "We receive from the student (group %s): \n\nTopic: %s"
+    :ok-stud-will-receive-approve-1 "OK, student will receive his approve.\n\n/%s"
+    :approved-description-1 "'%s' description was approved."
     :ok-need-send-remark-for-student "OK, you need to send your remark for the student:"
-    :declined-description "Presentation description was declined. The student was informed about your decision.\n\n/%s"
-    :rejected-description "'%s' description was rejected. Remark:\n\n%s"
+    :declined-description-1 "Presentation description was declined. The student was informed about your decision.\n\n/%s"
+    :rejected-description-2 "'%s' description was rejected. Remark:\n\n%s"
     :approve-yes-or-no "Approve (yes or no)?"
-    :incorrect-group-one-from "I don't know '%s', you should specify one from: %s"
-    :agenda "Agenda %s (%s)"
-    :expect-soon "We will expect for %s soon:"
+    :incorrect-group-one-from-2 "I don't know '%s', you should specify one from: %s"
+    :agenda-2 "Agenda %s (%s)"
+    :expect-soon-1 "We will expect for %s soon:"
     :not-have-options "I don't have options for you."
     :select-option "Select your option:\n"
     :not-found-allow-only "Not found, allow only:\n"
     :enter-pres-number "Enter the number of the best presentation in the list:\n"
     :feedback-collecting-disabled "Feedback collecting disabled (too early or too late)."
     :already-received "Already received."
-    :collect-feedback "Collect feedback for '%s' (%s) at %s"
+    :collect-feedback-3 "Collect feedback for '%s' (%s) at %s"
     :best-presentation-error "Wrong input. Enter the number of the best presentation in the list."
     :thank-feedback-saved "Thanks, your feedback saved!"
     :drop "drop"
     :all "all"
     :only-schedule "only schedule"
-    :wrong-input "Wrong input: /%s 12345"
+    :wrong-input-1 "Wrong input: /%s 12345"
     :not-found "Not found."
-    :drop-config "Drop '%s' config for %s?"
-    :drop-student "We drop student: %s"
-    :drop-state "We drop your state for %s"
+    :drop-config-2 "Drop '%s' config for %s?"
+    :drop-student-1 "We drop student: %s"
+    :drop-state-1 "We drop your state for %s"
     :descriptions "%s descriptions"
     :all-scheduled-description-by-group "File with all scheduled descriptions by groups:"
     :yes "yes"
     :no "no"
-    :set-group-help "Please, set your '%s' group by /%ssetgroup"
-    :already-submitted-and-approved-help "Already submitted and approved, maybe you need to schedule it? /%sschedule"
-    :submit-receive-before-schedule-help "You should submit and receive approve before scheduling. Use /%ssubmit"
-    :already-scheduled-help "Already scheduled, check /%sagenda."
-    :ok-check-schedule-help "OK, you can check it by: /%sagenda"
-    :should-set-group-to-send-feedback-help "To send feedback, you should set your group for %s by /%ssetgroup"
-    :setgroup-talk "set your group for '%s'"
-    :submit-talk "submit your '%s' description"
+    :set-group-help-2 "Please, set your '%s' group by /%ssetgroup"
+    :already-submitted-and-approved-help-1 "Already submitted and approved, maybe you need to schedule it? /%sschedule"
+    :submit-receive-before-schedule-help-1 "You should submit and receive approve before scheduling. Use /%ssubmit"
+    :already-scheduled-help-1 "Already scheduled, check /%sagenda."
+    :ok-check-schedule-help-1 "OK, you can check it by: /%sagenda"
+    :should-set-group-to-send-feedback-help-2 "To send feedback, you should set your group for %s by /%ssetgroup"
+    :setgroup-talk-1 "set your group for '%s'"
+    :submit-talk-1 "submit your '%s' description"
     :check-talk "for teacher, check submitted presentation description"
     :submisstion-talk "list submissions and their status (no args -- your group, with args -- specified)"
     :agenda-talk "agenda (no args -- your group, with args -- specified)"
     :soon-talk "what will happen soon"
     :schedule-talk "select your presentation day"
     :feedback-talk "send feedback for report"
-    :drop-talk "for teacher, drop '%s' for specific student (%s)"
-    :all-scheduled-descriptions-dump-talk "all-scheduled-descriptions-dump (admin only)"
-    }}
+    :drop-talk-2 "for teacher, drop '%s' for specific student (%s)"
+    :all-scheduled-descriptions-dump-talk "all-scheduled-descriptions-dump (admin only)"}}
   :ru
   {:pres
-   {
-    :nothing-to-check "Нечего проверять."
-    :group-is-already-set-error "Ваша группа %s уже установлена: %s"
-    :select-group "Пожалуйста, выберите вашу группу %s: %s"
-    :missing-group "Я не знаю эту группу. Попробуйте еще раз (%s)"
-    :group-is-already-set "Ваш набор групп %s: %s"
+   {:nothing-to-check "Нечего проверять."
+    :group-is-already-set-error-2 "Ваша группа %s уже установлена: %s"
+    :select-group-2 "Пожалуйста, выберите вашу группу %s: %s"
+    :missing-group-1 "Я не знаю эту группу. Попробуйте еще раз (%s)"
+    :group-is-already-set-2 "Ваш набор групп %s: %s"
     :on-review "На рассмотрении вы будете проинформированы, когда оно будет завершено."
-    :provide-description "Пожалуйста, предоставьте описание вашего '%s' (в одном сообщении):"
+    :provide-description-1 "Пожалуйста, предоставьте описание вашего '%s' (в одном сообщении):"
     :your-description "Ваше описание:"
     :do-you-approve "Вы одобряете это?"
     :teacher-will-check "Зарегистрировался, учитель скоро проверит."
     :later "Вы можете сделать это позже."
     :yes-or-no "Пожалуйста, да или нет?"
-    :wait-for-review "Дождитесь проверки: %s"
+    :wait-for-review-1 "Дождитесь проверки: %s"
     :remarks "Примечания:"
-    :receive-from-stud-topic "Получаем от студента (группа %s): \n\nТема: %s"
-    :ok-stud-will-receive-approve "Хорошо, учащийся получит одобрение.\n\n/%s"
-    :approved-description "Описание '%s' одобрено."
+    :receive-from-stud-topic-2 "Получаем от студента (группа %s): \n\nТема: %s"
+    :ok-stud-will-receive-approve-1 "Хорошо, учащийся получит одобрение.\n\n/%s"
+    :approved-description-1 "Описание '%s' одобрено."
     :ok-need-send-remark-for-student "Хорошо, вам нужно отправить свое замечание для студента:"
-    :declined-description "Описание презентации отклонено. Студент был проинформирован о вашем решении.\n\n/%s"
-    :rejected-description "Описание '%s' было отклонено. Примечание:\n\n%s"
+    :declined-description-1 "Описание презентации отклонено. Студент был проинформирован о вашем решении.\n\n/%s"
+    :rejected-description-2 "Описание '%s' было отклонено. Примечание:\n\n%s"
     :approve-yes-or-no "Одобрить (да или нет)?"
-    :incorrect-group-one-from "Я не знаю '%s', вы должны указать один из: %s"
-    :agenda "Повестка дня %s (%s)"
-    :expect-soon "Мы ожидаем для %s в ближайшее время:"
+    :incorrect-group-one-from-2 "Я не знаю '%s', вы должны указать один из: %s"
+    :agenda-2 "Повестка дня %s (%s)"
+    :expect-soon-1 "Мы ожидаем для %s в ближайшее время:"
     :not-have-options "У меня нет для тебя вариантов."
     :select-option "Выберите свой вариант:\n"
     :not-found-allow-only "Не найдено, разрешить только:\n"
     :enter-pres-number "Введите номер лучшей презентации в списке:\n"
     :feedback-collecting-disabled "Сбор отзывов отключен (слишком рано или слишком поздно)."
     :already-received "Уже получено."
-    :collect-feedback "Собрать отзывы для '%s' (%s) в %s"
+    :collect-feedback-3 "Собрать отзывы для '%s' (%s) в %s"
     :best-presentation-error "Неправильный ввод. Введите номер лучшей презентации в списке."
     :thank-feedback-saved "Спасибо, ваш отзыв сохранен!"
     :drop "уронить"
     :all "все"
     :only-schedule "только расписание"
-    :wrong-input "Неверный ввод: /%s 12345"
+    :wrong-input-1 "Неверный ввод: /%s 12345"
     :not-found "Не найден."
-    :drop-config "Удалить конфигурацию '%s' для %s?"
-    :drop-student "Мы бросаем студента: %s"
-    :drop-state "Мы сбрасываем ваше состояние на %s"
+    :drop-config-2 "Удалить конфигурацию '%s' для %s?"
+    :drop-student-1 "Мы бросаем студента: %s"
+    :drop-state-1 "Мы сбрасываем ваше состояние на %s"
     :descriptions "%s описаний"
     :all-scheduled-description-by-group "Файл со всеми запланированными описаниями по группам:"
     :yes "да"
     :no "нет"
-    :set-group-help "Пожалуйста, установите группу '%s' с помощью /%ssetgroup"
-    :already-submitted-and-approved-help "Уже отправлено и одобрено, может быть, вам нужно запланировать его? /%sрасписание"
-    :submit-receive-before-schedule-help "Вы должны отправить и получить одобрение до планирования. Используйте /%ssubmit"
-    :already-scheduled-help "Уже запланировано, проверьте /%sagenda."
-    :ok-check-schedule-help "Хорошо, вы можете проверить это: /%sagenda"
-    :should-set-group-to-send-feedback-help "Чтобы отправить отзыв, вы должны установить свою группу для %s с помощью /%ssetgroup"
-    :setgroup-talk "установить вашу группу для '%s'"
-    :submit-talk "отправьте описание '%s'"
+    :set-group-help-2 "Пожалуйста, установите группу '%s' с помощью /%ssetgroup"
+    :already-submitted-and-approved-help-1 "Уже отправлено и одобрено, может быть, вам нужно запланировать его? /%sрасписание"
+    :submit-receive-before-schedule-help-1 "Вы должны отправить и получить одобрение до планирования. Используйте /%ssubmit"
+    :already-scheduled-help-1 "Уже запланировано, проверьте /%sagenda."
+    :ok-check-schedule-help-1 "Хорошо, вы можете проверить это: /%sagenda"
+    :should-set-group-to-send-feedback-help-2 "Чтобы отправить отзыв, вы должны установить свою группу для %s с помощью /%ssetgroup"
+    :setgroup-talk-1 "установить вашу группу для '%s'"
+    :submit-talk-1 "отправьте описание '%s'"
     :check-talk "для учителя, проверьте представленное описание презентации"
     :submisstion-talk "список представлений и их статус (без аргументов - ваша группа, с аргументами - указано)"
     :agenda-talk "повестка дня (без аргументов -- ваша группа, с аргументами -- указано)"
     :soon-talk "что произойдет в ближайшее время"
     :schedule-talk "выберите день презентации"
     :feedback-talk "отправить отзыв для отчета"
-    :drop-talk "для учителя, отбросить '%s' для конкретного ученика (%s)"
+    :drop-talk-2 "для учителя, отбросить '%s' для конкретного ученика (%s)"
     :all-scheduled-descriptions-dump-talk "дамп всех запланированных описаний (только для администратора)"}}})
 
 (defn send-please-set-group [token id pres-key-name name]
-  (talk/send-text token id (format (tr :pres/set-group-help) name pres-key-name)))
+  (talk/send-text token id (format (tr :pres/set-group-help-2) name pres-key-name)))
 
 (defn setgroup-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "setgroup")
@@ -146,24 +144,24 @@
         groups (-> conf (get pres-key) :groups)
         groups-text (->> groups keys sort (str/join ", "))]
     (talk/def-talk db cmd
-      (format (tr :pres/setgroup-talk) name)
+      (format (tr :pres/setgroup-talk-1) name)
 
       :start
       (fn [tx {{id :id} :from}]
         (let [pres-group (codax/get-at tx [id :presentation pres-key :group])]
           (if (some? pres-group)
-            (do (talk/send-text token id (format (tr :pres/group-is-already-set-error) name pres-group))
+            (do (talk/send-text token id (format (tr :pres/group-is-already-set-error-2) name pres-group))
                 (talk/stop-talk tx))
-            (do (talk/send-text token id (format (tr :pres/select-group) name groups-text))
+            (do (talk/send-text token id (format (tr :pres/select-group-2) name groups-text))
                 (talk/change-branch tx :set-group)))))
 
       :set-group
       (fn [tx {{id :id} :from text :text}]
         (when-not (get groups text)
-          (talk/send-text token id (format (tr :pres/missing-group) groups-text))
+          (talk/send-text token id (format (tr :pres/missing-group-1) groups-text))
           (talk/wait tx))
 
-        (talk/send-text token id (format (tr :pres/group-is-already-set) name text))
+        (talk/send-text token id (format (tr :pres/group-is-already-set-2) name text))
         (-> tx
             (codax/assoc-at [id :presentation pres-key :group] text)
             talk/stop-talk)))))
@@ -188,7 +186,7 @@
         name (-> conf (get pres-key) :name)]
 
     (talk/def-talk db cmd
-      (format (tr :pres/submit-talk) name)
+      (format (tr :pres/submit-talk-1) name)
 
       :start
       (fn [tx {{id :id} :from}]
@@ -203,12 +201,12 @@
             (talk/stop-talk tx))
 
           (when (:approved? pres)
-            (talk/send-text token id (format (tr :pres/already-submitted-and-approved-help) pres-key-name))
+            (talk/send-text token id (format (tr :pres/already-submitted-and-approved-help-1) pres-key-name))
             (talk/stop-talk tx))
 
           (talk/send-text token id (if hint
                                      hint
-                                     (format (tr :pres/provide-description) name)))
+                                     (format (tr :pres/provide-description-1) name)))
           (talk/change-branch tx :recieve-description)))
 
       :recieve-description
@@ -222,12 +220,12 @@
       (fn [tx {{id :id} :from text :text} {desc :desc}]
         (cond
           (= text (tr :pres/yes)) (do (talk/send-text token id (tr :pres/teacher-will-check))
-                             (-> tx
-                                 (codax/assoc-at [id :presentation pres-key :on-review?] true)
-                                 (codax/assoc-at [id :presentation pres-key :description] desc)
-                                 talk/stop-talk))
+                                      (-> tx
+                                          (codax/assoc-at [id :presentation pres-key :on-review?] true)
+                                          (codax/assoc-at [id :presentation pres-key :description] desc)
+                                          talk/stop-talk))
           (= text (tr :pres/no)) (do (talk/send-text token id (tr :pres/later))
-                            (talk/stop-talk tx))
+                                     (talk/stop-talk tx))
           :else (do (talk/send-text token id (tr :pres/yes-or-no))
                     (talk/repeat-branch tx)))))))
 
@@ -286,12 +284,12 @@
                 group (-> info :presentation (get pres-key) :group)
                 desc (-> info :presentation (get pres-key) :description)
                 remarks (codax/get-at tx [stud-id :presentation pres-key :remarks])]
-            (talk/send-text token id (format (tr :pres/wait-for-review) (count submitions)))
+            (talk/send-text token id (format (tr :pres/wait-for-review-1) (count submitions)))
             (talk/send-text token id (approved-submissions tx pres-key group))
             (when (some? remarks)
               (talk/send-text token id (tr :pres/remarks))
               (doall (->> remarks reverse (map #(talk/send-text token id %)))))
-            (talk/send-text token id (format (tr :pres/receive-from-stud-topic)(-> info :group) (topic desc)))
+            (talk/send-text token id (format (tr :pres/receive-from-stud-topic-2) (-> info :group) (topic desc)))
             (talk/send-text token id desc)
             (talk/send-yes-no-kbd token id (tr :pres/approve-yes-or-no))
             (talk/change-branch tx :approve {:stud-id stud-id}))))
@@ -300,8 +298,8 @@
       (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
         (talk/if-parse-yes-or-no
          tx token id text
-         (do (talk/send-text token id (format (tr :pres/ok-stud-will-receive-approve) cmd))
-             (talk/send-text token stud-id (format (tr :pres/approved-description) name))
+         (do (talk/send-text token id (format (tr :pres/ok-stud-will-receive-approve-1) cmd))
+             (talk/send-text token stud-id (format (tr :pres/approved-description-1) name))
              (-> tx
                  (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
                  (codax/assoc-at [stud-id :presentation pres-key :approved?] true)
@@ -312,8 +310,8 @@
 
       :remark
       (fn [tx {{id :id} :from remark :text} {stud-id :stud-id}]
-        (talk/send-text token id (format (tr :pres/declined-description) cmd))
-        (talk/send-text token stud-id (format (tr :pres/rejected-description) name remark))
+        (talk/send-text token id (format (tr :pres/declined-description-1) cmd))
+        (talk/send-text token stud-id (format (tr :pres/rejected-description-2) name remark))
         (-> tx
             (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
             (codax/update-at [stud-id :presentation pres-key :remarks] conj remark)
@@ -344,7 +342,7 @@
             (talk/send-text token id (all-submissions tx pres-key arg))
 
             :else
-            (talk/send-text token id (format (tr :pres/incorrect-group-one-from) arg groups-text)))
+            (talk/send-text token id (format (tr :pres/incorrect-group-one-from-2) arg groups-text)))
           (talk/stop-talk tx))))))
 
 (defn lessons [conf pres-id group]
@@ -369,7 +367,7 @@
          (filter-lesson cut-off-in-min now)
          (map #(let [dt (:datetime %)
                      studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])]
-                 (str (format (tr :pres/agenda) dt group) (when (some? comment) (str ", " comment)) ":\n"
+                 (str (format (tr :pres/agenda-2) dt group) (when (some? comment) (str ", " comment)) ":\n"
                       (str/join "\n" (map-indexed (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
 
 (defn soon [tx conf pres-id group now]
@@ -381,7 +379,7 @@
          (map #(let [dt (:datetime %)
                      comment (-> conf (get pres-id) :groups (get group) :comment)
                      studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])]
-                 (str (format (tr :pres/agenda) dt group) (when (some? comment) (str ", " comment)) ":\n"
+                 (str (format (tr :pres/agenda-2) dt group) (when (some? comment) (str ", " comment)) ":\n"
                       (str/join "\n" (map-indexed (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
 
 (defn agenda-talk [db {token :token admin-chat-id :admin-chat-id :as conf} pres-key-name]
@@ -414,7 +412,7 @@
                         (map #(talk/send-text token id %))))
 
             :else
-            (talk/send-text token id (format (tr :pres/incorrect-group-one-from) arg groups-text)))
+            (talk/send-text token id (format (tr :pres/incorrect-group-one-from-2) arg groups-text)))
           (talk/stop-talk tx))))))
 
 (defn soon-talk [db {token :token  :as conf} pres-key-name]
@@ -425,7 +423,7 @@
     (talk/def-command db cmd
       (tr :pres/soon-talk)
       (fn [tx {{id :id} :from}]
-        (talk/send-text token id (format (tr :pres/expect-soon) name))
+        (talk/send-text token id (format (tr :pres/expect-soon-1) name))
         (doall (->> groups keys sort
                     (map #(soon tx conf pres-key % (misc/today)))
                     (apply concat)
@@ -447,11 +445,11 @@
             (talk/stop-talk tx))
 
           (when-not (-> pres :approved?)
-            (talk/send-text token id (format (tr :pres/submit-receive-before-schedule-help) pres-key-name))
+            (talk/send-text token id (format (tr :pres/submit-receive-before-schedule-help-1) pres-key-name))
             (talk/stop-talk tx))
 
           (when (-> pres :scheduled?)
-            (talk/send-text token id (format (tr :pres/already-scheduled-help)  pres-key-name))
+            (talk/send-text token id (format (tr :pres/already-scheduled-help-1)  pres-key-name))
             (talk/stop-talk tx))
 
           (let [future (future-lessons conf pres-key group (misc/today))]
@@ -481,7 +479,7 @@
                                       (map #(str "- " (:datetime %)))
                                       (str/join "\n"))))
             (talk/repeat-branch tx))
-          (talk/send-text token id (format (tr :pres/ok-check-schedule-help) pres-key-name))
+          (talk/send-text token id (format (tr :pres/ok-check-schedule-help-1) pres-key-name))
           (-> tx
               (codax/update-at [:presentation pres-key group text :stud-ids]
                                #(concat % [id]))
@@ -521,7 +519,7 @@
                                              topic)})))]
 
           (when (nil? group)
-            (talk/send-text token id (format (tr :pres/should-set-group-to-send-feedback-help) name pres-key-name ))
+            (talk/send-text token id (format (tr :pres/should-set-group-to-send-feedback-help-2) name pres-key-name))
             (talk/stop-talk tx))
 
           (when (nil? dt)
@@ -534,7 +532,7 @@
             (talk/stop-talk tx))
 
           (talk/send-text token id
-                          (format (tr :pres/collect-feedback) name group dt))
+                          (format (tr :pres/collect-feedback-3) name group dt))
           (talk/send-text token id (feedback-str studs))
           (talk/change-branch tx :select {:rank [] :remain studs :group group :dt dt})))
 
@@ -568,8 +566,8 @@
   (let [cmd (str pres-key-name (tr :pres/drop) (when drop-all (tr :pres/all)))
         pres-key (keyword pres-key-name)
         name (-> conf (get pres-key) :name)
-        help (format (tr :pres/drop-talk-for-teacher) name
-                  (if drop-all (tr :pres/all) (tr :pres/drop-talk)))]
+        help (format (tr :pres/drop-talk-2) name
+                     (if drop-all (tr :pres/all) (tr :pres/drop)))]
     (talk/def-talk db cmd help
 
       :start
@@ -578,7 +576,7 @@
         (let [stud-id (talk/command-num-arg text)]
 
           (when (nil? stud-id)
-            (talk/send-text token id (format (tr :pres/wrong-input) cmd ))
+            (talk/send-text token id (format (tr :pres/wrong-input-1) cmd))
             (talk/stop-talk tx))
 
           (let [stud (codax/get-at tx [stud-id])]
@@ -587,7 +585,7 @@
               (talk/stop-talk tx))
 
             (general/send-whoami tx token id stud-id)
-            (talk/send-yes-no-kbd token id (format (tr :pres/drop-config) name stud-id))
+            (talk/send-yes-no-kbd token id (format (tr :pres/drop-config-2) name stud-id))
 
             (talk/change-branch tx :approve {:stud-id stud-id}))))
 
@@ -597,8 +595,8 @@
          tx token id text
          (let [group (codax/get-at tx [stud-id :presentation pres-key :group])
                lessons (codax/get-at tx [:presentation pres-key group])]
-           (talk/send-text token id (format (tr :pres/drop-student) stud-id))
-           (talk/send-text token stud-id (format (tr :pres/drop-state) name))
+           (talk/send-text token id (format (tr :pres/drop-student-1) stud-id))
+           (talk/send-text token stud-id (format (tr :pres/drop-state-1) name))
            (-> (if drop-all
                  (codax/assoc-at tx [stud-id :presentation pres-key] nil)
                  (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
@@ -678,7 +676,7 @@
 
 (defn all-scheduled-descriptions-dump-talk [db {token :token :as conf} pres-id]
   (let [pres-key (keyword pres-id)
-      cmd (str pres-id "descriptions")]
+        cmd (str pres-id "descriptions")]
     (talk/def-command db cmd
       (tr :pres/all-scheduled-descriptions-dump-talk)
       (fn [tx {{id :id} :from}]
