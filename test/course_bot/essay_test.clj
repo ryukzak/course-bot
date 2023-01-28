@@ -147,24 +147,24 @@
 
       (testing "without essay"
         (talk 5 "/essay1review")
-        (tt/match-text *chat 5 "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё эссе вовремя или поспешили с отправкой ревью."))
+        (tt/match-text *chat 5 "You have not been assigned any essays. You probably didn't upload your essay on time or rushed to submit your review."))
 
       (testing "make a review"
         (talk 1 "/essay1review")
         (tt/match-history *chat
-                          (tt/text 1 "Вам на ревью пришло: 3 эссе. Их текст сейчас отправлю ниже отдельными сообщениями.")
+                          (tt/text 1 "You received: 3 essays for your review. Their text will now be sent below by selected messages.")
 
-                          (tt/text 1 "Эссе #1 <<<<<<<<<<<<<<<<<<<<")
+                          (tt/text 1 "Essay #1 <<<<<<<<<<<<<<<<<<<<")
                           (tt/text 1 "user4 essay1 text")
-                          (tt/text 1 ">>>>>>>>>>>>>>>>>>>> Эссе #1")
+                          (tt/text 1 ">>>>>>>>>>>>>>>>>>>> Essay #1")
 
-                          (tt/text 1 "Эссе #2 <<<<<<<<<<<<<<<<<<<<")
+                          (tt/text 1 "Essay #2 <<<<<<<<<<<<<<<<<<<<")
                           (tt/text 1 "user3 essay1 text")
-                          (tt/text 1 ">>>>>>>>>>>>>>>>>>>> Эссе #2")
+                          (tt/text 1 ">>>>>>>>>>>>>>>>>>>> Essay #2")
 
-                          (tt/text 1 "Эссе #3 <<<<<<<<<<<<<<<<<<<<")
+                          (tt/text 1 "Essay #3 <<<<<<<<<<<<<<<<<<<<")
                           (tt/text 1 "user2 essay1 text")
-                          (tt/text 1 ">>>>>>>>>>>>>>>>>>>> Эссе #3")
+                          (tt/text 1 ">>>>>>>>>>>>>>>>>>>> Essay #3")
 
                           (tt/text 1 ":review-msg from config"))
 

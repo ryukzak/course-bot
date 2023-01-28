@@ -22,12 +22,33 @@
     :essays " essays."
     :assignment-error "ERROR: can't find assignment for some reason!"
     :assignment-count "Assignment count: "
-    :assignment-examples "Examples: "}}
+    :assignment-examples "Examples: "
+    :first-essay-best "The first essay -- best.\n\n"
+    :rank-1 "Rank: %d; "
+    :preview-reviews-3 "Rank: %d, essay number in the list: #%d, your review: %s \n(few words from the essay: "
+    :the-last-essay-worst "\n\nThe last essay -- worst."
+    :write-review-for "write review for "
+    :not-assigned-reviews "You have not been assigned any essays. You probably didn't upload your essay on time or rushed to submit your review."
+    :you-already-sent-reviews "You already sent reviews."
+    :essays-submitted-for-review-1 "You received: %d essays for your review. Their text will now be sent below by selected messages."
+    :essay-number-begin-1 "Essay #%d <<<<<<<<<<<<<<<<<<<<"
+    :essay-number-end-1 ">>>>>>>>>>>>>>>>>>>> Essay #%d"
+    :essay-send-format "Send essay numbers with feedback in separate messages from best to worse (e.g.: `<essay number> <feedback text>`)"
+    :essay-need-feedback-error "Alas, you need to start writing reviews first (if you see this message again, let me know)."
+    :essay-number-error "The essay number is inconsistent or out of bounds."
+    :essay-feedback-short "Your feedback text is too short."
+    :essay-already-rate "You already rate this essay."
+    :essays-have-rated "You have rated all the essays. Let's take a look:"
+    :correct "Correct?"
+    :essay-feedback-saved "Your feedback has been saved and will be available to essay writers."
+    :essay-feedback "Feedback: "
+    :feedback-on-your-essay "feedback on your essay "
+    :number-of-reviews-1 "You received %d reviews."}}
   :ru
   {:essay
    {:submit "Отправить "
-    :your-essay-already-uploaded "Ваше эссе '%s' уже загружено."
-    :send-essay-text-in-one-message "Отправьте текст эссе '%s' одним сообщением."
+    :your-essay-already-uploaded-1 "Ваше эссе '%s' уже загружено."
+    :send-essay-text-in-one-message-1 "Отправьте текст эссе '%s' одним сообщением."
     :themes " Тема(-ы):\n\n"
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Загружаем (yes/no)?"
@@ -38,8 +59,32 @@
     :set-of-reviews "Есть комплект ревью на: "
     :essays " эссе."
     :assignment-error "ОШИБКА: почему-то не удается найти задание!"
-    :assignment-count "Количество заданий:"
-    :assignment-examples "Примеры: "}}})
+    :assignment-count "Количество заданий: "
+    :assignment-examples "Примеры: "
+    :first-essay-best "Первое эссе -- лучшее.\n\n"
+    :rank-1 "Ранг: %d, "
+    :essay-number-in-the-list-1 "Номер эссе в списке: #%d, "
+    :your-review-1 "Ваше ревью: %s "
+    :few-words-from-the-essay "\n(несколько слов из эссе: "
+    :preview-reviews "Ранг: %d, номер эссе в списке: #%d, ваше ревью: %s \n(несколько слов из эссе: "
+    :the-last-essay-worst "\n\nПоследнее эссе -- худшее."
+    :write-review-for "напишите ревью для "
+    :not-assigned-reviews "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё эссе вовремя или поспешили с отправкой ревью."
+    :you-already-sent-reviews "Вы уже отправили ревью."
+    :essays-submitted-for-review-1 "Вам на ревью пришло: %d эссе. Их текст сейчас отправлю ниже отдельными сообщениями."
+    :essay-number-begin-1 "Эссе #%d <<<<<<<<<<<<<<<<<<<<"
+    :essay-number-end-1 ">>>>>>>>>>>>>>>>>>>> Эссе #%d"
+    :essay-send-format "Отправляйте номера эссе с отзывыми отдельными сообщениями (пример: `<номер_эссе> <текст_отзыва>`)"
+    :essay-need-feedback-error "Увы, но вам надо начать писать отзывы сначала (если вы это сообщение видите в очередной раз -- сообщите)."
+    :essay-number-error "Номер эссе несовместим или выходит за допустимые пределы."
+    :essay-feedback-short "Ваш текст отзыва слишком короткий"
+    :essay-already-rate "Вы уже оценили это эссе."
+    :essays-have-rated "Вы оценили все эссе. Давайте посмотрим:"
+    :correct "Корректно?"
+    :essay-feedback-saved "Ваш отзыв сохранен и будет доступен авторам эссе."
+    :essay-feedback "Отзыв: "
+    :feedback-on-your-essay "отзыв на ваше эссе "
+    :number-of-reviews-1 "Вы получили %d отзывов."}}})
 
 (defn submit-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "submit")
@@ -145,44 +190,41 @@
     (map vector reviewer-ids assignments)))
 
 (defn preview-reviews [assignments reviews]
-  (str "The first essay -- best.\n\n"
+  (str (tr :essay/first-essay-best)
        (str/join "\n\n---\n\n"
-                 (map #(str "Rank: " (:rank %) ", "
-                            "essay number in the list: #" (+ 1 (:index %)) ", "
-                            "your review: " (:feedback %) " "
-                            "\n(few words from the essay: " (let [essay (-> assignments (nth (:index %)) second)]
-                                                              (subs essay 0 (min (count essay) 40))) "...)")
+                 (map #(str (format (tr :essay/preview-reviews-3) (:rank %) (+ 1 (:index %)) (:feedback %)) (let [essay (-> assignments (nth (:index %)) second)]
+                                                                                                              (subs essay 0 (min (count essay) 40))) "...)")
                       (sort-by :rank reviews)))
-       "\n\nThe last essay -- worst."))
+       (tr :essay/the-last-essay-worst)))
 
 (defn review-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "review")
-        help (str "write review for " essay-code)]
+        help (str (tr :essay/write-review-for) essay-code)]
     (talk/def-talk db cmd help
       :start
       (fn [tx {{id :id} :from}]
         (let [assignments (stud-review-assignments tx id essay-code)]
           (when (empty? assignments)
-            (talk/send-text token id "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё эссе вовремя или поспешили с отправкой ревью.")
+            (talk/send-text token id (tr :essay/not-assigned-reviews))
             (talk/stop-talk tx))
           (when-not (nil? (codax/get-at tx [id :essays essay-code :my-reviews]))
-            (talk/send-text token id "You already sent reviews.")
+            (talk/send-text token id (tr :essay/you-already-sent-reviews))
             (talk/stop-talk tx))
-          (talk/send-text token id (str "Вам на ревью пришло: " (count assignments) " эссе. Их текст сейчас отправлю ниже отдельными сообщениями."))
+          (talk/send-text token id (str (format (tr :essay/essays-submitted-for-review-1) (count assignments))))
           (doall (map (fn [index [_auth-id text]]
-                        (talk/send-text token id (str "Эссе #" (+ 1 index) " <<<<<<<<<<<<<<<<<<<<"))
+                        (talk/send-text token id (str (format (tr :essay/essay-number-begin-1) (+ 1 index))))
                         (talk/send-text token id text)
-                        (talk/send-text token id (str ">>>>>>>>>>>>>>>>>>>> Эссе #" (+ 1 index))))
+                        (talk/send-text token id (str (format (tr :essay/essay-number-end-1) (+ 1 index)))))
                       (range)
                       assignments))
           (talk/send-text token id (or (-> conf (get (keyword essay-code)) :review-msg)
-                                       "Send essay numbers with feedback in separate messages from best to worse (e.g.: `<essay number> <feedback text>`)"))
+                                       (tr :essay/essay-send-format)))
           (talk/change-branch tx :get-feedback {:assignments assignments})))
 
       :get-feedback
       (fn [tx {{id :id} :from text :text} {assignments :assignments reviews :reviews}]
         (when (and (seq reviews) (empty? (filter :index reviews)))
-          (talk/send-text token id "Увы, но вам надо начать писать отзывы сначала (если вы это сообщение видите в очередной раз -- сообщите).")
+          (talk/send-text token id (tr :essay/essay-need-feedback-error))
           (talk/stop-talk tx))
         (let [index (try (- (Integer/parseInt (.trim (first (re-find #"^\d(\s|$)" text)))) 1)
                          (catch Exception _ nil))
@@ -191,15 +233,15 @@
 
           (when (or (nil? index)
                     (< index 0) (>= index (count assignments)))
-            (talk/send-text token id "The essay number is inconsistent or out of bounds.")
+            (talk/send-text token id (tr :essay/essay-number-error))
             (talk/wait tx))
 
           (when (< (count text) 40)
-            (talk/send-text token id "Your feedback text is too short.")
+            (talk/send-text token id (tr :essay/essay-feedback-short))
             (talk/wait tx))
 
           (when (some #{index} (map :index reviews))
-            (talk/send-text token id "You already rate this essay.")
+            (talk/send-text token id (tr :essay/essay-already-rate))
             (talk/wait tx))
 
           (let [reviews' (cons {:rank rank
@@ -210,16 +252,16 @@
             (talk/send-text token id "ok")
             (if (not= (count reviews') (count assignments))
               (talk/change-branch tx :get-feedback {:assignments assignments :reviews reviews'})
-              (do (talk/send-text token id "You have rated all the essays. Let's take a look:")
+              (do (talk/send-text token id (tr :essay/essays-have-rated))
                   (talk/send-text token id (preview-reviews assignments reviews'))
-                  (talk/send-yes-no-kbd token id "Correct?")
+                  (talk/send-yes-no-kbd token id (tr :essay/correct))
                   (talk/change-branch tx :approve {:reviews reviews'}))))))
 
       :approve
       (fn [tx {{id :id} :from text :text} {reviews :reviews}]
         (talk/when-parse-yes-or-no
          tx token id text
-         (talk/send-text token id "Your feedback has been saved and will be available to essay writers.")
+         (talk/send-text token id (tr :essay/essay-feedback-saved))
          (-> (reduce (fn [tx' review]
                        (codax/update-at tx' [(:essay-author review) :essays essay-code :received-review] conj review))
                      tx reviews)
@@ -229,17 +271,17 @@
 
 (defn my-reviews [tx essay-code id]
   (->> (codax/get-at tx [id :essays essay-code :received-review])
-       (map #(str "Rank: " (:rank %)
-                  (when-let [fb (:feedback %)] (str "; Feedback: " fb))))))
+       (map #(str (format (tr :essay/rank-1) (:rank %))
+                  (when-let [fb (:feedback %)] (str (tr :essay/essay-feedback) fb))))))
 
 (defn myfeedback-talk [db {token :token} essay-code]
   (let [cmd (str essay-code "myfeedback")
-        help (str "feedback on your essay " essay-code)]
+        help (str (tr :essay/feedback-on-your-essay) essay-code)]
     (talk/def-command db cmd help
       (fn [tx {{id :id} :from}]
         (let [reviews (my-reviews tx essay-code id)]
           (doall (map #(talk/send-text token id %) reviews))
-          (talk/send-text token id (str "You received " (count reviews) " reviews.")))
+          (talk/send-text token id (str (format (tr :essay/number-of-reviews-1) (count reviews)))))
         (talk/stop-talk tx)))))
 
 (defn review-score [conf essay-code]
