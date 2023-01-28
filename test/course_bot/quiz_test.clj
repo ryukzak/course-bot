@@ -35,7 +35,7 @@
       (talk 0 "/startquiz")
       (tt/match-text *chat 0
                      (str/join "\n"
-                               '("Available tests:"
+                               '("Available quizzes:"
                                  "- test-quiz (Test quiz)"
                                  "- test-quiz-2 (Test quiz 2)"
                                  "- test-quiz-3 (Test quiz 3)")))
@@ -54,10 +54,10 @@
       (is (= {:current :test-quiz} (codax/get-at! db [:quiz])))
 
       (talk 0 "/startquiz test-quiz")
-      (tt/match-text *chat 0 "Test is already running.")
+      (tt/match-text *chat 0 "Quiz is already running.")
 
       (talk 0 "/startquiz")
-      (tt/match-text *chat 0 "Test is already running."))))
+      (tt/match-text *chat 0 "Quiz is already running."))))
 
 (deftest quiz-talk-test
   (let [conf  (misc/get-config "conf-example")
@@ -71,48 +71,48 @@
       (start-user *chat talk 1 "Bot Botovich")
 
       (talk 1 "/quiz")
-      (tt/match-text *chat 1 "Тест не запущен, дождитесь отмашки преподавателя.")
+      (tt/match-text *chat 1 "The quiz is not running, wait for the teacher's signal.")
 
       (talk 0 "/startquiz test-quiz")
       (talk 0 "yes")
       (tt/match-text *chat 0 "The quiz was started.")
 
       (talk 1 "/quiz")
-      (tt/match-text *chat 1 "Хотите начать тест 'Test quiz' (2 вопроса(-ов))?")
+      (tt/match-text *chat 1 "Would you like to start quiz 'Test quiz' (2 question(s))?")
 
       (talk 1 "nooooooo")
-      (tt/match-text *chat 1 "Что (yes/no)?")
+      (tt/match-text *chat 1 "What (yes/no)?")
 
       (talk 1 "no")
-      (tt/match-text *chat 1 "Ваше право.")
+      (tt/match-text *chat 1 "Your right.")
 
       (talk 1 "/quiz")
-      (tt/match-text *chat 1 "Хотите начать тест 'Test quiz' (2 вопроса(-ов))?")
+      (tt/match-text *chat 1 "Would you like to start quiz 'Test quiz' (2 question(s))?")
       (talk 1 "yes")
       (tt/match-history *chat
-                        (tt/text 1 "Отвечайте цифрой. Ваш первый вопрос:")
+                        (tt/text 1 "Answer with a number. Your first question:")
                         (tt/text 1 "Q1\n"
                                  "1. a1"
                                  "2. a2"))
       (talk 1 "first")
-      (tt/match-text *chat 1 "Не понял, укажите корректный номер ответа (1, 2...).")
+      (tt/match-text *chat 1 "I don't understand you, send the correct answer number (1, 2...).")
 
       (talk 1 "0")
-      (tt/match-text *chat 1 "Не понял, укажите корректный номер ответа (1, 2...).")
+      (tt/match-text *chat 1 "I don't understand you, send the correct answer number (1, 2...).")
 
       (talk 1 "3")
-      (tt/match-text *chat 1 "Не понял, укажите корректный номер ответа (1, 2...).")
+      (tt/match-text *chat 1 "I don't understand you, send the correct answer number (1, 2...).")
 
       (talk 1 "1")
       (tt/match-history *chat
-                        (tt/text 1 "Запомнили ваш ответ: 1")
+                        (tt/text 1 "Remember your answer: 1")
                         (tt/text 1 "Q2\n"
                                  "1. a3"
                                  "2. a4"))
 
       (talk 1 "2")
       (tt/match-history *chat
-                        (tt/text 1 "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт.")
+                        (tt/text 1 "Thanks, quiz passed. The results will be sent when the quiz is closed.")
                         (tt/text 0 "Quiz answers: 1, 2"))
 
       (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results]))))))
@@ -139,12 +139,12 @@
       (tt/match-text *chat 0 "The quiz was started.")
 
       (talk 1 "/quiz")
-      (tt/match-text *chat 1 "Хотите начать тест 'Test quiz' (2 вопроса(-ов))?")
+      (tt/match-text *chat 1 "Would you like to start quiz 'Test quiz' (2 question(s))?")
       (talk 1 "yes")
       (talk 1 "1")
       (talk 1 "1")
       (tt/match-history *chat
-                        (tt/text 1 "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт.")
+                        (tt/text 1 "Thanks, quiz passed. The results will be sent when the quiz is closed.")
                         (tt/text 0 "Quiz answers: 1, 1"))
 
       (is (= {:test-quiz {1 '("1" "1")}} (codax/get-at! db [:quiz :results])))
@@ -177,7 +177,7 @@
                                  ""
                                  "- [1] CORRECT a3"
                                  "- [0] a4")
-                        (tt/text 1 "Ваш результат: 1/2"))
+                        (tt/text 1 "Your result: 1/2"))
 
       (testing "report"
         (talk 0 "/report")
@@ -203,12 +203,12 @@
         do-test (fn [name id & answers]
                   (talk id "/quiz")
                   (tt/match-text *chat id
-                                 (str "Хотите начать тест '" name "' ("
-                                      (count answers) " вопроса(-ов))?"))
+                                 (str "Would you like to start quiz '" name "' ("
+                                      (count answers) " question(s))?"))
                   (talk id "yes")
                   (doall (map #(talk id %) answers))
                   (tt/match-history *chat
-                                    (tt/text id "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт.")
+                                    (tt/text id "Thanks, quiz passed. The results will be sent when the quiz is closed.")
                                     (tt/text 0 (str "Quiz answers: " (str/join ", " answers)))))]
 
     (tt/with-mocked-morse *chat
@@ -235,10 +235,10 @@
                         (tt/text 0 "Q1\n\n- [3] a1\n- [1] CORRECT a2")
                         (tt/text 0 "Q2\n\n- [2] CORRECT a3\n- [2] a4")
                         (tt/text 0 "Q3\n\n- [3] CORRECT a5\n- [1] a6")
-                        (tt/text 1 "Ваш результат: 0/3")
-                        (tt/text 2 "Ваш результат: 1/3")
-                        (tt/text 3 "Ваш результат: 2/3")
-                        (tt/text 4 "Ваш результат: 3/3"))
+                        (tt/text 1 "Your result: 0/3")
+                        (tt/text 2 "Your result: 1/3")
+                        (tt/text 3 "Your result: 2/3")
+                        (tt/text 4 "Your result: 3/3"))
 
       (is
        (=
@@ -304,4 +304,4 @@
       (talk 0 "yes")
       (tt/match-history *chat
                         (tt/text 0 "The quiz 'Test quiz 3' was stopped")
-                        (tt/text 0 "Answers did not recieved.")))))
+                        (tt/text 0 "Answers did not received.")))))
