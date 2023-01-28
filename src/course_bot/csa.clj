@@ -15,10 +15,14 @@
  {:en
   {:csa
    {:start "Bot activated, my Lord!"
-    :restart "Restart bot"
     :dot "."
     :stop "Bot is dead, my Lord!"
-    :unknown-_ "Unknown message: %s"}}})
+    :unknown-1 "Unknown message: %s"}}
+  :ru
+  {:csa
+   {:start "Бот активирован, мой господин!"
+    :stop "Бот погиб, мой господин!"
+    :unknown-1 "Неизвестное сообщение: %s, а вы точно мой господин?"}}})
 
 (def conf (misc/get-config "../edu-csa-internal"))
 
@@ -90,7 +94,7 @@
   (handlers/command "help" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/helps)))
 
   (handlers/message {{id :id} :chat :as message}
-                    (let [err (format (tr :bot/unknown-_) message)]
+                    (let [err (format (tr :bot/unknown-1) message)]
                       (println err)
                       (talk/send-text token id err))))
 
