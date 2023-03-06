@@ -149,7 +149,10 @@
 (defn assign-reviews [tx essay-code n]
   (loop [n n
          limit (* n 1000)
-         essays (get-essays tx essay-code)]
+         essays (->> (get-essays tx essay-code)
+                     (filter (fn [[_k v]]
+                               (-> v :essays (get essay-code) :request-review empty?))))]
+
     (let [tmp (into {} (map (fn [[id info] review-id]
                               [id (update-in info
                                              [:essays essay-code :request-review]

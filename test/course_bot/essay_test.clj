@@ -332,4 +332,43 @@
                       ["2" "1,5" "3"]
                       ["3" "1,5" "3"]
                       ["4" "1,5" "3"]
-                      ["5" "0" "x"])))))
+                      ["5" "0" "x"]))
+
+      (testing "additional essays from new users"
+        (doall (map #(register-user *chat talk %1 %2)
+                    [5 6 7 8]
+                    ["u5" "u6" "u7" "u8"]))
+
+        (doall (map #(essay-submit *chat talk %1)
+                    [5 6 7 8]))
+
+        (let [*shuffles (atom [[6 5 8 7] [5 8 7 6] [8 7 6 5]])]
+          (with-redefs [shuffle (fn [lst]
+                                  (is (= lst (list 7 6 5 8)))
+                                  (let [res (first @*shuffles)]
+                                    (swap! *shuffles rest)
+                                    res))]
+            (talk 0 "/essay1assignreviewers")
+            (tt/match-text *chat 0 "Assignment count: 4; Examples: (8 5 6)")))
+
+        (is (= '({:request-review (8 5 6), :text "user7 essay1 text"}
+                 {:my-reviews-submitted-at "2022.01.03 11:30 +0000",
+                  :request-review (4 3 2),
+                  :text "user1 essay1 text"}
+                 {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
+                  :request-review (3 2 1),
+                  :text "user4 essay1 text"}
+                 {:request-review (7 8 5), :text "user6 essay1 text"}
+                 {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
+                  :request-review (2 1 4),
+                  :text "user3 essay1 text"}
+                 {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
+                  :request-review (1 4 3),
+                  :text "user2 essay1 text"}
+                 {:request-review (6 7 8), :text "user5 essay1 text"}
+                 {:request-review (5 6 7), :text "user8 essay1 text"})
+               (->> (codax/get-at! db [])
+                    vals
+                    (map #(-> % :essays (get "essay1")))
+                    (map #(dissoc % :received-review :my-reviews))
+                    (filter some?))))))))
