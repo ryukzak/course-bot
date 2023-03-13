@@ -94,7 +94,7 @@
   (handlers/command "help" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/helps)))
 
   (handlers/message {{id :id} :chat :as message}
-                    (let [err (format (tr :bot/unknown-1) message)]
+                    (let [err (format (tr :csa/unknown-1) message)]
                       (println err)
                       (talk/send-text token id err))))
 
