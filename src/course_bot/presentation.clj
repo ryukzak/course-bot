@@ -563,7 +563,7 @@
               talk/stop-talk))))))
 
 (defn drop-talk [db {token :token :as conf} pres-key-name drop-all]
-  (let [cmd (str pres-key-name (tr :pres/drop) (when drop-all (tr :pres/all)))
+  (let [cmd (str pres-key-name "drop" (when drop-all "all"))
         pres-key (keyword pres-key-name)
         name (-> conf (get pres-key) :name)
         help (format (tr :pres/drop-talk-2) name
