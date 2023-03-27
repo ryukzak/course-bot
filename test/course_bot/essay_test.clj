@@ -97,9 +97,10 @@
                             (talk 4 "yes")
                             (tt/match-text *chat 4 "Thank you, the text has been uploaded and will be submitted for review soon.")
                             (is (= {:text "u4 essay1 The sun beat down on the parched earth, baking it to a crisp. The air was thick with the smell of hot tar and the hum of cicadas filled the silence. A lone figure stood in the shade of a tree, shielding their eyes against the glare. They scanned the horizon, searching for any sign of life."} (codax/get-at! db [4 :essays "essay1"])))))))
-(defn essay-submit [*chat essay-submit-talk id]
+
+(defn essay-submit [user-text *chat essay-submit-talk id]
   (essay-submit-talk id "/essay1submit")
-  (essay-submit-talk id (str "user" id " essay1 text"))
+  (essay-submit-talk id (str "user" id " essay1 " user-text))
   (tt/match-text *chat id "Is loading (yes/no)?")
   (essay-submit-talk id "yes")
   (tt/match-text *chat id "Thank you, the text has been uploaded and will be submitted for review soon."))
@@ -126,7 +127,8 @@
                                         [1 2 3 4]
                                         ["u1" "u2" "u3" "u4"]))
 
-                            (doall (map #(essay-submit *chat talk %1)
+                            (doall (map #(essay-submit %1 *chat talk %2)
+                                        ["user1text" "user2text" "user3text" "user4text"]
                                         [1 2 3 4]))
 
                             (talk 1 "/essay1status")
@@ -138,7 +140,7 @@
                             (talk 1 "/essay1assignreviewers")
                             (tt/match-text *chat 1 "That action requires admin rights."))
 
-                          (testing "out of limit shuffels"
+                          (testing "out of limit shuffles"
                             (with-redefs [shuffle (fn [lst]
                                                     (assert (= lst (list 1 2 3 4)))
                                                     lst)]
@@ -159,10 +161,10 @@
                               (talk 0 "/essay1assignreviewers")
                               (tt/match-text *chat 0 "Assignment count: 4; Examples: (4 3 2)")))
 
-                          (is (= '({:request-review (4 3 2), :text "user1 essay1 text"}
-                                   {:request-review (1 4 3), :text "user2 essay1 text"}
-                                   {:request-review (2 1 4), :text "user3 essay1 text"}
-                                   {:request-review (3 2 1), :text "user4 essay1 text"})
+                          (is (= '({:request-review (4 3 2), :text "user1 essay1 user1text"}
+                                   {:request-review (1 4 3), :text "user2 essay1 user2text"}
+                                   {:request-review (2 1 4), :text "user3 essay1 user3text"}
+                                   {:request-review (3 2 1), :text "user4 essay1 user4text"})
                                  (->> (codax/get-at! db [])
                                       vals
                                       (map #(-> % :essays (get "essay1")))
@@ -178,15 +180,15 @@
                                               (tt/text 1 "You received: 3 essays for your review. Their text will now be sent below by selected messages.")
 
                                               (tt/text 1 "Essay #1 <<<<<<<<<<<<<<<<<<<<")
-                                              (tt/text 1 "user4 essay1 text")
+                                              (tt/text 1 "user4 essay1 user4text")
                                               (tt/text 1 ">>>>>>>>>>>>>>>>>>>> Essay #1")
 
                                               (tt/text 1 "Essay #2 <<<<<<<<<<<<<<<<<<<<")
-                                              (tt/text 1 "user3 essay1 text")
+                                              (tt/text 1 "user3 essay1 user3text")
                                               (tt/text 1 ">>>>>>>>>>>>>>>>>>>> Essay #2")
 
                                               (tt/text 1 "Essay #3 <<<<<<<<<<<<<<<<<<<<")
-                                              (tt/text 1 "user2 essay1 text")
+                                              (tt/text 1 "user2 essay1 user2text")
                                               (tt/text 1 ">>>>>>>>>>>>>>>>>>>> Essay #3")
 
                                               (tt/text 1 ":review-msg from config"))
@@ -221,17 +223,17 @@
                                                 (tt/text 1 "The first essay -- best."
                                                          ""
                                                          "Rank: 1, essay number in the list: #1, your review: 111bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla "
-                                                         "(few words from the essay: user4 essay1 text...)"
+                                                         "(few words from the essay: user4 essay1 user4text...)"
                                                          ""
                                                          "---"
                                                          ""
                                                          "Rank: 2, essay number in the list: #2, your review: 222bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla "
-                                                         "(few words from the essay: user3 essay1 text...)"
+                                                         "(few words from the essay: user3 essay1 user3text...)"
                                                          ""
                                                          "---"
                                                          ""
                                                          "Rank: 3, essay number in the list: #3, your review: 333bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla "
-                                                         "(few words from the essay: user2 essay1 text...)"
+                                                         "(few words from the essay: user2 essay1 user2text...)"
                                                          ""
                                                          "The last essay -- worst.")
                                                 (tt/text 1 "Correct?")))
@@ -362,7 +364,11 @@
                                         [5 6 7 8]
                                         ["u5" "u6" "u7" "u8"]))
 
-                            (doall (map #(essay-submit *chat talk %1)
+                            ;(doall (map #(essay-submit *chat talk %1)
+                            ;            [5 6 7 8]))
+
+                            (doall (map #(essay-submit %1 *chat talk %2)
+                                        ["user5text" "user6text" "user7text" "user8text"]
                                         [5 6 7 8]))
 
                             (let [*shuffles (atom [[6 5 8 7] [5 8 7 6] [8 7 6 5]])]
@@ -374,22 +380,22 @@
                                 (talk 0 "/essay1assignreviewers")
                                 (tt/match-text *chat 0 "Assignment count: 4; Examples: (8 5 6)")))
 
-                            (is (= '({:request-review (8 5 6), :text "user7 essay1 text"}
+                            (is (= '({:request-review (8 5 6), :text "user7 essay1 user7text"}
                                      {:my-reviews-submitted-at "2022.01.03 11:30 +0000",
                                       :request-review          (4 3 2),
-                                      :text                    "user1 essay1 text"}
+                                      :text                    "user1 essay1 user1text"}
                                      {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
                                       :request-review          (3 2 1),
-                                      :text                    "user4 essay1 text"}
-                                     {:request-review (7 8 5), :text "user6 essay1 text"}
+                                      :text                    "user4 essay1 user4text"}
+                                     {:request-review (7 8 5), :text "user6 essay1 user6text"}
                                      {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
                                       :request-review          (2 1 4),
-                                      :text                    "user3 essay1 text"}
+                                      :text                    "user3 essay1 user3text"}
                                      {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
                                       :request-review          (1 4 3),
-                                      :text                    "user2 essay1 text"}
-                                     {:request-review (6 7 8), :text "user5 essay1 text"}
-                                     {:request-review (5 6 7), :text "user8 essay1 text"})
+                                      :text                    "user2 essay1 user2text"}
+                                     {:request-review (6 7 8), :text "user5 essay1 user5text"}
+                                     {:request-review (5 6 7), :text "user8 essay1 user8text"})
                                    (->> (codax/get-at! db [])
                                         vals
                                         (map #(-> % :essays (get "essay1")))
