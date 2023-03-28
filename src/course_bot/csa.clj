@@ -18,23 +18,29 @@
     {:start "Bot activated, my Lord!"
      :dot "."
      :stop "Bot is dead, my Lord!"
-     :unknown-1 "Unknown message: %s"}}
+     :unknown-1 "Unknown message: %s"
+     :db-failure "I failed to reach the database, my Lord!"
+     :db-failure-path "Can't find the database path, my Lord!"
+     }}
    :ru
    {:csa
     {:start "Бот активирован, мой господин!"
      :stop "Бот погиб, мой господин!"
-     :unknown-1 "Неизвестное сообщение: %s, а вы точно мой господин?"}}})
+     :unknown-1 "Неизвестное сообщение: %s, а вы точно мой господин?"
+     :db-failure "Не удалось подключиться к базе данных, мой господин!"
+     :db-failure-path "Не удалось найти путь к базе данных, мой господин!"
+     }}})
 
 (defn open-database-or-fail [path]
   (if path
     (try
       (codax/open-database! path)
       (catch Exception e
-        (println "Error: Failed to connect to the database.")
+        (println (tr :csa/db-failure))
         (println (.getMessage e))
         (System/exit 1)))
     (do
-      (println "Error: Database path not provided.")
+      (println (tr :csa/db-failure-path))
       (System/exit 1))))
 
 
