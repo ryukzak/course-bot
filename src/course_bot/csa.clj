@@ -25,14 +25,17 @@
      :stop "Бот погиб, мой господин!"
      :unknown-1 "Неизвестное сообщение: %s, а вы точно мой господин?"}}})
 
-(def conf (delay (misc/get-config "../edu-csa-internal")))
-
-(def token (delay (-> @conf :token)))
-(def db-path (delay (-> @conf :db-path)))
-(defn safe-open-database [path]
+(defn open-database-or-fail [path]
   (if path
-    (codax/open-database! path)
-    (atom {})))
+    (try
+      (codax/open-database! path)
+      (catch Exception e
+        (println "Error: Failed to connect to the database.")
+        (println (.getMessage e))
+        (System/exit 1)))
+    (do
+      (println "Error: Database path not provided.")
+      (System/exit 1))))
 
 
 (defn -main [& _args]
