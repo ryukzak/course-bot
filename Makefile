@@ -16,3 +16,10 @@ deploy:
 
 backup:
 	tar -zcf "csa-db-snapshot-$(date +'%Y-%m-%d-%H-%M').tar.gz" ${DB}
+
+clean:
+	rm -f *.csv
+	find . -type f -name '*-lab1-descriptions.md' -delete
+	rm -f *.jar
+	rm -rf codax-db-test
+	rm -rf test-databases
