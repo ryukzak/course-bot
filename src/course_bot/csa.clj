@@ -43,6 +43,7 @@
       (println (tr :csa/db-failure-path))
       (System/exit 1))))
 
+(declare bot-api id message)
 
 (defn -main [& _args]
   (let [conf (misc/get-config "../edu-csa-internal")
