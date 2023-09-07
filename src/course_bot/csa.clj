@@ -47,6 +47,7 @@
   (let [conf (misc/get-config "../edu-csa-internal/csa-2023.edn")
         token (:token conf)
         db-path (:db-path conf)
+        essays-on (:essays-on conf)
         db (open-database-or-fail db-path)]
 
     (handlers/defhandler bot-api

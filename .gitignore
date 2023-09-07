@@ -18,3 +18,4 @@ default-codax
 *.tar.gz
 .cpcache/
 tmp/
+.idea/
