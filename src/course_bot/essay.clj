@@ -1,7 +1,8 @@
 (ns course-bot.essay
   (:require [course-bot.talk :as talk]
             [course-bot.general :as general :refer [tr]]
-            [course-bot.misc :as misc])
+            [course-bot.misc :as misc]
+            [course-bot.plagiarism :as plagiarism])
   (:require [codax.core :as codax])
   (:require [clojure.string :as str]))
 
@@ -33,6 +34,7 @@
     :essays-submitted-for-review-1 "You received: %d essays for your review. Their text will now be sent below by selected messages."
     :essay-number-begin-1 "Essay #%d <<<<<<<<<<<<<<<<<<<<"
     :essay-number-end-1 ">>>>>>>>>>>>>>>>>>>> Essay #%d"
+    :essay-plagiarised "Your essay didn't pass plagiarism check. Make it more unique!"
     :essay-send-format "Send essay numbers with feedback in separate messages from best to worse (e.g.: `<essay number> <feedback text>`)"
     :essay-need-feedback-error "Alas, you need to start writing reviews first (if you see this message again, let me know)."
     :essay-number-error "The essay number is inconsistent or out of bounds."
@@ -71,7 +73,8 @@
     :essays-submitted-for-review-1 "Вам на ревью пришло: %d эссе. Их текст сейчас отправлю ниже отдельными сообщениями."
     :essay-number-begin-1 "Эссе #%d <<<<<<<<<<<<<<<<<<<<"
     :essay-number-end-1 ">>>>>>>>>>>>>>>>>>>> Эссе #%d"
-    :essay-send-format "Отправляйте номера эссе с отзывами отдельными сообщениями (пример: `<номер_эссе> <текст_отзыва>`)"
+    :essay-plagiarised "Ваше эссе не прошло проверку на плагиат. Сделайте его более уникальным!"
+    :essay-send-format "Отправляйте номера эссе с отзывыми отдельными сообщениями (пример: `<номер_эссе> <текст_отзыва>`)"
     :essay-need-feedback-error "Увы, но вам надо начать писать отзывы сначала (если вы это сообщение видите в очередной раз -- сообщите)."
     :essay-number-error "Номер эссе несовместим или выходит за допустимые пределы."
     :essay-feedback-short "Ваш текст отзыва слишком короткий"
@@ -83,7 +86,7 @@
     :feedback-on-your-essay "отзыв на ваше эссе "
     :number-of-reviews-1 "Вы получили %d отзывов."}}})
 
-(defn submit-talk [db {token :token :as conf} essay-code]
+(defn submit-talk [db {token :token :as conf} essay-code forest]
   (let [cmd (str essay-code "submit")
         topics-msg (-> conf (get (keyword essay-code)) :topic-msg)
         help (str (tr :essay/submit) essay-code)]
@@ -110,7 +113,12 @@
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
         (talk/when-parse-yes-or-no
          tx token id text
+         (if (plagiarism/is-essay-plagiarised forest essay-text)
+           (do
+             (talk/send-text token id (tr :essay/:essay-plagiarised))
+             (talk/stop-talk tx)))
          (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
+         (plagiarism/add-to-forest forest essay-text id)
          (-> tx
              (codax/assoc-at [id :essays essay-code :text] essay-text)
              talk/stop-talk))))))
