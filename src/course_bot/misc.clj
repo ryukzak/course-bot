@@ -4,7 +4,6 @@
 (defn inline? [v] (when (and (vector? v) (= :inline (first v)))
                     (second v)))
 
-
 (declare get-config)
 
 (defn inline [path conf]
@@ -12,8 +11,7 @@
                                  (fn [v]
                                    (if-let [sub-conf (inline? v)]
                                      (inline path (read-string (slurp (str path "/" sub-conf))))
-                                     (inline path v)
-                                     )))
+                                     (inline path v))))
         :else conf))
 
 (defn get-config [filename]
