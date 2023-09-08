@@ -6,7 +6,8 @@
            org.clojure/data.csv                 {:mvn/version "1.0.1"}
            com.taoensso/tempura                 {:mvn/version "1.5.3"}
            clj-kondo/clj-kondo                  {:mvn/version "2023.01.20"}
-           cljfmt/cljfmt                        {:mvn/version "0.9.2"}}
+           cljfmt/cljfmt                        {:mvn/version "0.9.2"}
+           consimilo/consimilo                  {:mvn/version "0.1.1"}}
 
  :linters {:not-empty? {:level :off}}
 
