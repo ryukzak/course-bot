@@ -1,33 +1,25 @@
 (ns course-bot.misc
-  (:require [clojure.string :as str])
   (:require [clojure.java.io :as io]))
 
-(defn keyword-path [path file]
-  (let [from-path (-> file
-                      .getParent
-                      (str/replace (re-pattern (str "^" path)) "")
-                      (str/split #"/")
-                      (#(->> % (filter not-empty) (map keyword))))
-        from-name (-> file
-                      .getName
-                      (str/replace #".edn" "")
-                      keyword)]
-    (concat from-path (list from-name))))
+(defn inline? [v] (when (and (vector? v) (= :inline (first v)))
+                    (second v)))
 
-(defn get-config [path]
-  (let [files (->> (file-seq (io/file path))
-                   (filter #(and (.isFile %) (str/ends-with? (.getName %) ".edn"))))
 
-        dt (map (fn [file]
-                  [(keyword-path path file) (read-string (slurp file))])
-                files)
-        {inlines true
-         paths false} (group-by #(-> % first last (= :inline)) dt)]
+(declare get-config)
 
-    (reduce (fn [m [ks v]]
-              (cond (= ks '(:inline)) (into m v)
-                    (= (last ks) :inline) (assoc-in m (drop-last ks) v)
-                    :else (assoc-in m ks v))) {} (concat inlines paths))))
+(defn inline [path conf]
+  (cond (map? conf) (update-vals conf
+                                 (fn [v]
+                                   (if-let [sub-conf (inline? v)]
+                                     (inline path (read-string (slurp (str path "/" sub-conf))))
+                                     (inline path v)
+                                     )))
+        :else conf))
+
+(defn get-config [filename]
+  (let [path (-> (io/file filename) .getAbsolutePath io/file .getParent)
+        conf (read-string (slurp filename))]
+    (inline path conf)))
 
 (defn today [] (.getTime (new java.util.Date)))
 

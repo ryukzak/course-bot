@@ -17,7 +17,7 @@
     (tt/match-text *chat id "You are already registered. To change your information, contact the teacher and send /whoami")))
 
 (deftest startquiz-talk-test
-  (let [conf  (misc/get-config "conf-example")
+  (let [conf  (misc/get-config "conf-example/csa-2023.edn")
         db    (tt/test-database)
         *chat (atom (list))
         talk  (tt/handlers (general/start-talk db conf)
@@ -60,7 +60,7 @@
       (tt/match-text *chat 0 "Quiz is already running."))))
 
 (deftest quiz-talk-test
-  (let [conf  (misc/get-config "conf-example")
+  (let [conf  (misc/get-config "conf-example/csa-2023.edn")
         db    (tt/test-database)
         *chat (atom (list))
         talk  (tt/handlers (general/start-talk db conf)
@@ -118,7 +118,7 @@
       (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results]))))))
 
 (deftest stopquiz-talk-test
-  (let [conf  (misc/get-config "conf-example")
+  (let [conf  (misc/get-config "conf-example/csa-2023.edn")
         db    (tt/test-database)
         *chat (atom (list))
         talk  (tt/handlers
@@ -189,7 +189,7 @@
                                    ""))))))
 
 (deftest report-talk-test
-  (let [conf    (misc/get-config "conf-example")
+  (let [conf    (misc/get-config "conf-example/csa-2023.edn")
         db      (tt/test-database)
         *chat   (atom (list))
         talk    (tt/handlers (general/start-talk db conf)
@@ -280,7 +280,7 @@
                                    ""))))))
 
 (deftest stop-quiz-without-answers-talk-test
-  (let [conf    (misc/get-config "conf-example")
+  (let [conf    (misc/get-config "conf-example/csa-2023.edn")
         db      (tt/test-database)
         *chat   (atom (list))
         talk    (tt/handlers (general/start-talk db conf)

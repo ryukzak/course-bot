@@ -17,7 +17,7 @@
     (tt/match-text *chat id "You are already registered. To change your information, contact the teacher and send /whoami")))
 
 (deftest setgroup-talk-test
-  (let [conf (misc/get-config "conf-example")
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
@@ -38,7 +38,7 @@
       (is (= {:lab1 {:group "lgr1"}} (codax/get-at! db [1 :presentation]))))))
 
 (deftest submit-talk-test
-  (let [conf (misc/get-config "conf-example")
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
@@ -81,7 +81,7 @@
              (codax/get-at! db [1 :presentation]))))))
 
 (deftest check-and-submissions-talks-test
-  (let [conf (misc/get-config "conf-example")
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
@@ -274,7 +274,7 @@
                                         "- pres 2 (Alice) - APPROVED")))))))
 
 (deftest schedule-agenda-and-drop-talks-test
-  (let [conf (misc/get-config "conf-example")
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
@@ -541,7 +541,7 @@
              (codax/get-at! db [:presentation :lab1]))))))
 
 (deftest feedback-and-rank-talks-test
-  (let [conf (misc/get-config "conf-example")
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
