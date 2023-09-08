@@ -2,6 +2,7 @@
   (:gen-class)
   (:require [codax.core :as codax]
             [course-bot.essay :as essay]
+            [consimilo.core :as consimilo]
             [course-bot.general :as general :refer [tr]]
             [course-bot.misc :as misc]
             [course-bot.presentation :as pres]
@@ -20,14 +21,18 @@
     :stop            "Bot is dead, my Lord!"
     :unknown-1       "Unknown message: %s"
     :db-failure      "I failed to reach the database, my Lord!"
-    :db-failure-path "Can't find the database path, my Lord!"}}
+    :db-failure-path "Can't find the database path, my Lord!"
+    :forest-failure  "I failed to reach forest file, my Lord!"
+    :f-path-failure  "Can't find path to the forest, my Lord!"}}
   :ru
   {:csa
    {:start           "Бот активирован, мой господин!"
     :stop            "Бот погиб, мой господин!"
     :unknown-1       "Неизвестное сообщение: %s, а вы точно мой господин?"
     :db-failure      "Не удалось подключиться к базе данных, мой господин!"
-    :db-failure-path "Не удалось найти путь к базе данных, мой господин!"}}})
+    :db-failure-path "Не удалось найти путь к базе данных, мой господин!"
+    :forest-failure  "Не удалось подключиться к хэш-лесу, мой господин!"
+    :f-path-failure  "Не удалось найти путь к хэш-лесу, мой господин!"}}})
 
 (defn open-database-or-fail [path]
   (if path
@@ -41,14 +46,28 @@
       (println (tr :csa/db-failure-path))
       (System/exit 1))))
 
+(defn open-forest-or-fail [path]
+  (if path
+    (try
+      (consimilo/thaw-forest path)
+      (catch Exception e
+        (println (tr :csa/forest-failure))
+        (println (.getMessage e))
+        (System/exit 1)))
+    (do
+      (println (tr :csa/f-path-failure)
+      (System/exit 1)))))
+
 (declare bot-api id message)
 
 (defn -main [& _args]
   (let [conf (misc/get-config "../edu-csa-internal/csa-2023.edn")
         token (:token conf)
         db-path (:db-path conf)
+        forest-path (:forest-path conf)
         essays-on (:essays-on conf)
-        db (open-database-or-fail db-path)]
+        db (open-database-or-fail db-path)
+        forest (open-forest-or-fail forest-path)]
 
     (handlers/defhandler bot-api
       (general/start-talk db conf)
@@ -123,6 +142,7 @@
     (loop [channel (polling/start token bot-api)]
       (Thread/sleep 500)
       (print (tr :csa/dot)) (flush)
+      (consimilo/freeze-forest forest forest-path)
       (if (.closed? channel)
         (do (print (tr :csa/stop))
             (recur (polling/start token bot-api)))
