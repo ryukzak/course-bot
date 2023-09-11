@@ -7,7 +7,7 @@
             [course-bot.misc :as misc]))
 
 (deftest start-talk-test
-  (let [conf (misc/get-config "conf-example")
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
@@ -65,7 +65,7 @@
         (tt/match-text *chat "You are already registered. To change your information, contact the teacher and send /whoami")))))
 
 (deftest restart-talk-test
-  (let [conf (misc/get-config "conf-example")
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
@@ -115,7 +115,7 @@
         (tt/match-text *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?")))))
 
 (deftest restart-permitted-test
-  (let [conf (assoc (misc/get-config "conf-example") :allow-restart true)
+  (let [conf (assoc (misc/get-config "conf-example/csa-2023.edn") :allow-restart true)
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
@@ -133,7 +133,7 @@
         (tt/match-text *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?")))))
 
 (deftest renameme-talk-test
-  (let [conf (misc/get-config "conf-example")
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)

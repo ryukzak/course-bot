@@ -16,7 +16,7 @@
     (tt/match-text *chat id "You are already registered. To change your information, contact the teacher and send /whoami")))
 
 (deftest essay-submit-talk-test
-  (let [conf (misc/get-config "conf-example")
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
@@ -82,7 +82,7 @@
   (tt/match-text *chat id "Thank you, the text has been uploaded and will be submitted for review soon."))
 
 (deftest essay-assign-review-myfeedback-talk-test
-  (let [conf (misc/get-config "conf-example")
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
