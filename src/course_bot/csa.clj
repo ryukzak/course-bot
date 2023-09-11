@@ -1,32 +1,32 @@
 (ns course-bot.csa
   (:gen-class)
-  (:require [morse.handlers :as handlers]
-            [morse.polling :as polling]
-            [codax.core :as codax])
-  (:require [course-bot.misc :as misc]
+  (:require [codax.core :as codax]
+            [course-bot.essay :as essay]
+            [course-bot.general :as general :refer [tr]]
+            [course-bot.misc :as misc]
+            [course-bot.presentation :as pres]
             [course-bot.quiz :as quiz]
             [course-bot.report :as report]
-            [course-bot.presentation :as pres]
-            [course-bot.general :as general :refer [tr]]
-            [course-bot.essay :as essay]
-            [course-bot.talk :as talk]))
+            [course-bot.talk :as talk]
+            [morse.handlers :as handlers]
+            [morse.polling :as polling]))
 
 (general/set-locales [:ru :en])
 (general/add-dict
  {:en
   {:csa
-   {:start "Bot activated, my Lord!"
-    :dot "."
-    :stop "Bot is dead, my Lord!"
-    :unknown-1 "Unknown message: %s"
-    :db-failure "I failed to reach the database, my Lord!"
+   {:start           "Bot activated, my Lord!"
+    :dot             "."
+    :stop            "Bot is dead, my Lord!"
+    :unknown-1       "Unknown message: %s"
+    :db-failure      "I failed to reach the database, my Lord!"
     :db-failure-path "Can't find the database path, my Lord!"}}
   :ru
   {:csa
-   {:start "Бот активирован, мой господин!"
-    :stop "Бот погиб, мой господин!"
-    :unknown-1 "Неизвестное сообщение: %s, а вы точно мой господин?"
-    :db-failure "Не удалось подключиться к базе данных, мой господин!"
+   {:start           "Бот активирован, мой господин!"
+    :stop            "Бот погиб, мой господин!"
+    :unknown-1       "Неизвестное сообщение: %s, а вы точно мой господин?"
+    :db-failure      "Не удалось подключиться к базе данных, мой господин!"
     :db-failure-path "Не удалось найти путь к базе данных, мой господин!"}}})
 
 (defn open-database-or-fail [path]
@@ -54,8 +54,10 @@
       (general/restart-talk db conf)
       (general/whoami-talk db conf)
       (general/renameme-talk db conf)
+
       (general/listgroups-talk db conf)
       (pres/setgroup-talk db conf "lab1")
+
       (pres/submit-talk db conf "lab1")
       (pres/submissions-talk db conf "lab1")
       (pres/check-talk db conf "lab1")
@@ -67,23 +69,23 @@
       (pres/drop-talk db conf "lab1" true)
       (pres/all-scheduled-descriptions-dump-talk db conf "lab1")
 
-      (essay/submit-talk db conf "essay1")
-      (essay/status-talk db conf "essay1")
-      (essay/assignreviewers-talk db conf "essay1")
-      (essay/review-talk db conf "essay1")
-      (essay/myfeedback-talk db conf "essay1")
+;      (essay/submit-talk db conf "essay1")
+;      (essay/status-talk db conf "essay1")
+;      (essay/assignreviewers-talk db conf "essay1")
+;      (essay/review-talk db conf "essay1")
+;      (essay/myfeedback-talk db conf "essay1")
 
-      (essay/submit-talk db conf "essay2")
-      (essay/status-talk db conf "essay2")
-      (essay/assignreviewers-talk db conf "essay2")
-      (essay/review-talk db conf "essay2")
-      (essay/myfeedback-talk db conf "essay2")
+;      (essay/submit-talk db conf "essay2")
+;      (essay/status-talk db conf "essay2")
+;      (essay/assignreviewers-talk db conf "essay2")
+;      (essay/review-talk db conf "essay2")
+;      (essay/myfeedback-talk db conf "essay2")
 
-      (essay/submit-talk db conf "essay3")
-      (essay/status-talk db conf "essay3")
-      (essay/assignreviewers-talk db conf "essay3")
-      (essay/review-talk db conf "essay3")
-      (essay/myfeedback-talk db conf "essay3")
+;      (essay/submit-talk db conf "essay3")
+;      (essay/status-talk db conf "essay3")
+;      (essay/assignreviewers-talk db conf "essay3")
+;      (essay/review-talk db conf "essay3")
+;      (essay/myfeedback-talk db conf "essay3")
 
       (quiz/startquiz-talk db conf)
       (quiz/stopquiz-talk db conf)
