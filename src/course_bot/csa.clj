@@ -44,7 +44,7 @@
 (declare bot-api id message)
 
 (defn -main [& _args]
-  (let [conf (misc/get-config "../edu-csa-internal")
+  (let [conf (misc/get-config "../edu-csa-internal/csa-2023.edn")
         token (:token conf)
         db-path (:db-path conf)
         db (open-database-or-fail db-path)]
