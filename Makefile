@@ -23,3 +23,6 @@ clean:
 	rm -f *.jar
 	rm -rf codax-db-test
 	rm -rf test-databases
+
+repl:
+	clj -M:test:nrepl
