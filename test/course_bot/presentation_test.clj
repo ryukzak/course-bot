@@ -431,32 +431,45 @@
       (testing "soon-talk"
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:30 +0000"))]
           (talk 1 "/lab1soon")
-          (tt/match-history *chat
-                            (tt/text 1 "We will expect for Lab 1 presentation soon:")
-                            (tt/text 1 "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:\n1. pres 2 (Bob)")
-                            (tt/text 1 "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:\n1. pres 1 (Alice)")))
+          (is (= (tt/history *chat 3 1)
+                 ["We will expect for Lab 1 presentation soon:"
+                  (tt/unlines "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
+                              "1. [Bob | 2022.01.01 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
+                              "    1. pres 2 (Bob)")
+                  (tt/unlines "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
+                              "1. [Alice | 2022.01.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
+                              "    1. pres 1 (Alice)")])))
 
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.02 11:30 +0000"))]
           (talk 1 "/lab1soon")
-          (tt/match-history *chat
-                            (tt/text 1 "We will expect for Lab 1 presentation soon:")
-                            (tt/text 1 "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:\n1. pres 2 (Bob)")
-                            (tt/text 1 "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:\n1. pres 1 (Alice)")))
+          (is (= (tt/history *chat 3 1)
+                 ["We will expect for Lab 1 presentation soon:"
+                  (tt/unlines "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
+                              "1. [Bob | 2022.01.01 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
+                              "    1. pres 2 (Bob)")
+                  (tt/unlines "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
+                              "1. [Alice | 2022.01.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
+                              "    1. pres 1 (Alice)")])))
 
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.03 11:30 +0000"))]
           (talk 1 "/lab1soon")
-          (tt/match-history *chat
-                            (tt/text 1 "We will expect for Lab 1 presentation soon:")
-                            (tt/text 1 "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:\n1. pres 1 (Alice)")))
+          (is (= (tt/history *chat 2 1)
+                 ["We will expect for Lab 1 presentation soon:"
+                  (tt/unlines "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
+                              "1. [Alice | 2022.01.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
+                              "    1. pres 1 (Alice)")])))
+
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.04 11:30 +0000"))]
           (talk 1 "/lab1soon")
-          (tt/match-text *chat 1
-                         "We will expect for Lab 1 presentation soon:"))
+          (is (= (tt/history *chat 1 1)
+                 ["We will expect for Lab 1 presentation soon:"])))
+
         (with-redefs [misc/today (fn [] (misc/read-time "2022.02.01 00:30 +0000"))]
           (talk 1 "/lab1soon")
-          (tt/match-history *chat
-                            (tt/text 1 "We will expect for Lab 1 presentation soon:")
-                            (tt/text 1 "Agenda 2022.02.02 12:00 +0000 (lgr2):\n"))))
+          (is (= (tt/history *chat 2 1)
+                 ["We will expect for Lab 1 presentation soon:"
+                  (tt/unlines "Agenda 2022.02.02 12:00 +0000 (lgr2):"
+                              "1. [ | 2022.02.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()")]))))
 
       (is (= {:lab1 {:approved? true
                      :description "pres 1"

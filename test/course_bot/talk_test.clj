@@ -70,3 +70,16 @@
        (rec nil *chat-or-id msg)))
     ([_*chat id msg] (let [handler (apply handlers/handlers handlers)]
                        (handler {:message {:from {:id id} :text msg}})))))
+
+(defn history
+  ([*chat n] (history *chat n nil))
+  ([*chat n id]
+   (->> @*chat
+        (take n)
+        (map #(if (nil? id)
+                (vector (:id %) (:msg %))
+                (:msg %)))
+        reverse
+        (apply vector))))
+
+(defn unlines [& coll] (str/join "\n" coll))
