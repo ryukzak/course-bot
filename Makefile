@@ -1,8 +1,12 @@
 NAME = csa-bot
-DB = ${PWD}/../csa-db-2023
 CONF = ${PWD}/../edu-csa-internal
+DB = ${PWD}/../csa-db-2023
 
-all: build stop deploy
+BACKUP_PATH = ..
+
+NOW = $(shell date +'%Y-%m-%d-%H-%M')
+
+all: backup build stop deploy
 
 build:
 	docker build -t ${NAME} .
@@ -15,7 +19,10 @@ deploy:
 	docker run --name ${NAME} --restart=always -d -v ${CONF}:/edu-csa-internal -v ${DB}:/csa-db ${NAME}
 
 backup:
-	tar -zcf "csa-db-snapshot-$(date +'%Y-%m-%d-%H-%M').tar.gz" ${DB}
+	tar -zcf "${BACKUP_PATH}/csa-db-snapshot-${NOW}.tar.gz" ${DB}
+#   file should be more than 100 Kb
+	[ `stat -c %s "${BACKUP_PATH}/csa-db-snapshot-${NOW}.tar.gz"` -gt 100000 ]
+
 
 clean:
 	rm -f *.csv
