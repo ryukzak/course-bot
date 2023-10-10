@@ -19,3 +19,4 @@ default-codax
 .cpcache/
 *-report.csv
 *-descriptions.md
+.idea
