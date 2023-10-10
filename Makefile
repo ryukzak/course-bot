@@ -6,7 +6,15 @@ BACKUP_PATH = ..
 
 NOW = $(shell date +'%Y-%m-%d-%H-%M')
 
-all: backup build stop deploy
+update: pull backup build stop run
+
+pull:
+	git pull
+
+backup:
+	tar -zcf "${BACKUP_PATH}/csa-db-snapshot-${NOW}.tar.gz" -C ${DB} .
+#   file should be more than 100 Kb
+	[ `stat -c %s "${BACKUP_PATH}/csa-db-snapshot-${NOW}.tar.gz"` -gt 100 ]
 
 build:
 	docker build -t ${NAME} .
@@ -15,14 +23,8 @@ stop:
 	docker stop ${NAME}
 	docker rm ${NAME}
 
-deploy:
+run:
 	docker run --name ${NAME} --restart=always -d -v ${CONF}:/edu-csa-internal -v ${DB}:/csa-db ${NAME}
-
-backup:
-	tar -zcf "${BACKUP_PATH}/csa-db-snapshot-${NOW}.tar.gz" ${DB}
-#   file should be more than 100 Kb
-	[ `stat -c %s "${BACKUP_PATH}/csa-db-snapshot-${NOW}.tar.gz"` -gt 100000 ]
-
 
 clean:
 	rm -f *.csv
