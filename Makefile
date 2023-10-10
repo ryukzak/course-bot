@@ -1,5 +1,5 @@
 NAME = csa-bot
-DB = ${PWD}/../csa-db
+DB = ${PWD}/../csa-db-2023
 CONF = ${PWD}/../edu-csa-internal
 
 all: build stop deploy
