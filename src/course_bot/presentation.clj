@@ -65,7 +65,7 @@
     :check-talk "for teacher, check submitted presentation description"
     :submisstion-talk "list submissions and their status (no args -- your group, with args -- specified)"
     :agenda-talk "agenda (no args -- your group, with args -- specified)"
-    :soon-talk "what will happen soon"
+    :soon-talk-help "what will happen soon"
     :schedule-talk "select your presentation day"
     :feedback-talk "send feedback for report"
     :drop-talk-2 "for teacher, drop '%s' for specific student (%s)"
@@ -128,7 +128,7 @@
     :check-talk "для преподавателя, ревью загруженных тем"
     :submisstion-talk "статус загруженных эссе (опциональный аргумент -- группа)"
     :agenda-talk "расписание докладов (опциональный аргумент -- группа)"
-    :soon-talk "что произойдет в ближайшее время"
+    :soon-talk-help "что произойдет в ближайшее время"
     :schedule-talk "выберите день презентации"
     :feedback-talk "отправить отзыв для отчета"
     :drop-talk-2 "для учителя, отбросить '%s' для конкретного ученика (%s)"
@@ -378,9 +378,23 @@
                     (and (> diff -24) (<= diff 48))))
          (map #(let [dt (:datetime %)
                      comment (-> conf (get pres-id) :groups (get group) :comment)
-                     studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])]
-                 (str (format (tr :pres/agenda-2) dt group) (when (some? comment) (str ", " comment)) ":\n"
-                      (str/join "\n" (map-indexed (fn [idx e] (str (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
+                     studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])
+                     last-names (str/join ", "
+                                          (map (fn [stud-id] (-> tx
+                                                                 (codax/get-at [stud-id :name])
+                                                                 (str/split #"\s+")
+                                                                 first))
+                                               studs))]
+
+                 (str (format (tr :pres/agenda-2) dt group)
+                      (when (some? comment) (str ", " comment)) ":\n"
+                      (format "1. [%s | %s %s]()"
+                              last-names
+                              (-> dt (str/split #"\s+") first)
+                              (-> conf (get pres-id) :agenda-postfix))
+                      (when (not-empty studs) "\n")
+                      (str/join "\n"
+                                (map-indexed (fn [idx e] (str "    " (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
 
 (defn agenda-talk [db {token :token admin-chat-id :admin-chat-id :as conf} pres-key-name]
   (let [cmd (str pres-key-name "agenda")
@@ -421,7 +435,7 @@
         name (-> conf (get pres-key) :name)
         groups (-> conf (get pres-key) :groups)]
     (talk/def-command db cmd
-      (tr :pres/soon-talk)
+      (tr :pres/soon-talk-help)
       (fn [tx {{id :id} :from}]
         (talk/send-text token id (format (tr :pres/expect-soon-1) name))
         (doall (->> groups keys sort
