@@ -52,8 +52,6 @@
     :drop-state-1 "We drop your state for %s"
     :descriptions "%s descriptions"
     :all-scheduled-description-by-group "File with all scheduled descriptions by groups:"
-    :yes "yes"
-    :no "no"
     :set-group-help-2 "Please, set your '%s' group by /%ssetgroup"
     :already-submitted-and-approved-help-1 "Already submitted and approved, maybe you need to schedule it? /%sschedule"
     :submit-receive-before-schedule-help-1 "You should submit and receive approve before scheduling. Use /%ssubmit"
@@ -115,8 +113,6 @@
     :drop-state-1 "Мы сбрасываем ваше состояние на %s"
     :descriptions "%s описаний"
     :all-scheduled-description-by-group "Файл со всеми запланированными описаниями по группам:"
-    :yes "да"
-    :no "нет"
     :set-group-help-2 "Пожалуйста, установите группу '%s' с помощью /%ssetgroup"
     :already-submitted-and-approved-help-1 "Уже отправлено и одобрено, может быть, вам нужно запланировать его? /%sрасписание"
     :submit-receive-before-schedule-help-1 "Вы должны отправить и получить одобрение до планирования. Используйте /%ssubmit"
@@ -219,13 +215,13 @@
       :approve
       (fn [tx {{id :id} :from text :text} {desc :desc}]
         (cond
-          (= text (tr :pres/yes)) (do (talk/send-text token id (tr :pres/teacher-will-check))
-                                      (-> tx
-                                          (codax/assoc-at [id :presentation pres-key :on-review?] true)
-                                          (codax/assoc-at [id :presentation pres-key :description] desc)
-                                          talk/stop-talk))
-          (= text (tr :pres/no)) (do (talk/send-text token id (tr :pres/later))
-                                     (talk/stop-talk tx))
+          (= text "yes") (do (talk/send-text token id (tr :pres/teacher-will-check))
+                             (-> tx
+                                 (codax/assoc-at [id :presentation pres-key :on-review?] true)
+                                 (codax/assoc-at [id :presentation pres-key :description] desc)
+                                 talk/stop-talk))
+          (= text "no") (do (talk/send-text token id (tr :pres/later))
+                            (talk/stop-talk tx))
           :else (do (talk/send-text token id (tr :pres/yes-or-no))
                     (talk/repeat-branch tx)))))))
 
