@@ -18,6 +18,7 @@
            ["You are already registered. To change your information, contact the teacher and send /whoami"]))))
 
 
+
 (deftest essay-submit-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
