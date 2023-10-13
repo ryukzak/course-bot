@@ -3,7 +3,6 @@
  :db-path "codax-db-test"
  :can-receive-reports [0]
  :allow-restart false
- :essays-on false
  :forest-path "forest-path-test"
  :groups {"gr1" {}
           "gr2" {}}

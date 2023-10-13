@@ -3,6 +3,7 @@
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.essay :as essay]
+            [course-bot.plagiarism :as plagiarism]
             [course-bot.misc :as misc]
             [course-bot.report :as report]
             [course-bot.talk-test :as tt]))
@@ -15,13 +16,15 @@
     (start-talk id "/start")
     (tt/match-text *chat id "You are already registered. To change your information, contact the teacher and send /whoami")))
 
+
 (deftest essay-submit-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
+        forest (plagiarism/get-test-forest "./test-databases/example-forest")
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
-                          (essay/submit-talk db conf "essay1")
-                          (essay/submit-talk db conf "essay2")
+                          (essay/submit-talk db conf "essay1" forest)
+                          (essay/submit-talk db conf "essay2" forest)
                           (essay/status-talk db conf "essay1"))]
     (tt/with-mocked-morse *chat
 
@@ -84,10 +87,11 @@
 (deftest essay-assign-review-myfeedback-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
+        forest (plagiarism/get-test-forest "./test-databases/example-forest")
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
-                          (essay/submit-talk db conf "essay1")
-                          (essay/submit-talk db conf "essay2")
+                          (essay/submit-talk db conf "essay1" forest)
+                          (essay/submit-talk db conf "essay2" forest)
                           (essay/status-talk db conf "essay1")
                           (essay/assignreviewers-talk db conf "essay1")
                           (essay/review-talk db conf "essay1")

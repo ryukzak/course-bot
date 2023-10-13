@@ -65,7 +65,6 @@
         token (:token conf)
         db-path (:db-path conf)
         forest-path (:forest-path conf)
-        essays-on (:essays-on conf)
         db (open-database-or-fail db-path)
         forest (open-forest-or-fail forest-path)]
 
