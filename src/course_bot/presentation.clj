@@ -376,10 +376,13 @@
                      comment (-> conf (get pres-id) :groups (get group) :comment)
                      studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])
                      last-names (str/join ", "
-                                          (map (fn [stud-id] (-> tx
-                                                                 (codax/get-at [stud-id :name])
-                                                                 (str/split #"\s+")
-                                                                 first))
+                                          (map (fn [stud-id] (let [name (codax/get-at tx [stud-id :name])]
+                                                               (if (nil? name)
+                                                                 "ANONYMOUS"
+                                                                 (-> name
+                                                                     (str/split #"\s+")
+                                                                     first))))
+
                                                studs))]
 
                  (str (format (tr :pres/agenda-2) dt group)
