@@ -13,7 +13,7 @@
     :send-essay-text-in-one-message-1 "Submit your essay text '%s' in one message."
     :themes " Theme(s):\n\n"
     :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
-    :is-loading-question "Is loading (yes/no)?"
+    :is-loading-question "Uploading? (yes/no)?"
     :thank-you-your-essay-submited "Thank you, the text has been uploaded and will be submitted for review soon."
     :status " status"
     :total-essays "Total essays: "
