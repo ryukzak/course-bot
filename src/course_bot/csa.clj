@@ -66,7 +66,10 @@
         db-path (:db-path conf)
         forest-path (:forest-path conf)
         db (open-database-or-fail db-path)
-        forest (open-forest-or-fail forest-path)]
+        forest (open-forest-or-fail forest-path)
+        load-essay1 (contains? conf :essay1)
+        load-essay2 (contains? conf :essay2)
+        load-essay3 (contains? conf :essay3)]
 
     (handlers/defhandler bot-api
       (general/start-talk db conf)
