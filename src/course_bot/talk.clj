@@ -44,11 +44,17 @@
 
 (def *helps (atom {}))
 
-(defn helps []
+(defn descriptions []
   (->> @*helps
        (map (fn [[n d]] (str n " - " d)))
        sort
        (str/join "\n")))
+
+(defn helps []
+  (let [commands (->> (descriptions)
+                      (str/split-lines)
+                      (map #(str "/" %)))]
+    (str/join "\n" commands)))
 
 ;; TODO: move help hint to name, like: "start - register student"
 
@@ -95,6 +101,11 @@
         @res))))
 
 (defmacro def-talk [& args] `(talk ~@args))
+
+(defmacro when-handlers [test & handlers]
+  `(if ~test
+     (handlers/handlers ~@handlers)
+     (constantly nil)))
 
 ;; TODO: move help hint to name, like: "start - register student"
 

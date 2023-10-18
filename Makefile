@@ -26,6 +26,12 @@ stop:
 run:
 	docker run --name ${NAME} --restart=always -d -v ${CONF}:/edu-csa-internal -v ${DB}:/csa-db ${NAME}
 
+format:
+	clj -Tcljfmt fix
+
+run-clj-csa:
+	clj -X course-bot.csa/-main
+
 clean:
 	rm -f *.csv
 	find . -type f -name '*-lab1-descriptions.md' -delete
