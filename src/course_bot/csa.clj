@@ -47,7 +47,10 @@
   (let [conf (misc/get-config "../edu-csa-internal/csa-2023.edn")
         token (:token conf)
         db-path (:db-path conf)
-        db (open-database-or-fail db-path)]
+        db (open-database-or-fail db-path)
+        load-essay1 (contains? conf :essay1)
+        load-essay2 (contains? conf :essay2)
+        load-essay3 (contains? conf :essay3)]
 
     (handlers/defhandler bot-api
       (general/start-talk db conf)
@@ -69,29 +72,23 @@
       (pres/drop-talk db conf "lab1" true)
       (pres/all-scheduled-descriptions-dump-talk db conf "lab1")
 
-      (if (contains? conf :essay1)
-        (do
-          (essay/submit-talk db conf "essay1")
-          (essay/status-talk db conf "essay1")
-          (essay/assignreviewers-talk db conf "essay1")
-          (essay/review-talk db conf "essay1")
-          (essay/myfeedback-talk db conf "essay1")))
+      (if load-essay1 (essay/submit-talk db conf "essay1"))
+      (if load-essay1 (essay/status-talk db conf "essay1"))
+      (if load-essay1 (essay/assignreviewers-talk db conf "essay1"))
+      (if load-essay1 (essay/review-talk db conf "essay1"))
+      (if load-essay1 (essay/myfeedback-talk db conf "essay1"))
 
-      (if (contains? conf :essay2)
-       (do
-         (essay/submit-talk db conf "essay2")
-         (essay/status-talk db conf "essay2")
-         (essay/assignreviewers-talk db conf "essay2")
-         (essay/review-talk db conf "essay2")
-         (essay/myfeedback-talk db conf "essay2")))
+      (if load-essay2 (essay/submit-talk db conf "essay2"))
+      (if load-essay2 (essay/status-talk db conf "essay2"))
+      (if load-essay2 (essay/assignreviewers-talk db conf "essay2"))
+      (if load-essay2 (essay/review-talk db conf "essay2"))
+      (if load-essay2 (essay/myfeedback-talk db conf "essay2"))
 
-      (if (contains? conf :essay3)
-       (do
-         (essay/submit-talk db conf "essay3")
-         (essay/status-talk db conf "essay3")
-         (essay/assignreviewers-talk db conf "essay3")
-         (essay/review-talk db conf "essay3")
-         (essay/myfeedback-talk db conf "essay3")))
+      (if load-essay3 (essay/submit-talk db conf "essay3"))
+      (if load-essay3 (essay/status-talk db conf "essay3"))
+      (if load-essay3 (essay/assignreviewers-talk db conf "essay3"))
+      (if load-essay3 (essay/review-talk db conf "essay3"))
+      (if load-essay3 (essay/myfeedback-talk db conf "essay3"))
 
       (quiz/startquiz-talk db conf)
       (quiz/stopquiz-talk db conf)
