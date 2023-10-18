@@ -96,6 +96,11 @@
 
 (defmacro def-talk [& args] `(talk ~@args))
 
+(defmacro when-handlers [test & handlers]
+  `(if ~test
+     (handlers/handlers ~@handlers)
+     (constantly nil)))
+
 ;; TODO: move help hint to name, like: "start - register student"
 
 (defn def-command
