@@ -188,12 +188,12 @@
     :approve
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
       (cond
-        (= text "yes") (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
-                           (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
-                           (-> tx
-                               (codax/assoc-at [stud-id :allow-restart] true)
-                               (talk/stop-talk)))
-        (= text "no") (do (talk/send-text token id (tr :general/not-restarted))
-                          (talk/stop-talk tx))
+        (.str.equalsIgnoreCase text "yes") (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
+                                               (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
+                                               (-> tx
+                                                   (codax/assoc-at [stud-id :allow-restart] true)
+                                                   (talk/stop-talk)))
+        (.str.equalsIgnoreCase text "no") (do (talk/send-text token id (tr :general/not-restarted))
+                                              (talk/stop-talk tx))
         :else (do (talk/send-text token id (tr :general/yes-no-question))
                   (talk/repeat-branch tx))))))

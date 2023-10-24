@@ -141,8 +141,8 @@
 
 (defmacro if-parse-yes-or-no [tx token id text if-yes if-no]
   `(cond
-     (= ~text "yes") ~if-yes
-     (= ~text "no") ~if-no
+     (.str.equalsIgnoreCase ~text "yes") ~if-yes
+     (.str.equalsIgnoreCase ~text "no") ~if-no
      :else (do (talk/send-text ~token ~id "What (yes or no)?")
                (talk/repeat-branch ~tx))))
 

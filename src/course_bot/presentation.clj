@@ -81,7 +81,7 @@
     :do-you-approve "Вы одобряете это?"
     :teacher-will-check "Зарегистрировался, учитель скоро проверит."
     :later "Вы можете сделать это позже."
-    :yes-or-no "Пожалуйста, да или нет?"
+    :yes-or-no "Пожалуйста, yes или no?"
     :wait-for-review-1 "Дождитесь проверки: %s"
     :remarks "Примечания:"
     :receive-from-stud-topic-2 "Получаем от студента (группа %s): \n\nТема: %s"
@@ -215,13 +215,13 @@
       :approve
       (fn [tx {{id :id} :from text :text} {desc :desc}]
         (cond
-          (= text "yes") (do (talk/send-text token id (tr :pres/teacher-will-check))
-                             (-> tx
-                                 (codax/assoc-at [id :presentation pres-key :on-review?] true)
-                                 (codax/assoc-at [id :presentation pres-key :description] desc)
-                                 talk/stop-talk))
-          (= text "no") (do (talk/send-text token id (tr :pres/later))
-                            (talk/stop-talk tx))
+          (.str.equalsIgnoreCase text "yes") (do (talk/send-text token id (tr :pres/teacher-will-check))
+                                                 (-> tx
+                                                     (codax/assoc-at [id :presentation pres-key :on-review?] true)
+                                                     (codax/assoc-at [id :presentation pres-key :description] desc)
+                                                     talk/stop-talk))
+          (.str.equalsIgnoreCase text "no") (do (talk/send-text token id (tr :pres/later))
+                                                (talk/stop-talk tx))
           :else (do (talk/send-text token id (tr :pres/yes-or-no))
                     (talk/repeat-branch tx)))))))
 
