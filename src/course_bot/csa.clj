@@ -54,22 +54,18 @@
         (println (tr :csa/forest-failure))
         (println (.getMessage e))
         (System/exit 1)))
-    (do
-      (println (tr :csa/f-path-failure)
-      (System/exit 1)))))
+    (do (println (tr :csa/f-path-failure))
+        (System/exit 1))))
 
 (declare bot-api id message)
 
 (defn -main [& _args]
-  (let [conf (misc/get-config "../edu-csa-internal/csa-2023.edn")
+  (let [conf (misc/get-config "../edu-csa-internal/csa-2023.edn") ; FIXME:
         token (:token conf)
         db-path (:db-path conf)
         forest-path (:forest-path conf)
         db (open-database-or-fail db-path)
-        forest (open-forest-or-fail forest-path)
-        load-essay1 (contains? conf :essay1)
-        load-essay2 (contains? conf :essay2)
-        load-essay3 (contains? conf :essay3)]
+        forest (open-forest-or-fail forest-path)]
 
     (handlers/defhandler bot-api
       (general/start-talk db conf)

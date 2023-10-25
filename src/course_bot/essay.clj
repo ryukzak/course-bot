@@ -113,10 +113,9 @@
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
         (talk/when-parse-yes-or-no
          tx token id text
-         (if (plagiarism/is-essay-plagiarised forest essay-text id essay-code tx)
-           (do
-             (talk/send-text token id (tr :essay/:essay-plagiarised))
-             (talk/stop-talk tx)))
+         (when (plagiarism/is-essay-plagiarised forest essay-text id essay-code tx)
+           (talk/send-text token id (tr :essay/:essay-plagiarised))
+           (talk/stop-talk tx))
          (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
          (plagiarism/add-to-forest forest essay-text essay-code id)
          (-> tx

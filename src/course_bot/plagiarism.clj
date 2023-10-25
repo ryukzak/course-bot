@@ -9,26 +9,26 @@
   "Add new entry to lsh-forest"
   [forest essay-text essay-code id]
   (consimilo/add-strings-to-forest
-    [{:id (str essay-code id) :features essay-text}]
-    :forest forest))
+   [{:id (str essay-code id) :features essay-text}]
+   :forest forest))
 
 (defn get-test-forest
   [path]
   (try
     (consimilo/thaw-forest path)
-    (catch Exception e
+    (catch Exception _e
       (consimilo/add-strings-to-forest
-        [{:id "test-id" :features "test id text"}]))))
+       [{:id "test-id" :features "test id text"}]))))
 
 (defn get-vector-cosine
   "Returns the cosine between two most similar vectors
   in existing forest"
   [forest essay-text]
   (let [similar-vectors (consimilo/similarity-k
-                          forest
-                          top-k
-                          essay-text
-                          :sim-fn :cosine)]
+                         forest
+                         top-k
+                         essay-text
+                         :sim-fn :cosine)]
     (apply min-key val similar-vectors)))
 
 (defn print-plagiarise-log
@@ -38,8 +38,8 @@
         id (apply str (second code-list))
         essay-text (codax/get-at tx [id :essays essay-code :text])]
     (println
-      (format "Essay with code '%s' submitted by '%s' was plagiarised from '%s', essay code: '%s' with cosine %s.\nOriginal essay text:\n%s\nPlagiarised essay text:\n%s",
-              plag-code, plag-id, id, essay-code, cosine, essay-text, plag-essay-text))
+     (format "Essay with code '%s' submitted by '%s' was plagiarised from '%s', essay code: '%s' with cosine %s.\nOriginal essay text:\n%s\nPlagiarised essay text:\n%s",
+             plag-code, plag-id, id, essay-code, cosine, essay-text, plag-essay-text))
     true))
 
 (defn is-essay-plagiarised
