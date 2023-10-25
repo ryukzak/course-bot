@@ -265,7 +265,7 @@
              :start
              (fn [tx {{id :id} :from}]
                (let [{quiz-key :key quiz :quiz quiz-name :name} (current-quiz! tx conf)
-                     questions-count (-> conf :quiz (get quiz-key) :questions count)
+                     questions-count (-> quiz :questions count)
                      results (codax/get-at tx [:quiz :results quiz-key id])]
 
                  (when (some? results)
@@ -278,6 +278,7 @@
 
                  (talk/send-yes-no-kbd token id (str (format (tr :quiz/student-confirm-run-quiz-2) quiz-name questions-count)))
                  (talk/change-branch tx :quiz-approve)))
+
              :quiz-approve
              (fn [tx {{id :id} :from text :text}]
                (let [quiz-key (codax/get-at tx [:quiz :current])
@@ -285,34 +286,32 @@
                  (case text
                    "yes" (do (talk/send-text token id (tr :quiz/quiz-after-run-info))
                              (talk/send-text token id (question-msg quiz 0))
-                             (talk/change-branch tx :quiz-step))
+                             (talk/change-branch tx :quiz-step {:results '()}))
                    "no" (do (talk/send-text token id (tr :quiz/your-right))
                             (talk/stop-talk tx))
                    (do (talk/send-yes-no-kbd token id (str (tr :quiz/what-question-yes-no)))
                        (talk/wait tx)))))
-             :quiz-step
-             (fn [tx {{id :id} :from text :text}]
-               (let [{quiz-key :key quiz :quiz} (current-quiz! tx conf)
-                     results (codax/get-at tx [:quiz :results quiz-key id])
 
-                     new-results (concat results (list text))
+             :quiz-step
+             (fn [tx {{id :id} :from text :text} {results :results}]
+               (let [{quiz-key :key quiz :quiz} (current-quiz! tx conf)
                      question-index (count results)
-                     next-question-index (+ 1 (count results))
-                     next-question (question-msg quiz next-question-index)]
-                 (if (is-answer quiz question-index text)
-                   (do
-                     (talk/send-text token id (str (tr :quiz/remember-your-answer) text))
-                     (if next-question
-                       (do
-                         (talk/send-text token id next-question)
-                         (codax/assoc-at tx [:quiz :results quiz-key id] new-results))
-                       (do
-                         (talk/send-text token id (tr :quiz/quiz-passed))
-                         (talk/send-text token (-> conf :admin-chat-id)
-                                         (str (tr :quiz/quiz-answers) (str/join ", " new-results)))
-                         (-> tx
-                             (codax/assoc-at [:quiz :results quiz-key id] (concat results (list text)))
-                             talk/stop-talk))))
-                   (do
-                     (talk/send-text token id (tr :quiz/incorrect-answer))
-                     tx))))))
+                     next-question-index (+ 1 question-index)
+                     new-results (concat results (list text))]
+                 (when-not (is-answer quiz question-index text)
+                   (talk/send-text token id (tr :quiz/incorrect-answer))
+                   (talk/wait tx))
+
+                 (talk/send-text token id (str (tr :quiz/remember-your-answer) text))
+
+                 (when-let [next-question (question-msg quiz next-question-index)]
+                   (talk/send-text token id next-question)
+                   (talk/change-branch tx :quiz-step {:results new-results}))
+
+                 ; finish quiz
+                 (talk/send-text token id (tr :quiz/quiz-passed))
+                 (talk/send-text token (-> conf :admin-chat-id)
+                                 (str (tr :quiz/quiz-answers) (str/join ", " new-results)))
+                 (-> tx
+                     (codax/assoc-at [:quiz :results quiz-key id] new-results)
+                     talk/stop-talk)))))
