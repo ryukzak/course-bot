@@ -72,14 +72,15 @@
                        (handler {:message {:from {:id id} :text msg}})))))
 
 (defn history
-  ([*chat n] (history *chat n nil))
-  ([*chat n id]
-   (->> @*chat
-        (take n)
-        (map #(if (nil? id)
-                (vector (:id %) (:msg %))
-                (:msg %)))
-        reverse
-        (apply vector))))
+  [*chat & {:keys [user-id number] :or {user-id nil number 1}}]
+  (->> @*chat
+       (filter #(or (nil? user-id) (= user-id (:id %))))
+       (take number)
+       (map #(assoc % :msg (-> % :msg str/trim-newline)))
+       (map #(if (nil? user-id)
+               (vector (:id %) (:msg %))
+               (:msg %)))
+       reverse
+       (apply vector)))
 
 (defn unlines [& coll] (str/join "\n" coll))
