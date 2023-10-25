@@ -74,26 +74,25 @@
   {:key nil :quiz nil :name nil})
 
 (defn current-quiz! [tx conf]
-
   (let [{current :current stopping :stopping} @*current-quiz]
     (cond
       stopping
-      (do (let [quiz-key (codax/get-at tx [:quiz :current])]
-            (cond
-              (= quiz-key current)
-              (empty-quiz-info)
+      (let [quiz-key (codax/get-at tx [:quiz :current])]
+        (cond
+          (= quiz-key current)
+          (empty-quiz-info)
 
-              (nil? quiz-key)
-              (do (reset! *current-quiz {:stopping false :current nil})
-                  (empty-quiz-info))
+          (nil? quiz-key)
+          (do (reset! *current-quiz {:stopping false :current nil})
+              (empty-quiz-info))
 
-              (not= quiz-key current)
-              (do (reset! *current-quiz {:stopping false :current (quiz-info conf quiz-key)})
-                  (quiz-info conf quiz-key))
+          (not= quiz-key current)
+          (do (reset! *current-quiz {:stopping false :current (quiz-info conf quiz-key)})
+              (quiz-info conf quiz-key))
 
-              (= quiz-key current)
-              (do (reset! *current-quiz {:stopping false :current nil})
-                  (empty-quiz-info)))))
+          (= quiz-key current)
+          (do (reset! *current-quiz {:stopping false :current nil})
+              (empty-quiz-info))))
 
       (some? current) current
 
@@ -203,7 +202,7 @@
              :start
              (fn [tx {{id :id} :from}]
                (general/assert-admin tx conf id)
-               (let [{quiz-key :key quiz :quiz quiz-name :name} (current-quiz! tx conf)]
+               (let [{quiz-key :key quiz-name :name} (current-quiz! tx conf)]
                  (when-not quiz-key
                    (talk/send-text token id (tr :quiz/no-running-quizzes))
                    (talk/stop-talk tx))
