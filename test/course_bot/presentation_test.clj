@@ -506,7 +506,7 @@
 
       (talk 0 "/lab1drop 1")
       (tt/match-history *chat
-                        (tt/text 0 "Name: Alice; Group: gr1; Telegram ID: 1")
+                        (tt/text 0 "Name: Alice; Group: gr1; Telegram ID: 1; Group for first laboratory work: lgr1")
                         (tt/text 0 "Drop 'Lab 1 presentation' config for 1?"))
 
       (talk 0 "noooooooooooooooooooo")
@@ -517,7 +517,7 @@
 
       (talk 0 "/lab1drop 1")
       (tt/match-history *chat
-                        (tt/text 0 "Name: Alice; Group: gr1; Telegram ID: 1")
+                        (tt/text 0 "Name: Alice; Group: gr1; Telegram ID: 1; Group for first laboratory work: lgr1")
                         (tt/text 0 "Drop 'Lab 1 presentation' config for 1?"))
 
       (talk 0 "yes")
@@ -538,7 +538,7 @@
 
       (talk 0 "/lab1dropall 2")
       (tt/match-history *chat
-                        (tt/text 0 "Name: Bob; Group: gr1; Telegram ID: 2")
+                        (tt/text 0 "Name: Bob; Group: gr1; Telegram ID: 2; Group for first laboratory work: lgr1")
                         (tt/text 0 "Drop 'Lab 1 presentation' config for 2?"))
 
       (talk 0 "yes")

@@ -5,10 +5,12 @@
   (:require [course-bot.talk :as talk]))
 
 (def *tr-options-dict (atom {}))
+
 (defn add-dict [dict]
   (swap! *tr-options-dict (partial merge-with merge) dict))
 
 (def *tr-locales (atom [:en]))
+
 (defn set-locales [langs]
   (compare-and-set! *tr-locales @*tr-locales langs)
   @*tr-locales)
@@ -23,54 +25,54 @@
 (add-dict
  {:en
   {:general
-   {:who-am-i-3 "Name: %s; Group: %s; Telegram ID: %s"
-    :need-admin "That action requires admin rights."
-    :who-am-i-info "send me my registration info"
-    :group " group:\n"
-    :list-groups-info "send me group list know by the bot"
-    :register-student-info "register student"
-    :already-registered "You are already registered. To change your information, contact the teacher and send /whoami"
-    :start "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"
-    :what-is-your-group "What is your group ("
-    :group-not-found "I don't know this group. Please, repeat it ("
-    :hi-user-1 "Hi %s!"
-    :send-help-for-help "Send /help for help."
-    :rename-me-info "rename me"
-    :unregistered-rename-warn "You should be registered to rename yourself!"
-    :what-is-your-new-name "What is your new name?"
-    :renamed "Renamed:"
-    :telegram-id-not-found "User with specific telegram id not found."
+   {:who-am-i-4                    "Name: %s; Group: %s; Telegram ID: %s; Group for first laboratory work: %s"
+    :need-admin                    "That action requires admin rights."
+    :who-am-i-info                 "send me my registration info"
+    :group                         " group:\n"
+    :list-groups-info              "send me group list know by the bot"
+    :register-student-info         "register student"
+    :already-registered            "You are already registered. To change your information, contact the teacher and send /whoami"
+    :start                         "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"
+    :what-is-your-group            "What is your group ("
+    :group-not-found               "I don't know this group. Please, repeat it ("
+    :hi-user-1                     "Hi %s!"
+    :send-help-for-help            "Send /help for help."
+    :rename-me-info                "rename me"
+    :unregistered-rename-warn      "You should be registered to rename yourself!"
+    :what-is-your-new-name         "What is your new name?"
+    :renamed                       "Renamed:"
+    :telegram-id-not-found         "User with specific telegram id not found."
     :restart-this-student-question "Restart this student?"
-    :restart-wrong-input "Wrong input. Expect: /restart 12345"
-    :restarted-and-notified "Restarted and notified: "
-    :use-start-once-more "You can use /start once more."
-    :not-restarted "Not restarted."
-    :yes-no-question "Please yes or no?"}}
+    :restart-wrong-input           "Wrong input. Expect: /restart 12345"
+    :restarted-and-notified        "Restarted and notified: "
+    :use-start-once-more           "You can use /start once more."
+    :not-restarted                 "Not restarted."
+    :yes-no-question               "Please yes or no?"}}
   :ru
   {:general
-   {:who-am-i-3 "Имя: %s; Группа: %s; Telegram ID: %s"
-    :need-admin "Это действие требует прав администратора."
-    :who-am-i-info "отправьте мне мою информацию о регистрации"
-    :group " группа:\n"
-    :list-groups-info "отправь мне список групп известных боту"
-    :register-student-info "зарегистрировать студента"
-    :already-registered "Вы уже зарегистрированы. Чтобы изменить свою информацию, свяжитесь с учителем и отправьте /whoami"
-    :start "Привет, я бот вашего курса. Я помогу тебе с твоей работой. Как тебя зовут (как в реестре)?"
-    :what-is-your-group "Какая у тебя группа ("
-    :group-not-found "Я не знаю эту группу. Пожалуйста, попробуй это ("
-    :hi-user-1 "Привет %s!"
-    :send-help-for-help "Отправь /help для помощь."
-    :rename-me-info "переименовать меня"
-    :unregistered-rename-warn "Вы должны быть зарегистрированы, чтобы переименовать себя!"
-    :what-is-your-new-name "Какое твое новое имя?"
-    :renamed "Переименовано:"
-    :telegram-id-not-found "Пользователь с указанным Telegram ID не найден."
+   {:who-am-i-4                    "Имя: %s; Группа: %s; Telegram ID: %s; Группа на первую лабораторную работу: %s"
+    :need-admin                    "Это действие требует прав администратора."
+    :who-am-i-info                 "отправьте мне мою информацию о регистрации"
+    :group                         " группа:\n"
+    :list-groups-info              "отправь мне список групп известных боту"
+    :register-student-info         "зарегистрировать студента"
+    :already-registered            "Вы уже зарегистрированы. Чтобы изменить свою информацию, свяжитесь с учителем и отправьте /whoami"
+    :start                         "Привет, я бот вашего курса. Я помогу тебе с твоей работой. Как тебя зовут (как в реестре)?"
+    :what-is-your-group            "Какая у тебя группа ("
+    :group-not-found               "Я не знаю эту группу. Пожалуйста, попробуй это ("
+    :hi-user-1                     "Привет %s!"
+    :send-help-for-help            "Отправь /help для помощь."
+    :rename-me-info                "переименовать меня"
+    :unregistered-rename-warn      "Вы должны быть зарегистрированы, чтобы переименовать себя!"
+    :what-is-your-new-name         "Какое твое новое имя?"
+    :renamed                       "Переименовано:"
+    :telegram-id-not-found         "Пользователь с указанным Telegram ID не найден."
     :restart-this-student-question "Перезапустить этого студента?"
-    :restart-wrong-input "Неправильный ввод. Ожидается: /restart 12345"
-    :restarted-and-notified "Перезапущено и уведомлено: "
-    :use-start-once-more "Вы можете использовать /start еще раз."
-    :not-restarted "Не перезапущено."
-    :yes-no-question "Пожалуйста, yes или no?"}}})
+    :restart-wrong-input           "Неправильный ввод. Ожидается: /restart 12345"
+    :restarted-and-notified        "Перезапущено и уведомлено: "
+    :use-start-once-more           "Вы можете использовать /start еще раз."
+    :not-restarted                 "Не перезапущено."
+    :yes-no-question               "Пожалуйста, yes или no?"}}})
 
 (defn assert-admin
   ([tx {token :token admin-chat-id :admin-chat-id} id]
@@ -81,8 +83,10 @@
 (defn send-whoami
   ([tx token id] (send-whoami tx token id id))
   ([tx token id about]
-   (let [{name :name group :group} (codax/get-at tx [about])]
-     (talk/send-text token id (format (tr :general/who-am-i-3) name group about)))))
+   (let [{name :name group :group pres :presentation} (codax/get-at tx [about])
+         lab1                                         (-> pres :lab1)
+         grouplab1                                    (-> lab1 :group)]
+     (talk/send-text token id (format (tr :general/who-am-i-4) name group about grouplab1)))))
 
 (defn whoami-talk [db {token :token}]
   (talk/def-command db "whoami" (tr :general/who-am-i-info)
@@ -95,15 +99,18 @@
    (doall
     (->> (codax/get-at tx [])
          (group-by (fn [[_id desc]] (:group desc)))
-         (map (fn [[group records]]
-                (let [studs (->> records
-                                 (map second)
-                                 (filter #(some? (:group %)))
-                                 (sort-by :name)
-                                 (map (fn [i x] (str (+ 1 i) ") " (:name x) " (@" (-> x :chat :username) ", " (-> x :chat :id) ")"))
-                                      (range)))
-                      msg (str group (tr :general/group) (str/join "\n" studs))]
-                  (talk/send-text token id msg))))))))
+         (map
+          (fn [[group records]]
+            (let [studs (->> records
+                             (map second)
+                             (filter #(some? (:group %)))
+                             (sort-by :name)
+                             (map
+                              (fn [i x]
+                                (str (+ 1 i) ") " (:name x) " (@" (-> x :chat :username) ", " (-> x :chat :id) ")"))
+                              (range)))
+                  msg   (str group (tr :general/group) (str/join "\n" studs))]
+              (talk/send-text token id msg))))))))
 
 (defn listgroups-talk [db {token :token :as conf}]
   (talk/def-command db "listgroups" (tr :general/list-groups-info)
@@ -117,9 +124,10 @@
       :start
       (fn [tx {{id :id} :from}]
         (let [info (codax/get-at tx [id])]
-          (when (and (some? (:name info))
-                     (-> info :allow-restart not)
-                     (not allow-restart))
+          (when
+           (and (some? (:name info))
+                (-> info :allow-restart not)
+                (not allow-restart))
             (talk/send-text token id (tr :general/already-registered))
             (talk/stop-talk tx))
           (talk/send-text token id (str (tr :general/start)))
@@ -193,7 +201,7 @@
                            (-> tx
                                (codax/assoc-at [stud-id :allow-restart] true)
                                (talk/stop-talk)))
-        (= text "no") (do (talk/send-text token id (tr :general/not-restarted))
-                          (talk/stop-talk tx))
-        :else (do (talk/send-text token id (tr :general/yes-no-question))
-                  (talk/repeat-branch tx))))))
+        (= text "no")  (do (talk/send-text token id (tr :general/not-restarted))
+                           (talk/stop-talk tx))
+        :else          (do (talk/send-text token id (tr :general/yes-no-question))
+                           (talk/repeat-branch tx))))))
