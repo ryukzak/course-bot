@@ -212,8 +212,9 @@
              (fn [tx {{id :id} :from text :text}]
                (let [quiz-key (codax/get-at tx [:quiz :current])
                      quiz-name (-> conf :quiz (get quiz-key) :name)
-                     quiz (-> conf :quiz (get quiz-key))]
-                 (case text
+                     quiz (-> conf :quiz (get quiz-key))
+                     lower-text (str/lower-case text)]
+                 (case lower-text
                    "yes" (let [results (codax/get-at tx [:quiz :results quiz-key])
                                per-studs (map (fn [stud-id]
                                                 (let [{cur :count-correct max :count-questions} (evaluate-answers (:questions quiz)
