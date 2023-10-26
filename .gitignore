@@ -17,5 +17,6 @@ codax-db-test
 default-codax
 *.tar.gz
 .cpcache/
-tmp/
 .idea/
+logs/
+tmp/
