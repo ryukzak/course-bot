@@ -18,7 +18,7 @@
 
 (deftest essay-submit-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         plagiarism-db (tt/test-plagiarsm-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
@@ -95,7 +95,7 @@
 
 (deftest essay-assign-review-myfeedback-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         plagiarism-db (tt/test-plagiarsm-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)

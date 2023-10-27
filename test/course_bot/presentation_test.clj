@@ -18,7 +18,7 @@
 
 (deftest setgroup-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (pres/setgroup-talk db conf "lab1"))]
@@ -39,7 +39,7 @@
 
 (deftest submit-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (pres/setgroup-talk db conf "lab1")
@@ -82,7 +82,7 @@
 
 (deftest check-and-submissions-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (pres/setgroup-talk db conf "lab1")
@@ -275,7 +275,7 @@
 
 (deftest schedule-agenda-and-drop-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (pres/setgroup-talk db conf "lab1")
@@ -555,7 +555,7 @@
 
 (deftest feedback-and-rank-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (pres/setgroup-talk db conf "lab1")

@@ -56,10 +56,9 @@
                    talk/send-document (fn [token# id# file#] (swap! ~*chat conj {:id id# :msg (slurp file#)}))]
        ~@body)))
 
-(defn test-database []
-  (let [test-db "./tmp/test/codax"]
-    (codax/destroy-database! test-db)
-    (codax/open-database! test-db)))
+(defn test-database [path]
+  (codax/destroy-database! path)
+  (codax/open-database! path))
 
 (defn test-plagiarsm-database []
   (let [path "./tmp/test/plagiarism"]
