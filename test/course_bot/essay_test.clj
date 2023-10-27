@@ -17,15 +17,14 @@
     (is (= (tt/history *chat :user-id id)
            ["You are already registered. To change your information, contact the teacher and send /whoami"]))))
 
-
 (deftest essay-submit-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
-        forest (plagiarism/get-test-forest "./test-databases/example-forest")
+        plagiarism-db (tt/test-plagiarsm-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
-                          (essay/submit-talk db conf "essay1" forest)
-                          (essay/submit-talk db conf "essay2" forest)
+                          (essay/submit-talk db conf "essay1" plagiarism-db)
+                          (essay/submit-talk db conf "essay2" plagiarism-db)
                           (essay/status-talk db conf "essay1"))]
     (tt/with-mocked-morse *chat
       (register-user *chat talk 1 "u1")
@@ -98,11 +97,11 @@
 (deftest essay-assign-review-myfeedback-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database)
-        forest (plagiarism/get-test-forest "./test-databases/example-forest")
+        plagiarism-db (tt/test-plagiarsm-database)
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
-                          (essay/submit-talk db conf "essay1" forest)
-                          (essay/submit-talk db conf "essay2" forest)
+                          (essay/submit-talk db conf "essay1" plagiarism-db)
+                          (essay/submit-talk db conf "essay2" plagiarism-db)
                           (essay/status-talk db conf "essay1")
                           (essay/assignreviewers-talk db conf "essay1")
                           (essay/review-talk db conf "essay1")
