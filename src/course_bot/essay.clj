@@ -45,7 +45,11 @@
     :essay-feedback-saved "Your feedback has been saved and will be available to essay writers."
     :essay-feedback "Feedback: "
     :feedback-on-your-essay "feedback on your essay "
-    :number-of-reviews-1 "You received %d reviews."}}
+    :number-of-reviews-1 "You received %d reviews."
+    :plagirism-report-3 "%s original: %s new: %s"
+    :warmup-plagiarism-help "Recheck and register existed essays for plagiarism."
+    :warmup-no-plagiarsm "No plagiarism found."
+    }}
   :ru
   {:essay
    {:submit "Отправить "
@@ -84,7 +88,10 @@
     :essay-feedback-saved "Ваш отзыв сохранен и будет доступен авторам эссе."
     :essay-feedback "Отзыв: "
     :feedback-on-your-essay "отзыв на ваше эссе "
-    :number-of-reviews-1 "Вы получили %d отзывов."}}})
+    :number-of-reviews-1 "Вы получили %d отзывов."
+    :plagirism-report-3 "%s оригинал: %s новое: %s"
+    :warmup-plagiarism-help "Перепроверить и зарегистрировать существующие эссе на плагиат."
+    :warmup-no-plagiarsm "Плагиат не найден."}}})
 
 (defn submit-talk [db {token :token :as conf} essay-code forest]
   (let [cmd (str essay-code "submit")
@@ -317,3 +324,28 @@
             (#(- 4 %)) ; 3 (max score) = 4 - 1; 1 (min score) = 4 - 3
             (+ 1) ; + 1 to get actual score
             )))))
+
+(defn warmup-plagiarism-talk [db {token :token :as conf} essay-code plagiarism-db]
+  (let [cmd (str essay-code "warmupplagiarism")
+        help (str (tr :essay/warmup-plagiarism-help) essay-code)]
+    (talk/def-command db cmd help
+      (fn [tx {{id :id} :from}]
+        (general/assert-admin tx conf id)
+        (let [reports (->> (get-essays tx essay-code)
+                           (map (fn [[stud-id v]] [stud-id (-> v :essays (get essay-code) :text)]))
+                           (map (fn [[stud-id text]]
+                                  (let [key (str essay-code " - " stud-id)
+                                        origin (plagiarism/find-original plagiarism-db text key)]
+                                    (plagiarism/register-text! plagiarism-db key text)
+                                    (cond
+                                      (nil? origin) nil
+                                      (= key (:key origin)) nil
+                                      :else (format (tr :essay/plagirism-report-3)
+                                                    (misc/round-2 (:similarity origin))
+                                                    (:key origin)
+                                                    key)))))
+                           (filter some?))]
+          (if (empty? reports)
+            (talk/send-text token id (tr :essay/warmup-no-plagiarism))
+            (doall (map #(talk/send-text token id %) reports)))
+          (talk/stop-talk tx))))))

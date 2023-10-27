@@ -29,7 +29,7 @@
     (-> (sut/open-path-or-fail path)
         (sut/register-text! "a" "bla")
         (sut/register-text! "b" "bla-bla")
-        (sut/register-text! "cl" "bla-bla asdf")
+        (sut/register-text! "c" "bla-bla foo bar")
         (sut/register-text! "d" "hello")
         (sut/register-text! "e" "привет")
         (sut/register-text! "text1" text1)

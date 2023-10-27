@@ -28,3 +28,14 @@
   (str-time (read-time dt)))
 
 (defn round-2 [num] (double (/ (Math/round (* 100.0 num)) 100)))
+
+(defn count-with-report [n callback coll0]
+  (loop [counter 0
+         coll coll0]
+    (let [head (take n coll)
+          tail (drop n coll)
+          counter' (+ counter (count head))]
+      (callback counter')
+      (if (empty? tail)
+        count
+        (recur counter' tail)))))
