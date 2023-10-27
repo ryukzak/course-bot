@@ -60,11 +60,10 @@
   (codax/destroy-database! path)
   (codax/open-database! path))
 
-(defn test-plagiarsm-database []
-  (let [path "./tmp/test/plagiarism"]
-    (when (.exists (io/file path))
-      (run! io/delete-file (reverse (file-seq (io/file path)))))
-    (plagiarism/open-path-or-fail path)))
+(defn test-plagiarsm-database [path]
+  (when (.exists (io/file path))
+    (run! io/delete-file (reverse (file-seq (io/file path)))))
+  (plagiarism/open-path-or-fail path))
 
 (defn atom? [v] (instance? clojure.lang.Atom v))
 
