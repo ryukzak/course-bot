@@ -3,7 +3,6 @@
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.essay :as essay]
-            [course-bot.plagiarism :as plagiarism]
             [course-bot.misc :as misc]
             [course-bot.report :as report]
             [course-bot.talk-test :as tt]))
@@ -400,4 +399,28 @@
                     vals
                     (map #(-> % :essays (get "essay1")))
                     (map #(dissoc % :received-review :my-reviews))
-                    (filter some?))))))))
+                    (filter some?)))))
+
+      (testing "too-small-article"
+        (talk 10 "/essay1submit")
+        (talk 10 (str "1234"))
+
+        (is (= (tt/history *chat :user-id 10 :number 1)
+               ["Your essay text is too short, it should be at least 5 characters long."])))
+
+      (testing "plagirism"
+        (register-user *chat talk 10 "10")
+        (talk 10 "/essay1submit")
+
+        (with-redefs [misc/filename-time (fn [_] "202201031130")]
+          (talk 10 (str "1 user7 essay1 text" (hash 7))))
+
+        (is (= (tt/history *chat :user-id 10 :number 1)
+               ["Your essay didn't pass plagiarism check. Your score: 24. Make it more unique!"]))
+
+        (is (= (tt/history *chat :user-id 0 :number 1)
+               [(tt/unlines
+                 "Plagiarism case: 24"
+                 ""
+                 "origin text: essay1 - 7"
+                 "uploaded text: 202201031130 - essay1 - 10")]))))))

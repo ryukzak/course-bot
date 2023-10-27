@@ -4,7 +4,8 @@
             [course-bot.misc :as misc]
             [course-bot.plagiarism :as plagiarism])
   (:require [codax.core :as codax])
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [clojure.java.io :as io]))
 
 (general/add-dict
  {:en
@@ -12,6 +13,9 @@
    {:submit "Submit "
     :your-essay-already-uploaded-1 "Your essay '%s' already uploaded."
     :send-essay-text-in-one-message-1 "Submit your essay text '%s' in one message."
+    :essay-text-too-short-1 "Your essay text is too short, it should be at least %d characters long."
+    :plagiarised-warning-1 "Your essay didn't pass plagiarism check. Your score: %s. Make it more unique!"
+    :plagiarised-report-3 "Plagiarism case: %s\n\norigin text: %s\nuploaded text: %s"
     :themes " Theme(s):\n\n"
     :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Is loading (yes/no)?"
@@ -34,7 +38,6 @@
     :essays-submitted-for-review-1 "You received: %d essays for your review. Their text will now be sent below by selected messages."
     :essay-number-begin-1 "Essay #%d <<<<<<<<<<<<<<<<<<<<"
     :essay-number-end-1 ">>>>>>>>>>>>>>>>>>>> Essay #%d"
-    :essay-plagiarised "Your essay didn't pass plagiarism check. Make it more unique!"
     :essay-send-format "Send essay numbers with feedback in separate messages from best to worse (e.g.: `<essay number> <feedback text>`)"
     :essay-need-feedback-error "Alas, you need to start writing reviews first (if you see this message again, let me know)."
     :essay-number-error "The essay number is inconsistent or out of bounds."
@@ -48,13 +51,14 @@
     :number-of-reviews-1 "You received %d reviews."
     :plagirism-report-3 "%s original: %s new: %s"
     :warmup-plagiarism-help "Recheck and register existed essays for plagiarism."
-    :warmup-no-plagiarsm "No plagiarism found."
-    }}
+    :warmup-no-plagiarsm "No plagiarism found."}}
   :ru
   {:essay
    {:submit "Отправить "
     :your-essay-already-uploaded-1 "Ваше эссе '%s' уже загружено."
     :send-essay-text-in-one-message-1 "Отправьте текст эссе '%s' одним сообщением."
+    :plagiarised-warning-1 "Ваше эссе не прошло проверку на плагиат. Ваш балл: %s. Сделайте его более уникальным!"
+    :plagiarised-report-3 "Плагиат: %s\n\nоригинал: %s\n загруженный текст: %s"
     :themes " Тема(-ы):\n\n"
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Загружаем (yes/no)?"
@@ -77,7 +81,6 @@
     :essays-submitted-for-review-1 "Вам на ревью пришло: %d эссе. Их текст сейчас отправлю ниже отдельными сообщениями."
     :essay-number-begin-1 "Эссе #%d <<<<<<<<<<<<<<<<<<<<"
     :essay-number-end-1 ">>>>>>>>>>>>>>>>>>>> Эссе #%d"
-    :essay-plagiarised "Ваше эссе не прошло проверку на плагиат. Сделайте его более уникальным!"
     :essay-send-format "Отправляйте номера эссе с отзывыми отдельными сообщениями (пример: `<номер_эссе> <текст_отзыва>`)"
     :essay-need-feedback-error "Увы, но вам надо начать писать отзывы сначала (если вы это сообщение видите в очередной раз -- сообщите)."
     :essay-number-error "Номер эссе несовместим или выходит за допустимые пределы."
@@ -93,7 +96,10 @@
     :warmup-plagiarism-help "Перепроверить и зарегистрировать существующие эссе на плагиат."
     :warmup-no-plagiarsm "Плагиат не найден."}}})
 
-(defn submit-talk [db {token :token :as conf} essay-code forest]
+(defn submit-talk [db
+                   {token :token admin-chat-id :admin-chat-id :as conf}
+                   essay-code
+                   {bad-texts-path :bad-texts-path :as plagiarism-db}]
   (let [cmd (str essay-code "submit")
         topics-msg (-> conf (get (keyword essay-code)) :topic-msg)
         help (str (tr :essay/submit) essay-code)]
@@ -110,6 +116,28 @@
 
       :submit
       (fn [tx {{id :id} :from text :text}]
+        (let [min-length (or (-> conf (get (keyword essay-code)) :min-length)
+                             512)]
+          (when (< (count text) min-length)
+            (talk/send-text token id (format (tr :essay/essay-text-too-short-1) min-length))
+            (talk/stop-talk tx)))
+
+        (when-let [origin (plagiarism/find-original plagiarism-db text)]
+          (talk/send-text token id
+                          (format (tr :essay/plagiarised-warning-1) (Math/round (:similarity origin))))
+
+          (let [bad-key (str (misc/filename-time (misc/today))
+                             " - " essay-code
+                             " - " id)
+                bad-filename (str bad-texts-path "/" bad-key ".txt")]
+            (io/make-parents bad-filename)
+            (spit bad-filename text)
+
+            (talk/send-text token admin-chat-id
+                            (format (tr :essay/plagiarised-report-3)
+                                    (Math/round (:similarity origin)) (:key origin) bad-key)))
+          (talk/stop-talk tx))
+
         (talk/send-text token id (tr :essay/text-of-your-essay))
         (talk/send-text token id text)
         (talk/send-text token id ">>>>>>>>>>>>>>>>>>>>")
@@ -120,11 +148,8 @@
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
         (talk/when-parse-yes-or-no
          tx token id text
-         (when (plagiarism/is-essay-plagiarised forest essay-text id essay-code tx)
-           (talk/send-text token id (tr :essay/:essay-plagiarised))
-           (talk/stop-talk tx))
+         (plagiarism/register-text! plagiarism-db (str essay-code " - " id) essay-text)
          (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
-         (plagiarism/add-to-forest forest essay-text essay-code id)
          (-> tx
              (codax/assoc-at [id :essays essay-code :text] essay-text)
              talk/stop-talk))))))

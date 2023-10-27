@@ -27,14 +27,16 @@
          (assoc default-conf
                 :forest-filename "tmp/plagiarism/forest"
                 :forest 'CONSIMILO-FOREST
-                :texts-path "tmp/plagiarism/texts"))
+                :texts-path "tmp/plagiarism/texts"
+                :bad-texts-path "tmp/plagiarism/bad-texts-path"))
 
 (defn open-path-or-fail [path]
   (let [forest-filename (str path "/forest")
         texts-path (str path "/texts")
         db (assoc default-conf
                   :forest-filename forest-filename
-                  :texts-path texts-path)]
+                  :texts-path texts-path
+                  :bad-texts-path (str path "/bad-texts"))]
     (try
       (assoc db :forest (consimilo/thaw-forest forest-filename))
       (catch java.io.FileNotFoundException _
