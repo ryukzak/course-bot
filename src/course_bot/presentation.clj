@@ -697,12 +697,13 @@
 
         (talk/send-text token id (tr :pres/all-scheduled-description-by-group))
         (let [dt (.format (java.text.SimpleDateFormat. "yyyy-MM-dd-HH-mm-Z") (misc/today))
-              fn (str dt "-" pres-id "-descriptions.md")
+              filename (str "tmp/" dt "-" pres-id "-descriptions.md")
               groups (-> conf (get pres-key) :groups keys)
               data (codax/get-at tx [])
               text (->> groups
                         (map #(str "# " % "\n\n" (scheduled-descriptions-dump data pres-key %)))
                         (str/join "\n\n\n"))]
-          (spit fn text)
-          (talk/send-document token id (io/file fn)))
+          (io/make-parents filename)
+          (spit filename text)
+          (talk/send-document token id (io/file filename)))
         tx))))

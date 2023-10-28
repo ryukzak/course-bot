@@ -6,6 +6,10 @@ BACKUP_PATH = ..
 
 NOW = $(shell date +'%Y-%m-%d-%H-%M')
 
+.PHONY: test
+
+check-all-fix: format lint test
+
 update: pull backup build stop run
 
 pull:
@@ -26,8 +30,16 @@ stop:
 run:
 	docker run --name ${NAME} --restart=always -d -v ${CONF}:/edu-csa-internal -v ${DB}:/csa-db ${NAME}
 
+test:
+	clojure -X:test
+
+lint-fix: format lint
+
 format:
 	clj -Tcljfmt fix
+
+lint:
+	clj -M:lint
 
 run-clj-csa:
 	clj -X course-bot.csa/-main

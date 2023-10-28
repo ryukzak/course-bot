@@ -1,10 +1,12 @@
 (ns course-bot.talk-test
   (:require [clojure.test :refer [deftest is]]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.data.csv :as csv])
   (:require [codax.core :as codax]
             [morse.handlers :as handlers])
-  (:require [course-bot.talk :as talk]))
+  (:require [course-bot.talk :as talk]
+            [course-bot.plagiarism :as plagiarism]))
 
 (defn csv [tid & rows]
   (if (number? tid)
@@ -54,10 +56,14 @@
                    talk/send-document (fn [token# id# file#] (swap! ~*chat conj {:id id# :msg (slurp file#)}))]
        ~@body)))
 
-(defn test-database []
-  (let [test-db "test-databases/example-database"]
-    (codax/destroy-database! test-db)
-    (codax/open-database! test-db)))
+(defn test-database [path]
+  (codax/destroy-database! path)
+  (codax/open-database! path))
+
+(defn test-plagiarsm-database [path]
+  (when (.exists (io/file path))
+    (run! io/delete-file (reverse (file-seq (io/file path)))))
+  (plagiarism/open-path-or-fail path))
 
 (defn atom? [v] (instance? clojure.lang.Atom v))
 

@@ -24,7 +24,20 @@
 (defn read-time [s] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm Z") s)))
 (defn str-time [dt] (.format (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm Z") dt))
 
+(defn filename-time [dt] (.format (java.text.SimpleDateFormat. "yyyyMMddHHmm") dt))
+
 (defn normalize-time [dt]
   (str-time (read-time dt)))
 
 (defn round-2 [num] (double (/ (Math/round (* 100.0 num)) 100)))
+
+(defn count-with-report [n callback coll0]
+  (loop [counter 0
+         coll coll0]
+    (let [head (take n coll)
+          tail (drop n coll)
+          counter' (+ counter (count head))]
+      (callback counter')
+      (if (empty? tail)
+        count
+        (recur counter' tail)))))

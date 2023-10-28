@@ -8,7 +8,7 @@
 
 (deftest start-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (general/listgroups-talk db conf)
@@ -66,7 +66,7 @@
 
 (deftest restart-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (general/whoami-talk db conf)
@@ -116,7 +116,7 @@
 
 (deftest restart-permitted-test
   (let [conf (assoc (misc/get-config "conf-example/csa-2023.edn") :allow-restart true)
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (general/whoami-talk db conf)
@@ -134,7 +134,7 @@
 
 (deftest renameme-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (general/whoami-talk db conf)

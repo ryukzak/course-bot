@@ -18,7 +18,7 @@
 
 (deftest startquiz-talk-test
   (let [conf  (misc/get-config "conf-example/csa-2023.edn")
-        db    (tt/test-database)
+        db    (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk  (tt/handlers (general/start-talk db conf)
                            (quiz/startquiz-talk db conf))]
@@ -61,7 +61,7 @@
 
 (deftest quiz-talk-test
   (let [conf  (misc/get-config "conf-example/csa-2023.edn")
-        db    (tt/test-database)
+        db    (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk  (tt/handlers (general/start-talk db conf)
                            (quiz/startquiz-talk db conf)
@@ -119,7 +119,7 @@
 
 (deftest stopquiz-talk-test
   (let [conf  (misc/get-config "conf-example/csa-2023.edn")
-        db    (tt/test-database)
+        db    (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk  (tt/handlers
                (general/start-talk db conf)
@@ -195,7 +195,7 @@
 
 (deftest report-talk-test
   (let [conf    (misc/get-config "conf-example/csa-2023.edn")
-        db      (tt/test-database)
+        db      (tt/test-database (-> conf :db-path))
         *chat   (atom (list))
         talk    (tt/handlers (general/start-talk db conf)
                              (quiz/startquiz-talk db conf)
@@ -286,7 +286,7 @@
 
 (deftest stop-quiz-without-answers-talk-test
   (let [conf    (misc/get-config "conf-example/csa-2023.edn")
-        db      (tt/test-database)
+        db      (tt/test-database (-> conf :db-path))
         *chat   (atom (list))
         talk    (tt/handlers (general/start-talk db conf)
                              (quiz/startquiz-talk db conf)
