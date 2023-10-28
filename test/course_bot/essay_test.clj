@@ -36,9 +36,8 @@
 
       (talk 1 "u1 essay1 text")
       (is (= (tt/history *chat :user-id 1 :number 4)
-             [(tt/unlines
-               "The text of your essay"
-               "<<<<<<<<<<<<<<<<<<<<")
+             [(tt/unlines "The text of your essay"
+                          "<<<<<<<<<<<<<<<<<<<<")
               "u1 essay1 text"
               ">>>>>>>>>>>>>>>>>>>>"
               "Is loading (yes/no)?"]))
