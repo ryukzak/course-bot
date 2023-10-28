@@ -3,7 +3,6 @@
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.essay :as essay]
-            [course-bot.plagiarism :as plagiarism]
             [course-bot.misc :as misc]
             [course-bot.report :as report]
             [course-bot.talk-test :as tt]))
@@ -17,15 +16,14 @@
     (is (= (tt/history *chat :user-id id)
            ["You are already registered. To change your information, contact the teacher and send /whoami"]))))
 
-
 (deftest essay-submit-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
-        forest (plagiarism/get-test-forest "./test-databases/example-forest")
+        db (tt/test-database (-> conf :db-path))
+        plagiarism-db (tt/test-plagiarsm-database (-> conf :plagiarism-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
-                          (essay/submit-talk db conf "essay1" forest)
-                          (essay/submit-talk db conf "essay2" forest)
+                          (essay/submit-talk db conf "essay1" plagiarism-db)
+                          (essay/submit-talk db conf "essay2" plagiarism-db)
                           (essay/status-talk db conf "essay1"))]
     (tt/with-mocked-morse *chat
       (register-user *chat talk 1 "u1")
@@ -97,12 +95,12 @@
 
 (deftest essay-assign-review-myfeedback-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
-        forest (plagiarism/get-test-forest "./test-databases/example-forest")
+        db (tt/test-database (-> conf :db-path))
+        plagiarism-db (tt/test-plagiarsm-database (-> conf :plagiarism-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
-                          (essay/submit-talk db conf "essay1" forest)
-                          (essay/submit-talk db conf "essay2" forest)
+                          (essay/submit-talk db conf "essay1" plagiarism-db)
+                          (essay/submit-talk db conf "essay2" plagiarism-db)
                           (essay/status-talk db conf "essay1")
                           (essay/assignreviewers-talk db conf "essay1")
                           (essay/review-talk db conf "essay1")
@@ -401,4 +399,28 @@
                     vals
                     (map #(-> % :essays (get "essay1")))
                     (map #(dissoc % :received-review :my-reviews))
-                    (filter some?))))))))
+                    (filter some?)))))
+
+      (testing "too-small-article"
+        (talk 10 "/essay1submit")
+        (talk 10 (str "1234"))
+
+        (is (= (tt/history *chat :user-id 10 :number 1)
+               ["Your essay text is too short, it should be at least 5 characters long."])))
+
+      (testing "plagirism"
+        (register-user *chat talk 10 "10")
+        (talk 10 "/essay1submit")
+
+        (with-redefs [misc/filename-time (fn [_] "202201031130")]
+          (talk 10 (str "1 user7 essay1 text" (hash 7))))
+
+        (is (= (tt/history *chat :user-id 10 :number 1)
+               ["Your essay didn't pass plagiarism check. Your score: 24. Make it more unique!"]))
+
+        (is (= (tt/history *chat :user-id 0 :number 1)
+               [(tt/unlines
+                 "Plagiarism case: 24"
+                 ""
+                 "origin text: essay1 - 7"
+                 "uploaded text: 202201031130 - essay1 - 10")]))))))

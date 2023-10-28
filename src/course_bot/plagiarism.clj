@@ -1,51 +1,110 @@
 (ns course-bot.plagiarism
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [course-bot.misc :as misc])
   (:require [consimilo.core :as consimilo])
-  (:require [codax.core :as codax]))
+  (:require [course-bot.talk :as talk]
+            [course-bot.plagiarism :as plagiarism]
+            [course-bot.general :as general :refer [tr]]))
 
-(def top-k 7)
-(def cosine-threshold 25.00)
+(general/add-dict
+ {:en
+  {:plagiarism
+   {:forest-failure  "I failed to reach forest file, my Lord!"
+    :processed-1 "Processed %d texts, my Lord!"
+    :restore-forest-done "Forest restored, my Lord!"}}
+  :ru
+  {:plagiarism
+   {:forest-failure  "Не удалось подключиться к хэш-лесу, мой господин!"
+    :processed-1 "Обработано %d тектов, мой господин!"
+    :restore-forest-done "Хэш-лес восстановлен, мой господин!"}}})
 
-(defn add-to-forest
-  "Add new entry to lsh-forest"
-  [forest essay-text essay-code id]
-  (consimilo/add-strings-to-forest
-    [{:id (str essay-code id) :features essay-text}]
-    :forest forest))
+(def default-conf {:top-k 10
+                   :cosine-threshold 30.00
+                   :sim-fn :cosine})
 
-(defn get-test-forest
-  [path]
-  (try
-    (consimilo/thaw-forest path)
-    (catch Exception e
-      (consimilo/add-strings-to-forest
-        [{:id "test-id" :features "test id text"}]))))
+(comment 'plagiarism-db
+         (assoc default-conf
+                :forest-filename "tmp/plagiarism/forest"
+                :forest 'CONSIMILO-FOREST
+                :texts-path "tmp/plagiarism/texts"
+                :bad-texts-path "tmp/plagiarism/bad-texts-path"))
 
-(defn get-vector-cosine
-  "Returns the cosine between two most similar vectors
-  in existing forest"
-  [forest essay-text]
-  (let [similar-vectors (consimilo/similarity-k
-                          forest
-                          top-k
-                          essay-text
-                          :sim-fn :cosine)]
-    (apply min-key val similar-vectors)))
+(defn open-path-or-fail [path]
+  (let [forest-filename (str path "/forest")
+        texts-path (str path "/texts")
+        db (assoc default-conf
+                  :forest-filename forest-filename
+                  :texts-path texts-path
+                  :bad-texts-path (str path "/bad-texts"))]
+    (try
+      (assoc db :forest (consimilo/thaw-forest forest-filename))
+      (catch java.io.FileNotFoundException _
+        (println "Forest file not found, creating new one...")
+        (let [forest (consimilo/add-strings-to-forest [])]
+          (io/make-parents forest-filename)
+          (consimilo/freeze-forest forest forest-filename)
+          (assoc db :forest forest)))
+      (catch Exception e
+        (println (tr :forest-failure))
+        (println e)
+        (System/exit 1)))))
 
-(defn print-plagiarise-log
-  [forest-key cosine plag-essay-text plag-id plag-code tx]
-  (let [code-list (split-at 6 forest-key)
-        essay-code (apply str (first code-list))
-        id (apply str (second code-list))
-        essay-text (codax/get-at tx [id :essays essay-code :text])]
-    (println
-      (format "Essay with code '%s' submitted by '%s' was plagiarised from '%s', essay code: '%s' with cosine %s.\nOriginal essay text:\n%s\nPlagiarised essay text:\n%s",
-              plag-code, plag-id, id, essay-code, cosine, essay-text, plag-essay-text))
-    true))
+(defn register-text!
+  "Add new entry to lsh-forest.
 
-(defn is-essay-plagiarised
-  [forest essay-text id essay-code tx]
-  (let [minimal-vector
-        (get-vector-cosine forest essay-text)]
-    (if (< (val minimal-vector) cosine-threshold)
-      (print-plagiarise-log (name (key minimal-vector)) (val minimal-vector) essay-text id essay-code tx)
-      false)))
+  key should be a string to be consistent with in
+  input and output and valid as a filename."
+  [{forest-filename :forest-filename forest :forest texts-path :texts-path :as plagiarism-db} key text]
+  (consimilo/add-strings-to-forest [{:id key :features text}] :forest forest)
+  (when forest-filename
+    (consimilo/freeze-forest forest forest-filename))
+  (when texts-path
+    (let [filename (str texts-path "/" key ".txt")]
+      (io/make-parents filename)
+      (spit filename text)))
+  plagiarism-db)
+
+(defn similars [{forest :forest top-k :top-k sim-fn :sim-fn} text]
+  (->> (consimilo/similarity-k forest top-k text :sim-fn sim-fn)
+       (map (fn [[key similarity]]
+              {:key (name key)
+               :similarity (if (.equals ##NaN similarity)
+                             0 ;; for some reason NaN is returned sometimes.
+                             similarity)}))))
+
+(defn sorted-similars [plagiarism-db text]
+  (->> (similars plagiarism-db text)
+       (sort-by :similarity)))
+
+(defn find-original
+  ([plagiarism-db text] (find-original plagiarism-db text nil))
+  ([{cosine-threshold :cosine-threshold :as plagiarism-db} text skip-key]
+   (let [similars (->> (similars plagiarism-db text)
+                       (filter #(not= (:key %) skip-key))
+                       (filter #(< (:similarity %) cosine-threshold)))]
+     (when (not (empty? similars))
+       (apply min-key :similarity similars)))))
+
+(defn get-text [{texts-path :texts-path} key]
+  (when texts-path
+    (let [filename (str texts-path "/" key ".txt")]
+      (when (io/file filename)
+        (slurp filename)))))
+
+(defn restore-forest-talk [db {token :token :as conf} {texts-path :texts-path :as plagiarism-db}]
+  (let [cmd "restoreforest"
+        help (str (tr :essay/restore-forest-help))]
+    (talk/def-command db cmd help
+      (fn [tx {{id :id} :from}]
+        (general/assert-admin tx conf id)
+        (->> (file-seq (io/file texts-path))
+             (filter #(.isFile %))
+             (filter #(str/ends-with? (.getName %) ".txt"))
+             (map (fn [file] {:file file :key (str/replace (.getName file) #"\.txt$" "")}))
+             (map (fn [{file :file key :key}]
+                    (register-text! plagiarism-db key (slurp file))))
+             (misc/count-with-report
+              50 #(talk/send-text token id (format (tr :plagiarism/processed-1)  %))))
+        (talk/send-text token id (tr :plagiarism/restore-forest-done))
+        (talk/stop-talk tx)))))
