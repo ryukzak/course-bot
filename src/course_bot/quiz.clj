@@ -104,7 +104,7 @@
                                       (get (- ans 1))
                                       (get :correct false)))
                    options
-                   (map #(Integer/parseInt %) ans))
+                   (map #(parse-long %) ans))
         scores (map #(if % 1 0) bools)
         count-correct (reduce + scores)
         count-questions (count options)]

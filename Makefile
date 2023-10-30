@@ -1,6 +1,7 @@
 NAME = csa-bot
 CONF = ${PWD}/../edu-csa-internal
 DB = ${PWD}/../csa-db-2023
+PLAGIARISM_DB = ${PWD}/../plagiarism-db
 
 BACKUP_PATH = ..
 
@@ -20,6 +21,10 @@ backup:
 #   file should be more than 100 Kb
 	[ `stat -c %s "${BACKUP_PATH}/csa-db-snapshot-${NOW}.tar.gz"` -gt 100 ]
 
+	tar -zcf "${BACKUP_PATH}/plagiarism-db-${NOW}.tar.gz" -C ${PLAGIARISM_DB} .
+#   file should be more than 100 Kb
+	[ `stat -c %s "${BACKUP_PATH}/plagiarism-db-${NOW}.tar.gz"` -gt 100 ]
+
 build:
 	docker build -t ${NAME} .
 
@@ -28,7 +33,7 @@ stop:
 	docker rm ${NAME}
 
 run:
-	docker run --name ${NAME} --restart=always -d -v ${CONF}:/edu-csa-internal -v ${DB}:/csa-db ${NAME}
+	docker run --name ${NAME} --restart=always -d -v ${CONF}:/edu-csa-internal -v ${PLAGIARISM_DB}:/plagiarism-db -v ${DB}:/csa-db ${NAME}
 
 test:
 	clojure -X:test

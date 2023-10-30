@@ -421,5 +421,5 @@
                [(tt/unlines
                  "Plagiarism case: 24"
                  ""
-                 "origin text: essay1 - 7"
-                 "uploaded text: 202201031130 - essay1 - 10")]))))))
+                 "origin text: 7 - essay1"
+                 "uploaded text: 202201031130 - 10 - essay1")]))))))
