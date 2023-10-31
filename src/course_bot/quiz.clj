@@ -132,7 +132,7 @@
                  (talk/change-branch tx :approve {:quiz-key quiz-key})))
              :approve
              (fn [tx {{id :id} :from text :text} {quiz-key :quiz-key}]
-               (case text
+               (case (str/lower-case text)
                  "yes" (do
                          (talk/send-text token id (tr :quiz/quiz-started))
                          (start-quiz! tx quiz-key))
@@ -212,9 +212,8 @@
              (fn [tx {{id :id} :from text :text}]
                (let [quiz-key (codax/get-at tx [:quiz :current])
                      quiz-name (-> conf :quiz (get quiz-key) :name)
-                     quiz (-> conf :quiz (get quiz-key))
-                     lower-text (str/lower-case text)]
-                 (case lower-text
+                     quiz (-> conf :quiz (get quiz-key))]
+                 (case (str/lower-case text)
                    "yes" (let [results (codax/get-at tx [:quiz :results quiz-key])
                                per-studs (map (fn [stud-id]
                                                 (let [{cur :count-correct max :count-questions} (evaluate-answers (:questions quiz)
@@ -283,7 +282,7 @@
              (fn [tx {{id :id} :from text :text}]
                (let [quiz-key (codax/get-at tx [:quiz :current])
                      quiz (-> conf :quiz (get quiz-key))]
-                 (case text
+                 (case (str/lower-case text)
                    "yes" (do (talk/send-text token id (tr :quiz/quiz-after-run-info))
                              (talk/send-text token id (question-msg quiz 0))
                              (talk/change-branch tx :quiz-step {:results '()}))

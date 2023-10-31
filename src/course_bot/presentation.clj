@@ -214,17 +214,16 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {desc :desc}]
-        (let [lower-text (str/lower-case text)]
-          (cond
-            (= lower-text "yes") (do (talk/send-text token id (tr :pres/teacher-will-check))
-                                     (-> tx
-                                         (codax/assoc-at [id :presentation pres-key :on-review?] true)
-                                         (codax/assoc-at [id :presentation pres-key :description] desc)
-                                         talk/stop-talk))
-            (= lower-text "no") (do (talk/send-text token id (tr :pres/later))
-                                    (talk/stop-talk tx))
-            :else (do (talk/send-text token id (tr :pres/yes-or-no))
-                      (talk/repeat-branch tx))))))))
+        (case (str/lower-case text)
+          "yes" (do (talk/send-text token id (tr :pres/teacher-will-check))
+                    (-> tx
+                        (codax/assoc-at [id :presentation pres-key :on-review?] true)
+                        (codax/assoc-at [id :presentation pres-key :description] desc)
+                        talk/stop-talk))
+          "no" (do (talk/send-text token id (tr :pres/later))
+                   (talk/stop-talk tx))
+          (do (talk/send-text token id (tr :pres/yes-or-no))
+              (talk/repeat-branch tx)))))))
 
 (defn wait-for-reviews [tx pres-key]
   (->> (codax/get-at tx [])
