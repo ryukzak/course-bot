@@ -51,7 +51,8 @@
     :number-of-reviews-1 "You received %d reviews."
     :plagirism-report-3 "%s original: %s new: %s"
     :warmup-plagiarism-help "Recheck and register existed essays for plagiarism."
-    :warmup-no-plagiarsm "No plagiarism found."}}
+    :warmup-no-plagiarsm "No plagiarism found."
+    :warmup-processed-1 "Processed %d essays."}}
   :ru
   {:essay
    {:submit "Отправить "
@@ -95,7 +96,11 @@
     :number-of-reviews-1 "Вы получили %d отзывов."
     :plagirism-report-3 "%s оригинал: %s новое: %s"
     :warmup-plagiarism-help "Перепроверить и зарегистрировать существующие эссе на плагиат."
-    :warmup-no-plagiarsm "Плагиат не найден."}}})
+    :warmup-no-plagiarsm "Плагиат не найден."
+    :warmup-processed-1 "Обработано %d эссе."}}})
+
+(defn plagiarism-key [essay-code stud-id]
+  (str stud-id " - " essay-code))
 
 (defn submit-talk [db
                    {token :token admin-chat-id :admin-chat-id :as conf}
@@ -124,20 +129,18 @@
             (talk/stop-talk tx)))
 
         (when-let [origin (plagiarism/find-original plagiarism-db text)]
-          (talk/send-text token id
-                          (format (tr :essay/plagiarised-warning-1) (Math/round (:similarity origin))))
+          (let [similarity (Math/round (:similarity origin))
+                origin-key (:key origin)
+                key (plagiarism-key essay-code id)]
+            (talk/send-text token id (format (tr :essay/plagiarised-warning-1) similarity))
 
-          (let [bad-key (str (misc/filename-time (misc/today))
-                             " - " essay-code
-                             " - " id)
-                bad-filename (str bad-texts-path "/" bad-key ".txt")]
-            (io/make-parents bad-filename)
-            (spit bad-filename text)
-
-            (talk/send-text token admin-chat-id
-                            (format (tr :essay/plagiarised-report-3)
-                                    (Math/round (:similarity origin)) (:key origin) bad-key)))
-          (talk/stop-talk tx))
+            (let [bad-key (str (misc/filename-time (misc/today)) " - " key)
+                  bad-filename (str bad-texts-path "/" bad-key ".txt")]
+              (io/make-parents bad-filename)
+              (spit bad-filename text)
+              (talk/send-text token admin-chat-id
+                              (format (tr :essay/plagiarised-report-3) similarity origin-key bad-key)))
+            (talk/stop-talk tx)))
 
         (talk/send-text token id (tr :essay/text-of-your-essay))
         (talk/send-text token id text)
@@ -149,7 +152,7 @@
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
         (talk/when-parse-yes-or-no
          tx token id text
-         (plagiarism/register-text! plagiarism-db (str essay-code " - " id) essay-text)
+         (plagiarism/register-text! plagiarism-db (plagiarism-key essay-code id) essay-text)
          (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
          (-> tx
              (codax/assoc-at [id :essays essay-code :text] essay-text)
@@ -360,7 +363,7 @@
         (let [reports (->> (get-essays tx essay-code)
                            (map (fn [[stud-id v]] [stud-id (-> v :essays (get essay-code) :text)]))
                            (map (fn [[stud-id text]]
-                                  (let [key (str essay-code " - " stud-id)
+                                  (let [key (plagiarism-key essay-code stud-id)
                                         origin (plagiarism/find-original plagiarism-db text key)]
                                     (plagiarism/register-text! plagiarism-db key text)
                                     (cond
@@ -369,9 +372,10 @@
                                       :else (format (tr :essay/plagirism-report-3)
                                                     (misc/round-2 (:similarity origin))
                                                     (:key origin)
-                                                    key)))))
-                           (filter some?))]
-          (if (empty? reports)
+                                                    key))))))
+              bad-reports (filter some? reports)]
+          (if (empty? bad-reports)
             (talk/send-text token id (tr :essay/warmup-no-plagiarism))
-            (doall (map #(talk/send-text token id %) reports)))
+            (doall (map #(talk/send-text token id %) bad-reports)))
+          (talk/send-text token id (format (tr :essay/warmup-processed-1) (count reports)))
           (talk/stop-talk tx))))))

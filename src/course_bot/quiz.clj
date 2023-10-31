@@ -60,6 +60,52 @@
     :quiz-answers "Ответы на тест: "
     :incorrect-answer "Не понял, укажите корректный номер ответа (1, 2...)."}}})
 
+(def *current-quiz (atom {:stopping false :current nil}))
+
+(defn start-quiz! [tx quiz-key]
+  (codax/assoc-at tx [:quiz :current] quiz-key))
+
+(defn quiz-info [conf quiz-key]
+  {:key quiz-key
+   :quiz (-> conf :quiz (get quiz-key))
+   :name (-> conf :quiz (get quiz-key) :name)})
+
+(defn empty-quiz-info []
+  {:key nil :quiz nil :name nil})
+
+(defn current-quiz! [tx conf]
+  (let [{current :current stopping :stopping} @*current-quiz]
+    (cond
+      stopping
+      (let [quiz-key (codax/get-at tx [:quiz :current])]
+        (cond
+          (= quiz-key current)
+          (empty-quiz-info)
+
+          (nil? quiz-key)
+          (do (reset! *current-quiz {:stopping false :current nil})
+              (empty-quiz-info))
+
+          (not= quiz-key current)
+          (do (reset! *current-quiz {:stopping false :current (quiz-info conf quiz-key)})
+              (quiz-info conf quiz-key))
+
+          (= quiz-key current)
+          (do (reset! *current-quiz {:stopping false :current nil})
+              (empty-quiz-info))))
+
+      (some? current) current
+
+      :else
+      (let [quiz-key (codax/get-at tx [:quiz :current])]
+        (if (nil? quiz-key)
+          (empty-quiz-info)
+          (quiz-info conf quiz-key))))))
+
+(defn stop-quiz! [tx]
+  (swap! *current-quiz assoc :stopping true)
+  (codax/assoc-at tx [:quiz :current] nil))
+
 (defn startquiz-talk [db {token :token :as conf}]
   (talk/talk db "startquiz"
              :start
@@ -89,7 +135,7 @@
                (case text
                  "yes" (do
                          (talk/send-text token id (tr :quiz/quiz-started))
-                         (codax/assoc-at tx [:quiz :current] quiz-key))
+                         (start-quiz! tx quiz-key))
                  "no" (do (talk/send-text token id (tr :quiz/quiz-canceled)) (talk/stop-talk tx))))))
 
 (defn get-test-keys-for-score [conf]
@@ -104,7 +150,7 @@
                                       (get (- ans 1))
                                       (get :correct false)))
                    options
-                   (map #(Integer/parseInt %) ans))
+                   (map #(parse-long %) ans))
         scores (map #(if % 1 0) bools)
         count-correct (reduce + scores)
         count-questions (count options)]
@@ -156,8 +202,7 @@
              :start
              (fn [tx {{id :id} :from}]
                (general/assert-admin tx conf id)
-               (let [quiz-key (codax/get-at tx [:quiz :current])
-                     quiz-name (-> conf :quiz (get quiz-key) :name)]
+               (let [{quiz-key :key quiz-name :name} (current-quiz! tx conf)]
                  (when-not quiz-key
                    (talk/send-text token id (tr :quiz/no-running-quizzes))
                    (talk/stop-talk tx))
@@ -193,7 +238,7 @@
                                        per-studs))
                            (-> (reduce (fn [tx [_stud-id cur _info]] (codax/assoc-at tx [id :quiz (:name quiz)] cur))
                                        tx per-studs)
-                               (codax/assoc-at [:quiz :current] nil)
+                               stop-quiz!
                                talk/stop-talk))
                    "no" (do (talk/send-text token id (tr :quiz/quiz-is-still-in-progress)) (talk/stop-talk tx))
                    (do (talk/send-text token id (tr :quiz/what-question)) (talk/wait tx)))))))
@@ -218,10 +263,8 @@
   (talk/talk db "quiz" (tr :quiz/quiz-cmd-description)
              :start
              (fn [tx {{id :id} :from}]
-               (let [quiz-key (codax/get-at tx [:quiz :current])
-                     quiz (-> conf :quiz (get quiz-key))
-                     questions-count (-> conf :quiz (get quiz-key) :questions count)
-                     quiz-name (-> quiz :name)
+               (let [{quiz-key :key quiz :quiz quiz-name :name} (current-quiz! tx conf)
+                     questions-count (-> quiz :questions count)
                      results (codax/get-at tx [:quiz :results quiz-key id])]
 
                  (when (some? results)
@@ -234,6 +277,7 @@
 
                  (talk/send-yes-no-kbd token id (str (format (tr :quiz/student-confirm-run-quiz-2) quiz-name questions-count)))
                  (talk/change-branch tx :quiz-approve)))
+
              :quiz-approve
              (fn [tx {{id :id} :from text :text}]
                (let [quiz-key (codax/get-at tx [:quiz :current])
@@ -241,35 +285,32 @@
                  (case text
                    "yes" (do (talk/send-text token id (tr :quiz/quiz-after-run-info))
                              (talk/send-text token id (question-msg quiz 0))
-                             (talk/change-branch tx :quiz-step))
+                             (talk/change-branch tx :quiz-step {:results '()}))
                    "no" (do (talk/send-text token id (tr :quiz/your-right))
                             (talk/stop-talk tx))
                    (do (talk/send-yes-no-kbd token id (str (tr :quiz/what-question-yes-no)))
                        (talk/wait tx)))))
-             :quiz-step
-             (fn [tx {{id :id} :from text :text}]
-               (let [quiz-key (codax/get-at tx [:quiz :current])
-                     quiz (-> conf :quiz (get quiz-key))
-                     results (codax/get-at tx [:quiz :results quiz-key id])
 
-                     new-results (concat results (list text))
+             :quiz-step
+             (fn [tx {{id :id} :from text :text} {results :results}]
+               (let [{quiz-key :key quiz :quiz} (current-quiz! tx conf)
                      question-index (count results)
-                     next-question-index (+ 1 (count results))
-                     next-question (question-msg quiz next-question-index)]
-                 (if (is-answer quiz question-index text)
-                   (do
-                     (talk/send-text token id (str (tr :quiz/remember-your-answer) text))
-                     (if next-question
-                       (do
-                         (talk/send-text token id next-question)
-                         (codax/assoc-at tx [:quiz :results quiz-key id] new-results))
-                       (do
-                         (talk/send-text token id (tr :quiz/quiz-passed))
-                         (talk/send-text token (-> conf :admin-chat-id)
-                                         (str (tr :quiz/quiz-answers) (str/join ", " new-results)))
-                         (-> tx
-                             (codax/assoc-at [:quiz :results quiz-key id] (concat results (list text)))
-                             talk/stop-talk))))
-                   (do
-                     (talk/send-text token id (tr :quiz/incorrect-answer))
-                     tx))))))
+                     next-question-index (+ 1 question-index)
+                     new-results (concat results (list text))]
+                 (when-not (is-answer quiz question-index text)
+                   (talk/send-text token id (tr :quiz/incorrect-answer))
+                   (talk/wait tx))
+
+                 (talk/send-text token id (str (tr :quiz/remember-your-answer) text))
+
+                 (when-let [next-question (question-msg quiz next-question-index)]
+                   (talk/send-text token id next-question)
+                   (talk/change-branch tx :quiz-step {:results new-results}))
+
+                 ; finish quiz
+                 (talk/send-text token id (tr :quiz/quiz-passed))
+                 (talk/send-text token (-> conf :admin-chat-id)
+                                 (str (tr :quiz/quiz-answers) (str/join ", " new-results)))
+                 (-> tx
+                     (codax/assoc-at [:quiz :results quiz-key id] new-results)
+                     talk/stop-talk)))))

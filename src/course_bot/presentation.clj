@@ -551,7 +551,7 @@
 
       :select
       (fn [tx {{id :id} :from text :text} {rank :rank studs :remain group :group dt :dt :as state}]
-        (let [n (if (re-matches #"^\d+$" text) (Integer/parseInt text) nil)]
+        (let [n (if (re-matches #"^\d+$" text) (parse-long text) nil)]
           (when (or (nil? n) (not (< n (count studs))))
             (talk/send-text token id (tr :pres/best-presentation-error))
             (talk/wait tx))
