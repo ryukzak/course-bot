@@ -311,7 +311,6 @@
                         (tt/text 0 "The quiz 'Test quiz 3' was stopped")
                         (tt/text 0 "Answers did not received.")))))
 
-
 (deftest quiz-yes-no-test
   (let [conf  (misc/get-config "conf-example/csa-2023.edn")
         db    (tt/test-database (-> conf :db-path))
