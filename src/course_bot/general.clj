@@ -23,7 +23,7 @@
 (add-dict
  {:en
   {:general
-   {:who-am-i-3 "Name: %s; Group: %s; Telegram ID: %s"
+   {:who-am-i-4 "Name: %s; Group: %s; Telegram ID: %s; Group for first laboratory work: %s"
     :need-admin "That action requires admin rights."
     :who-am-i-info "send me my registration info"
     :group " group:\n"
@@ -48,7 +48,7 @@
     :yes-no-question "Please yes or no?"}}
   :ru
   {:general
-   {:who-am-i-3 "Имя: %s; Группа: %s; Telegram ID: %s"
+   {:who-am-i-4 "Имя: %s; Группа: %s; Telegram ID: %s; Группа на первую лабораторную работу: %s"
     :need-admin "Это действие требует прав администратора."
     :who-am-i-info "отправьте мне мою информацию о регистрации"
     :group " группа:\n"
@@ -81,8 +81,9 @@
 (defn send-whoami
   ([tx token id] (send-whoami tx token id id))
   ([tx token id about]
-   (let [{name :name group :group} (codax/get-at tx [about])]
-     (talk/send-text token id (format (tr :general/who-am-i-3) name group about)))))
+   (let [{name :name group :group pres :presentation} (codax/get-at tx [about])
+         grouplab1 (-> pres :lab1 :group)]
+     (talk/send-text token id (format (tr :general/who-am-i-4) name group about grouplab1)))))
 
 (defn whoami-talk [db {token :token}]
   (talk/def-command db "whoami" (tr :general/who-am-i-info)
