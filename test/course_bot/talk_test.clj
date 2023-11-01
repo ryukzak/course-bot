@@ -90,3 +90,15 @@
        (apply vector)))
 
 (defn unlines [& coll] (str/join "\n" coll))
+
+(defn test-if-parse-yes-or-no-helper [text expected-result]
+  (is (= (talk/if-parse-yes-or-no nil nil nil text (str "ret-yes") (str "ret-no")) expected-result)
+      (str "parsed '" text "' incorrectly")))
+
+(deftest test-if-parse-yes-or-no
+  (test-if-parse-yes-or-no-helper "YeS" "ret-yes")
+  (test-if-parse-yes-or-no-helper "YES" "ret-yes")
+  (test-if-parse-yes-or-no-helper "yes" "ret-yes")
+  (test-if-parse-yes-or-no-helper "NO" "ret-no")
+  (test-if-parse-yes-or-no-helper "no" "ret-no"))
+
