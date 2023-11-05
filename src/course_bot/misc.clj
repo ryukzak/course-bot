@@ -1,5 +1,6 @@
 (ns course-bot.misc
-  (:require [clojure.java.io :as io]))
+  (:require [clojure.java.io :as io]
+            [codax.core :as codax]))
 
 (defn inline? [v] (when (and (vector? v) (= :inline (first v)))
                     (second v)))
@@ -41,3 +42,34 @@
       (if (empty? tail)
         count
         (recur counter' tail)))))
+
+(defn codax-backup-fn [info] (println "codax-backup:" info))
+
+(defn merge-codaxs
+  "Merge two codax databases, a and b, into out-db."
+
+  [a-db-path b-db-path out-db-path]
+
+  (let [a-db (codax/open-database! a-db-path)
+        b-db (codax/open-database! b-db-path)
+        a-keys (-> (codax/get-at! a-db []) keys)
+        merged-data (doall
+                     (->> a-keys
+                          (map #(try
+                                  (let [dt (codax/get-at! b-db [%])] [:ok % dt])
+                                  (catch Exception _e [:fail % (codax/get-at! a-db [%])])))))
+        failed-records (->> merged-data
+                            (filter (fn [[status _k _v]] (= status :fail)))
+                            (map (fn [[_status k v]]
+                                   (str k " - " (:group v) " - " (:name v)))))
+        out-db (codax/open-database! out-db-path :backup-fn codax-backup-fn)]
+    (codax/close-database! a-db-path)
+    (codax/close-database! b-db-path)
+    (doall (->> merged-data
+                (map (fn [[_ k v]] (codax/assoc-at! out-db k v)))))
+    (codax/close-database! out-db-path)
+    failed-records))
+
+(quote (merge-codaxs "../csa-db-snapshot-2023-10-30-22-58"
+                     "../csa-db-snapshot-2023-11-05-16-55"
+                     "../csa-db-merged"))
