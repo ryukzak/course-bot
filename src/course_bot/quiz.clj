@@ -30,7 +30,7 @@
     :what-question-yes-no "What (yes/no)?"
     :remember-your-answer "Remember your answer: "
     :quiz-passed "Thanks, quiz passed. The results will be sent when the quiz is closed."
-    :quiz-answers "Quiz answers: %s (%s, %s, %s, %s)"
+    :quiz-answers-5 "Quiz answers: %s (%s, %s, %s, %s)"
     :incorrect-answer "I don't understand you, send the correct answer number (1, 2...)."}}
   :ru
   {:quiz
@@ -57,7 +57,7 @@
     :what-question-yes-no "Что (yes/no)?"
     :remember-your-answer "Запомнили ваш ответ: "
     :quiz-passed "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."
-    :quiz-answers "Ответы на тест: %s (%s, %s, %s, %s)"
+    :quiz-answers-5 "Ответы на тест: %s (%s, %s, %s, %s)"
     :incorrect-answer "Не понял, укажите корректный номер ответа (1, 2...)."}}})
 
 (def *current-quiz (atom {:stopping false :current nil}))
@@ -296,9 +296,7 @@
                (let [{quiz-key :key quiz :quiz} (current-quiz! tx conf)
                      question-index (count results)
                      next-question-index (+ 1 question-index)
-                     new-results (concat results (list text))
-                     {student-name :name group :group} (codax/get-at tx [id])
-                     quiz-name (:name quiz)]
+                     new-results (concat results (list text))]
                  (when-not (is-answer quiz question-index text)
                    (talk/send-text token id (tr :quiz/incorrect-answer))
                    (talk/wait tx))
@@ -311,8 +309,9 @@
 
                  ; finish quiz
                  (talk/send-text token id (tr :quiz/quiz-passed))
-                 (talk/send-text token (-> conf :admin-chat-id)
-                                 (str (format (tr :quiz/quiz-answers) (str/join ", " new-results) quiz-name student-name group id)))
+                 (let [{student-name :name group :group} (codax/get-at tx [id])]
+                   (talk/send-text token (-> conf :admin-chat-id)
+                                   (str (format (tr :quiz/quiz-answers-5) (str/join ", " new-results) (:name quiz) student-name group id))))
                  (-> tx
                      (codax/assoc-at [:quiz :results quiz-key id] new-results)
                      talk/stop-talk)))))
