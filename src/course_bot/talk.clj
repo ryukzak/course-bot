@@ -3,7 +3,22 @@
   (:require [codax.core :as codax]
             [morse.handlers :as handlers]
             [morse.api :as morse]
-            [clj-http.client :as http]))
+            [clj-http.client :as http])
+  (:require [course-bot.localization :as l10z :refer [tr]]))
+
+(l10z/add-dict
+ {:en
+  {:talk
+   {:yes "yes"
+    :no "no"
+    :cancelled "Cancelled."
+    :question-yes-no "What (yes or no)?"}}
+  :ru
+  {:talk
+   {:yes "да"
+    :no "нет"
+    :cancelled "Отменено."
+    :question-yes-no "Что (да или нет)?"}}})
 
 ;; Talk flow
 
@@ -137,7 +152,7 @@
                           {:one_time_keyboard true
                            :resize_keyboard true
                            :keyboard
-                           [[{:text "yes"} {:text "no"}]]}}))
+                           [[{:text (tr :talk/yes)} {:text (tr :talk/no)}]]}}))
 
 (defmacro if-parse-yes-or-no [tx token id text if-yes if-no]
   `(case (str/lower-case ~text)

@@ -2,7 +2,8 @@
   (:gen-class)
   (:require [codax.core :as codax]
             [course-bot.essay :as essay]
-            [course-bot.general :as general :refer [tr]]
+            [course-bot.general :as general]
+            [course-bot.localization :as l10z :refer [tr]]
             [course-bot.misc :as misc]
             [course-bot.plagiarism :as plagiarism]
             [course-bot.presentation :as pres]
@@ -12,8 +13,8 @@
             [morse.handlers :as handlers]
             [morse.polling :as polling]))
 
-(general/set-locales [:ru :en])
-(general/add-dict
+(l10z/set-locales [:ru :en])
+(l10z/add-dict
  {:en
   {:csa
    {:start           "Bot activated, my Lord!"

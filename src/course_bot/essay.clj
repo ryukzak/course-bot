@@ -1,13 +1,14 @@
 (ns course-bot.essay
   (:require [course-bot.talk :as talk]
-            [course-bot.general :as general :refer [tr]]
+            [course-bot.localization :as l10z :refer [tr]]
+            [course-bot.general :as general]
             [course-bot.misc :as misc]
             [course-bot.plagiarism :as plagiarism])
   (:require [codax.core :as codax])
   (:require [clojure.string :as str]
             [clojure.java.io :as io]))
 
-(general/add-dict
+(l10z/add-dict
  {:en
   {:essay
    {:submit "Submit "
@@ -63,7 +64,7 @@
     :plagiarised-report-3 "Плагиат: %s\n\nоригинал: %s\n загруженный текст: %s"
     :themes " Тема(-ы):\n\n"
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
-    :is-loading-question "Загружаем (yes/no)?"
+    :is-loading-question "Загружаем (да/нет)?"
     :thank-you-your-essay-submited "Спасибо, текст загружен и скоро попадёт на рецензирование."
     :status " статус"
     :total-essays "Всего эссе: "
@@ -151,13 +152,19 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
-        (talk/when-parse-yes-or-no
-         tx token id text
-         (plagiarism/register-text! plagiarism-db (plagiarism-key essay-code id) essay-text)
-         (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
-         (-> tx
-             (codax/assoc-at [id :essays essay-code :text] essay-text)
-             talk/stop-talk))))))
+        (cond
+          (= (str/lower-case text) (tr :talk/yes))
+          (do (plagiarism/register-text! plagiarism-db (plagiarism-key essay-code id) essay-text)
+              (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
+              (-> tx
+                  (codax/assoc-at [id :essays essay-code :text] essay-text)
+                  talk/stop-talk))
+          (= (str/lower-case text) (tr :talk/no))
+          (do (talk/send-text token id (tr :talk/cancelled))
+              (talk/stop-talk tx))
+          :else
+          (do (talk/send-text token id (tr :talk/question-yes-no))
+              (talk/repeat-branch tx)))))))
 
 (defn get-essays [tx essay-code]
   (->> (codax/get-at tx [])
@@ -303,15 +310,21 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {reviews :reviews}]
-        (talk/when-parse-yes-or-no
-         tx token id text
-         (talk/send-text token id (tr :essay/essay-feedback-saved))
-         (-> (reduce (fn [tx' review]
-                       (codax/update-at tx' [(:essay-author review) :essays essay-code :received-review] conj review))
-                     tx reviews)
-             (codax/assoc-at [id :essays essay-code :my-reviews] reviews)
-             (codax/assoc-at [id :essays essay-code :my-reviews-submitted-at] (misc/str-time (misc/today)))
-             talk/stop-talk))))))
+        (cond
+          (= (str/lower-case text) (tr :talk/yes))
+          (do (talk/send-text token id (tr :essay/essay-feedback-saved))
+              (-> (reduce (fn [tx' review]
+                            (codax/update-at tx' [(:essay-author review) :essays essay-code :received-review] conj review))
+                          tx reviews)
+                  (codax/assoc-at [id :essays essay-code :my-reviews] reviews)
+                  (codax/assoc-at [id :essays essay-code :my-reviews-submitted-at] (misc/str-time (misc/today)))
+                  talk/stop-talk))
+          (= (str/lower-case text) (tr :talk/no))
+          (do (talk/send-text token id (tr :talk/cancelled))
+              (talk/stop-talk tx))
+          :else
+          (do (talk/send-text token id (tr :talk/question-yes-no))
+              (talk/repeat-branch tx)))))))
 
 (defn my-reviews [tx essay-code id]
   (->> (codax/get-at tx [id :essays essay-code :received-review])
