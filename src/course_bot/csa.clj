@@ -33,7 +33,7 @@
 (defn open-database-or-fail [path]
   (if path
     (try
-      (codax/open-database! path)
+      (codax/open-database! path :backup-fn misc/codax-backup-fn)
       (catch Exception e
         (println (tr :csa/db-failure))
         (println (.getMessage e))

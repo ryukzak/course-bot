@@ -9,7 +9,7 @@ NOW = $(shell date +'%Y-%m-%d-%H-%M')
 
 .PHONY: test
 
-check-all-fix: format lint test
+check-all-fix: format test lint
 
 update: pull backup build stop run
 

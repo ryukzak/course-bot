@@ -132,15 +132,16 @@
           (let [similarity (Math/round (:similarity origin))
                 origin-key (:key origin)
                 key (plagiarism-key essay-code id)]
-            (talk/send-text token id (format (tr :essay/plagiarised-warning-1) similarity))
+            (when-not (= origin-key key) ;; allow self plagiarism
+              (talk/send-text token id (format (tr :essay/plagiarised-warning-1) similarity))
 
-            (let [bad-key (str (misc/filename-time (misc/today)) " - " key)
-                  bad-filename (str bad-texts-path "/" bad-key ".txt")]
-              (io/make-parents bad-filename)
-              (spit bad-filename text)
-              (talk/send-text token admin-chat-id
-                              (format (tr :essay/plagiarised-report-3) similarity origin-key bad-key)))
-            (talk/stop-talk tx)))
+              (let [bad-key (str (misc/filename-time (misc/today)) " - " key)
+                    bad-filename (str bad-texts-path "/" bad-key ".txt")]
+                (io/make-parents bad-filename)
+                (spit bad-filename text)
+                (talk/send-text token admin-chat-id
+                                (format (tr :essay/plagiarised-report-3) similarity origin-key bad-key)))
+              (talk/stop-talk tx))))
 
         (talk/send-text token id (tr :essay/text-of-your-essay))
         (talk/send-text token id text)
