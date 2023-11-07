@@ -43,7 +43,8 @@
         count
         (recur counter' tail)))))
 
-(defn codax-backup-fn [info] (println "codax-backup:" info))
+(defn codax-backup-fn [info] (println "\n"
+                                      "codax-backup:" info))
 
 (defn merge-codaxs
   "Merge two codax databases, a and b, into out-db."
