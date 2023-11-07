@@ -1,10 +1,12 @@
 (ns course-bot.talk-test
   (:require [clojure.test :refer [deftest is]]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.data.csv :as csv])
   (:require [codax.core :as codax]
             [morse.handlers :as handlers])
-  (:require [course-bot.talk :as talk]))
+  (:require [course-bot.talk :as talk]
+            [course-bot.plagiarism :as plagiarism]))
 
 (defn csv [tid & rows]
   (if (number? tid)
@@ -54,10 +56,14 @@
                    talk/send-document (fn [token# id# file#] (swap! ~*chat conj {:id id# :msg (slurp file#)}))]
        ~@body)))
 
-(defn test-database []
-  (let [test-db "test-databases/example-database"]
-    (codax/destroy-database! test-db)
-    (codax/open-database! test-db)))
+(defn test-database [path]
+  (codax/destroy-database! path)
+  (codax/open-database! path))
+
+(defn test-plagiarsm-database [path]
+  (when (.exists (io/file path))
+    (run! io/delete-file (reverse (file-seq (io/file path)))))
+  (plagiarism/open-path-or-fail path))
 
 (defn atom? [v] (instance? clojure.lang.Atom v))
 
@@ -72,14 +78,27 @@
                        (handler {:message {:from {:id id} :text msg}})))))
 
 (defn history
-  ([*chat n] (history *chat n nil))
-  ([*chat n id]
-   (->> @*chat
-        (take n)
-        (map #(if (nil? id)
-                (vector (:id %) (:msg %))
-                (:msg %)))
-        reverse
-        (apply vector))))
+  [*chat & {:keys [user-id number] :or {user-id nil number 1}}]
+  (->> @*chat
+       (filter #(or (nil? user-id) (= user-id (:id %))))
+       (take number)
+       (map #(assoc % :msg (-> % :msg str/trim-newline)))
+       (map #(if (nil? user-id)
+               (vector (:id %) (:msg %))
+               (:msg %)))
+       reverse
+       (apply vector)))
 
 (defn unlines [& coll] (str/join "\n" coll))
+
+(defn test-if-parse-yes-or-no-helper [text expected-result]
+  (is (= (talk/if-parse-yes-or-no nil nil nil text (str "ret-yes") (str "ret-no")) expected-result)
+      (str "parsed '" text "' incorrectly")))
+
+(deftest test-if-parse-yes-or-no
+  (test-if-parse-yes-or-no-helper "YeS" "ret-yes")
+  (test-if-parse-yes-or-no-helper "YES" "ret-yes")
+  (test-if-parse-yes-or-no-helper "yes" "ret-yes")
+  (test-if-parse-yes-or-no-helper "NO" "ret-no")
+  (test-if-parse-yes-or-no-helper "no" "ret-no"))
+

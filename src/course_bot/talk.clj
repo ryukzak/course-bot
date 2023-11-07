@@ -33,7 +33,7 @@
 (defn command-num-arg [text]
   (let [args (command-args text)]
     (if (and (= (count args) 1) (re-matches #"^\d+$" (first args)))
-      (Integer/parseInt (first args))
+      (parse-long (first args))
       nil)))
 
 (defn command-keyword-arg [text]
@@ -44,11 +44,17 @@
 
 (def *helps (atom {}))
 
-(defn helps []
+(defn descriptions []
   (->> @*helps
        (map (fn [[n d]] (str n " - " d)))
        sort
        (str/join "\n")))
+
+(defn helps []
+  (let [commands (->> (descriptions)
+                      (str/split-lines)
+                      (map #(str "/" %)))]
+    (str/join "\n" commands)))
 
 ;; TODO: move help hint to name, like: "start - register student"
 
@@ -74,6 +80,7 @@
               (let [tmp (cond
                           (handlers/command? update name) (start-handler tx msg)
 
+                          (nil? msg) nil
                           (str/starts-with? (-> msg :text) "/") nil
 
                           (and (= current-talk name) (contains? handlers current-branch))
@@ -95,6 +102,11 @@
         @res))))
 
 (defmacro def-talk [& args] `(talk ~@args))
+
+(defmacro when-handlers [test & handlers]
+  `(if ~test
+     (handlers/handlers ~@handlers)
+     (constantly nil)))
 
 ;; TODO: move help hint to name, like: "start - register student"
 
@@ -129,11 +141,11 @@
                            [[{:text "yes"} {:text "no"}]]}}))
 
 (defmacro if-parse-yes-or-no [tx token id text if-yes if-no]
-  `(cond
-     (= ~text "yes") ~if-yes
-     (= ~text "no") ~if-no
-     :else (do (talk/send-text ~token ~id "What (yes or no)?")
-               (talk/repeat-branch ~tx))))
+  `(case (str/lower-case ~text)
+     "yes" (do ~if-yes)
+     "no" (do ~if-no)
+     (do (talk/send-text ~token ~id "What (yes or no)?")
+         (talk/repeat-branch ~tx))))
 
 (defmacro when-parse-yes-or-no [tx token id text & body]
   `(if-parse-yes-or-no ~tx ~token ~id ~text

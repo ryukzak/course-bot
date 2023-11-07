@@ -1,9 +1,11 @@
 (ns course-bot.essay
   (:require [course-bot.talk :as talk]
             [course-bot.general :as general :refer [tr]]
-            [course-bot.misc :as misc])
+            [course-bot.misc :as misc]
+            [course-bot.plagiarism :as plagiarism])
   (:require [codax.core :as codax])
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [clojure.java.io :as io]))
 
 (general/add-dict
  {:en
@@ -11,6 +13,9 @@
    {:submit "Submit "
     :your-essay-already-uploaded-1 "Your essay '%s' already uploaded."
     :send-essay-text-in-one-message-1 "Submit your essay text '%s' in one message."
+    :essay-text-too-short-1 "Your essay text is too short, it should be at least %d characters long."
+    :plagiarised-warning-1 "Your essay didn't pass plagiarism check. Your score: %s. Make it more unique!"
+    :plagiarised-report-3 "Plagiarism case: %s\n\norigin text: %s\nuploaded text: %s"
     :themes " Theme(s):\n\n"
     :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Uploading (yes/no)?"
@@ -43,12 +48,19 @@
     :essay-feedback-saved "Your feedback has been saved and will be available to essay writers."
     :essay-feedback "Feedback: "
     :feedback-on-your-essay "feedback on your essay "
-    :number-of-reviews-1 "You received %d reviews."}}
+    :number-of-reviews-1 "You received %d reviews."
+    :plagirism-report-3 "%s original: %s new: %s"
+    :warmup-plagiarism-help "Recheck and register existed essays for plagiarism."
+    :warmup-no-plagiarsm "No plagiarism found."
+    :warmup-processed-1 "Processed %d essays."}}
   :ru
   {:essay
    {:submit "Отправить "
     :your-essay-already-uploaded-1 "Ваше эссе '%s' уже загружено."
     :send-essay-text-in-one-message-1 "Отправьте текст эссе '%s' одним сообщением."
+    :essay-text-too-short-1 "Ваше эссе слишком короткое, оно должно быть длиной не менее %d символов."
+    :plagiarised-warning-1 "Ваше эссе не прошло проверку на плагиат. Ваш балл: %s. Сделайте его более уникальным!"
+    :plagiarised-report-3 "Плагиат: %s\n\nоригинал: %s\n загруженный текст: %s"
     :themes " Тема(-ы):\n\n"
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Загружаем (yes/no)?"
@@ -81,9 +93,19 @@
     :essay-feedback-saved "Ваш отзыв сохранен и будет доступен авторам эссе."
     :essay-feedback "Отзыв: "
     :feedback-on-your-essay "отзыв на ваше эссе "
-    :number-of-reviews-1 "Вы получили %d отзывов."}}})
+    :number-of-reviews-1 "Вы получили %d отзывов."
+    :plagirism-report-3 "%s оригинал: %s новое: %s"
+    :warmup-plagiarism-help "Перепроверить и зарегистрировать существующие эссе на плагиат."
+    :warmup-no-plagiarsm "Плагиат не найден."
+    :warmup-processed-1 "Обработано %d эссе."}}})
 
-(defn submit-talk [db {token :token :as conf} essay-code]
+(defn plagiarism-key [essay-code stud-id]
+  (str stud-id " - " essay-code))
+
+(defn submit-talk [db
+                   {token :token admin-chat-id :admin-chat-id :as conf}
+                   essay-code
+                   {bad-texts-path :bad-texts-path :as plagiarism-db}]
   (let [cmd (str essay-code "submit")
         topics-msg (-> conf (get (keyword essay-code)) :topic-msg)
         help (str (tr :essay/submit) essay-code)]
@@ -100,6 +122,27 @@
 
       :submit
       (fn [tx {{id :id} :from text :text}]
+        (let [min-length (or (-> conf (get (keyword essay-code)) :min-length)
+                             512)]
+          (when (< (count text) min-length)
+            (talk/send-text token id (format (tr :essay/essay-text-too-short-1) min-length))
+            (talk/stop-talk tx)))
+
+        (when-let [origin (plagiarism/find-original plagiarism-db text)]
+          (let [similarity (Math/round (:similarity origin))
+                origin-key (:key origin)
+                key (plagiarism-key essay-code id)]
+            (when-not (= origin-key key) ;; allow self plagiarism
+              (talk/send-text token id (format (tr :essay/plagiarised-warning-1) similarity))
+
+              (let [bad-key (str (misc/filename-time (misc/today)) " - " key)
+                    bad-filename (str bad-texts-path "/" bad-key ".txt")]
+                (io/make-parents bad-filename)
+                (spit bad-filename text)
+                (talk/send-text token admin-chat-id
+                                (format (tr :essay/plagiarised-report-3) similarity origin-key bad-key)))
+              (talk/stop-talk tx))))
+
         (talk/send-text token id (tr :essay/text-of-your-essay))
         (talk/send-text token id text)
         (talk/send-text token id ">>>>>>>>>>>>>>>>>>>>")
@@ -110,6 +153,7 @@
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
         (talk/when-parse-yes-or-no
          tx token id text
+         (plagiarism/register-text! plagiarism-db (plagiarism-key essay-code id) essay-text)
          (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
          (-> tx
              (codax/assoc-at [id :essays essay-code :text] essay-text)
@@ -310,3 +354,29 @@
             (#(- 4 %)) ; 3 (max score) = 4 - 1; 1 (min score) = 4 - 3
             (+ 1) ; + 1 to get actual score
             )))))
+
+(defn warmup-plagiarism-talk [db {token :token :as conf} essay-code plagiarism-db]
+  (let [cmd (str essay-code "warmupplagiarism")
+        help (str (tr :essay/warmup-plagiarism-help) essay-code)]
+    (talk/def-command db cmd help
+      (fn [tx {{id :id} :from}]
+        (general/assert-admin tx conf id)
+        (let [reports (->> (get-essays tx essay-code)
+                           (map (fn [[stud-id v]] [stud-id (-> v :essays (get essay-code) :text)]))
+                           (map (fn [[stud-id text]]
+                                  (let [key (plagiarism-key essay-code stud-id)
+                                        origin (plagiarism/find-original plagiarism-db text key)]
+                                    (plagiarism/register-text! plagiarism-db key text)
+                                    (cond
+                                      (nil? origin) nil
+                                      (= key (:key origin)) nil
+                                      :else (format (tr :essay/plagirism-report-3)
+                                                    (misc/round-2 (:similarity origin))
+                                                    (:key origin)
+                                                    key))))))
+              bad-reports (filter some? reports)]
+          (if (empty? bad-reports)
+            (talk/send-text token id (tr :essay/warmup-no-plagiarism))
+            (doall (map #(talk/send-text token id %) bad-reports)))
+          (talk/send-text token id (format (tr :essay/warmup-processed-1) (count reports)))
+          (talk/stop-talk tx))))))

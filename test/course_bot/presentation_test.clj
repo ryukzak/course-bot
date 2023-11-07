@@ -18,7 +18,7 @@
 
 (deftest setgroup-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (pres/setgroup-talk db conf "lab1"))]
@@ -39,7 +39,7 @@
 
 (deftest submit-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (pres/setgroup-talk db conf "lab1")
@@ -82,7 +82,7 @@
 
 (deftest check-and-submissions-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (pres/setgroup-talk db conf "lab1")
@@ -275,7 +275,7 @@
 
 (deftest schedule-agenda-and-drop-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (pres/setgroup-talk db conf "lab1")
@@ -431,7 +431,7 @@
       (testing "soon-talk"
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:30 +0000"))]
           (talk 1 "/lab1soon")
-          (is (= (tt/history *chat 3 1)
+          (is (= (tt/history *chat :user-id 1 :number 3)
                  ["We will expect for Lab 1 presentation soon:"
                   (tt/unlines "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
                               "1. [Bob | 2022.01.01 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
@@ -442,7 +442,7 @@
 
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.02 11:30 +0000"))]
           (talk 1 "/lab1soon")
-          (is (= (tt/history *chat 3 1)
+          (is (= (tt/history *chat :user-id 1 :number 3)
                  ["We will expect for Lab 1 presentation soon:"
                   (tt/unlines "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
                               "1. [Bob | 2022.01.01 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
@@ -453,7 +453,7 @@
 
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.03 11:30 +0000"))]
           (talk 1 "/lab1soon")
-          (is (= (tt/history *chat 2 1)
+          (is (= (tt/history *chat :user-id 1 :number 2)
                  ["We will expect for Lab 1 presentation soon:"
                   (tt/unlines "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
                               "1. [Alice | 2022.01.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
@@ -461,12 +461,12 @@
 
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.04 11:30 +0000"))]
           (talk 1 "/lab1soon")
-          (is (= (tt/history *chat 1 1)
+          (is (= (tt/history *chat :user-id 1)
                  ["We will expect for Lab 1 presentation soon:"])))
 
         (with-redefs [misc/today (fn [] (misc/read-time "2022.02.01 00:30 +0000"))]
           (talk 1 "/lab1soon")
-          (is (= (tt/history *chat 2 1)
+          (is (= (tt/history *chat :user-id 1 :number 2)
                  ["We will expect for Lab 1 presentation soon:"
                   (tt/unlines "Agenda 2022.02.02 12:00 +0000 (lgr2):"
                               "1. [ | 2022.02.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()")]))))
@@ -555,7 +555,7 @@
 
 (deftest feedback-and-rank-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database)
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
         talk (tt/handlers (general/start-talk db conf)
                           (pres/setgroup-talk db conf "lab1")

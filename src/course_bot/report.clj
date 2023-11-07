@@ -16,10 +16,11 @@
         data (cons columns
                    (map (fn [id] (map (fn [[_key get]] (get tx data id)) fields)) ids))
         dt (.format (java.text.SimpleDateFormat. "yyyy-MM-dd-HH-mm-Z") (misc/today))
-        fn (str dt "-report.csv")]
-    (with-open [writer (io/writer fn)]
+        filename (str "tmp/" dt "-report.csv")]
+    (io/make-parents filename)
+    (with-open [writer (io/writer filename)]
       (csv/write-csv writer data :separator \;))
-    (talk/send-document token id (io/file fn))))
+    (talk/send-document token id (io/file filename))))
 
 (defn report-talk [db {token :token :as conf} & fields]
   (talk/def-command db "report" "receive report"

@@ -1,3 +1,4 @@
 {:topic-msg "essay1-topics-text"
  :review-msg ":review-msg from config"
- :review-deadline "2022.01.14 12:00 +0100"}
+ :review-deadline "2022.01.14 12:00 +0100"
+ :min-length 5}

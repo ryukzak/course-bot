@@ -81,7 +81,7 @@
     :do-you-approve "Вы одобряете это?"
     :teacher-will-check "Зарегистрировано, учитель скоро проверит."
     :later "Вы можете сделать это позже."
-    :yes-or-no "Пожалуйста, да или нет?"
+    :yes-or-no "Пожалуйста, yes или no?"
     :wait-for-review-1 "Дождитесь проверки: %s"
     :remarks "Примечания:"
     :receive-from-stud-topic-2 "Получаем от студента (группа %s): \n\nТема: %s"
@@ -214,16 +214,16 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {desc :desc}]
-        (cond
-          (= text "yes") (do (talk/send-text token id (tr :pres/teacher-will-check))
-                             (-> tx
-                                 (codax/assoc-at [id :presentation pres-key :on-review?] true)
-                                 (codax/assoc-at [id :presentation pres-key :description] desc)
-                                 talk/stop-talk))
-          (= text "no") (do (talk/send-text token id (tr :pres/later))
-                            (talk/stop-talk tx))
-          :else (do (talk/send-text token id (tr :pres/yes-or-no))
-                    (talk/repeat-branch tx)))))))
+        (case (str/lower-case text)
+          "yes" (do (talk/send-text token id (tr :pres/teacher-will-check))
+                    (-> tx
+                        (codax/assoc-at [id :presentation pres-key :on-review?] true)
+                        (codax/assoc-at [id :presentation pres-key :description] desc)
+                        talk/stop-talk))
+          "no" (do (talk/send-text token id (tr :pres/later))
+                   (talk/stop-talk tx))
+          (do (talk/send-text token id (tr :pres/yes-or-no))
+              (talk/repeat-branch tx)))))))
 
 (defn wait-for-reviews [tx pres-key]
   (->> (codax/get-at tx [])
@@ -551,7 +551,7 @@
 
       :select
       (fn [tx {{id :id} :from text :text} {rank :rank studs :remain group :group dt :dt :as state}]
-        (let [n (if (re-matches #"^\d+$" text) (Integer/parseInt text) nil)]
+        (let [n (if (re-matches #"^\d+$" text) (parse-long text) nil)]
           (when (or (nil? n) (not (< n (count studs))))
             (talk/send-text token id (tr :pres/best-presentation-error))
             (talk/wait tx))
@@ -697,12 +697,13 @@
 
         (talk/send-text token id (tr :pres/all-scheduled-description-by-group))
         (let [dt (.format (java.text.SimpleDateFormat. "yyyy-MM-dd-HH-mm-Z") (misc/today))
-              fn (str dt "-" pres-id "-descriptions.md")
+              filename (str "tmp/" dt "-" pres-id "-descriptions.md")
               groups (-> conf (get pres-key) :groups keys)
               data (codax/get-at tx [])
               text (->> groups
                         (map #(str "# " % "\n\n" (scheduled-descriptions-dump data pres-key %)))
                         (str/join "\n\n\n"))]
-          (spit fn text)
-          (talk/send-document token id (io/file fn)))
+          (io/make-parents filename)
+          (spit filename text)
+          (talk/send-document token id (io/file filename)))
         tx))))

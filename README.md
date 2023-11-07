@@ -26,19 +26,19 @@ Course bot for performing laboratory works for "Computer Architecture" disciplin
   - `/lab1submissions` -- список согласованных докладов.
   - `/lab1submit` -- загрузка описания вашего доклада.
   - `/lab1feedback` -- составление рейтинга докладов.
-  
+
   Вы должны указать свою группу (`/lab1setgroup`) и загрузить описание доклада (`/lab1submit`). После проверки (не менее суток) вам придут результаты.
-  
+
   Если пришёл отзыв -- улучшаете описание и загружаете повторно. Если подтверждение, то регистрируетесь на один из дней (`/lab1schedule`). Будьте внимательны, регистрация закрывается автоматически где-то за полчаса до занятия.
-  
+
   Сразу после занятия требуется составить свой рейтинг докладов одногруппников (`/lab1feedback`). Приём закрывается автоматически.
 
-### Run
+### Run by `clj`
 
 Expect course config in `../edu-csa-internal`.
 
 ``` sh
-clj -X course-bot.csa/run
+make run-clj-csa
 ```
 
 ### Deploy
@@ -50,6 +50,6 @@ docker run --name csa-bot --restart=always -d -v $PWD/../edu-csa-internal:/edu-c
 
 ## License
 
-Copyright © 2022 Aleksandr Penskoi 
+Copyright © 2023 Aleksandr Penskoi
 
 BSD 3-Clause "New" or "Revised" License
