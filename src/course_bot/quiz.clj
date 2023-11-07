@@ -30,6 +30,7 @@
     :what-question-yes-no "What (yes/no)?"
     :remember-your-answer "Remember your answer: "
     :quiz-passed "Thanks, quiz passed. The results will be sent when the quiz is closed."
+    :already-stopped "The quiz is already stopped."
     :quiz-answers "Quiz answers: "
     :incorrect-answer "I don't understand you, send the correct answer number (1, 2...)."}}
   :ru
@@ -57,6 +58,7 @@
     :what-question-yes-no "Что (yes/no)?"
     :remember-your-answer "Запомнили ваш ответ: "
     :quiz-passed "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."
+    :already-stopped "Тест уже остановлен."
     :quiz-answers "Ответы на тест: "
     :incorrect-answer "Не понял, укажите корректный номер ответа (1, 2...)."}}})
 
@@ -297,6 +299,10 @@
                      question-index (count results)
                      next-question-index (+ 1 question-index)
                      new-results (concat results (list text))]
+                 (when (nil? quiz-key)
+                   (talk/send-text token id (tr :quiz/already-stopped))
+                   (-> tx talk/stop-talk))
+
                  (when-not (is-answer quiz question-index text)
                    (talk/send-text token id (tr :quiz/incorrect-answer))
                    (talk/wait tx))
