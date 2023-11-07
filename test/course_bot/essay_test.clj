@@ -38,7 +38,7 @@
                         (tt/text 1 "The text of your essay\n<<<<<<<<<<<<<<<<<<<<")
                         (tt/text 1 "u1 essay1 text")
                         (tt/text 1 ">>>>>>>>>>>>>>>>>>>>")
-                        (tt/text 1 "Is loading (yes/no)?"))
+                        (tt/text 1 "Uploading (yes/no)?"))
 
       (testing "cancelation"
         (talk 1 "hmmm")
@@ -56,7 +56,7 @@
       (testing "submit"
         (talk 1 "/essay1submit")
         (talk 1 "u1 essay1 text")
-        (tt/match-text *chat 1 "Is loading (yes/no)?")
+        (tt/match-text *chat 1 "Uploading (yes/no)?")
         (talk 1 "yes")
         (tt/match-text *chat 1 "Thank you, the text has been uploaded and will be submitted for review soon.")
         (talk 1 "/essay1status")
@@ -77,7 +77,7 @@
 (defn essay-submit [*chat essay-submit-talk id]
   (essay-submit-talk id "/essay1submit")
   (essay-submit-talk id (str "user" id " essay1 text"))
-  (tt/match-text *chat id "Is loading (yes/no)?")
+  (tt/match-text *chat id "Uploading (yes/no)?")
   (essay-submit-talk id "yes")
   (tt/match-text *chat id "Thank you, the text has been uploaded and will be submitted for review soon."))
 
