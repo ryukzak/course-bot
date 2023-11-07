@@ -408,10 +408,9 @@
                ["Your essay text is too short, it should be at least 5 characters long."])))
 
       (testing "plagirism"
-        (register-user *chat talk 10 "10")
-        (talk 10 "/essay1submit")
-
         (with-redefs [misc/filename-time (fn [_] "202201031130")]
+          (register-user *chat talk 10 "10")
+          (talk 10 "/essay1submit")
           (talk 10 (str "1 user7 essay1 text" (hash 7))))
 
         (is (= (tt/history *chat :user-id 10 :number 1)
@@ -422,4 +421,16 @@
                  "Plagiarism case: 24"
                  ""
                  "origin text: 7 - essay1"
-                 "uploaded text: 202201031130 - 10 - essay1")]))))))
+                 "uploaded text: 202201031130 - 10 - essay1")]))
+
+        (testing "reupload self text after db broke. Aware: broken db state."
+          (is (= (str "user7 essay1 text" (hash 7))
+                 (codax/get-at! db [7 :essays "essay1" :text])))
+          (codax/dissoc-at! db [7 :essays "essay1"])
+
+          (with-redefs [misc/filename-time (fn [_] "202201031130")]
+            (talk 7 "/essay1submit")
+            (talk 7 (str "1 user7 essay1 text" (hash 7))))
+
+          (is (= ["Is loading (yes/no)?"]
+                 (tt/history *chat :user-id 7 :number 1))))))))

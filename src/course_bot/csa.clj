@@ -33,7 +33,7 @@
 (defn open-database-or-fail [path]
   (if path
     (try
-      (codax/open-database! path)
+      (codax/open-database! path :backup-fn misc/codax-backup-fn)
       (catch Exception e
         (println (tr :csa/db-failure))
         (println (.getMessage e))
@@ -118,6 +118,7 @@
                           "essay3-reviews" (essay/review-score conf "essay3"))
 
       (plagiarism/restore-forest-talk db conf plagiarism-db)
+      (general/warning-on-edited-message conf)
 
       (handlers/command "help" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/helps)))
       (handlers/command "description" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/descriptions)))
