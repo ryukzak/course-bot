@@ -113,7 +113,7 @@
       (talk 1 "2")
       (tt/match-history *chat
                         (tt/text 1 "Thanks, quiz passed. The results will be sent when the quiz is closed.")
-                        (tt/text 0 "Quiz answers: 1, 2"))
+                        (tt/text 0 "Quiz answers: 1, 2 (Test quiz, Bot Botovich, gr1, 1)"))
 
       (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results]))))))
 
@@ -148,7 +148,7 @@
       (talk 1 "1")
       (is (= (tt/history *chat :number 2)
              [[1 "Thanks, quiz passed. The results will be sent when the quiz is closed."]
-              [0 "Quiz answers: 1, 1"]]))
+              [0 "Quiz answers: 1, 1 (Test quiz, Bot Botovich, gr1, 1)"]]))
       (is (= {:test-quiz {1 '("1" "1")}} (codax/get-at! db [:quiz :results])))
 
       (talk 1 "/stopquiz")
@@ -205,16 +205,20 @@
                                                  "ID" report/stud-id
                                                  "fail" (quiz/fail-tests conf)
                                                  "percent" (quiz/success-tests-percent conf)))
-        do-test (fn [name id & answers]
+        format-quiz-answers (fn [new-results quiz-name student-name group id]
+                              (format "Quiz answers: %s (%s, %s, %s, %s)" (str/join ", " new-results) quiz-name student-name group id))
+        do-test (fn [quiz-name id & answers]
                   (talk id "/quiz")
                   (tt/match-text *chat id
-                                 (str "Would you like to start quiz '" name "' ("
+                                 (str "Would you like to start quiz '" quiz-name "' ("
                                       (count answers) " question(s))?"))
                   (talk id "yes")
                   (doall (map #(talk id %) answers))
-                  (tt/match-history *chat
-                                    (tt/text id "Thanks, quiz passed. The results will be sent when the quiz is closed.")
-                                    (tt/text 0 (str "Quiz answers: " (str/join ", " answers)))))]
+
+                  (let [{stud-name :name stud-group :group} (codax/get-at! db [id])]
+                    (tt/match-history *chat
+                                      (tt/text id "Thanks, quiz passed. The results will be sent when the quiz is closed.")
+                                      (tt/text 0 (format-quiz-answers answers quiz-name stud-name stud-group id)))))]
 
     (tt/with-mocked-morse *chat
 
