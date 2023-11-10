@@ -95,6 +95,7 @@
               (let [tmp (cond
                           (handlers/command? update name) (start-handler tx msg)
 
+                          (nil? msg) nil
                           (str/starts-with? (-> msg :text) "/") nil
 
                           (and (= current-talk name) (contains? handlers current-branch))
