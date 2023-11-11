@@ -30,7 +30,8 @@
     :what-question-yes-no "What (yes/no)?"
     :remember-your-answer "Remember your answer: "
     :quiz-passed "Thanks, quiz passed. The results will be sent when the quiz is closed."
-    :quiz-answers "Quiz answers: "
+    :already-stopped "The quiz is already stopped."
+    :quiz-answers-5 "Quiz answers: %s (%s, %s, %s, %s)"
     :incorrect-answer "I don't understand you, send the correct answer number (1, 2...)."}}
   :ru
   {:quiz
@@ -57,7 +58,8 @@
     :what-question-yes-no "Что (yes/no)?"
     :remember-your-answer "Запомнили ваш ответ: "
     :quiz-passed "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."
-    :quiz-answers "Ответы на тест: "
+    :already-stopped "Тест уже остановлен."
+    :quiz-answers-5 "Ответы на тест: %s (%s, %s, %s, %s)"
     :incorrect-answer "Не понял, укажите корректный номер ответа (1, 2...)."}}})
 
 (def *current-quiz (atom {:stopping false :current nil}))
@@ -224,11 +226,10 @@
                            (talk/send-text token id (str (format (tr :quiz/quiz-was-stopped-1) quiz-name)))
                            (when (empty? results)
                              (talk/send-text token id (str (tr :quiz/no-answers)))
-                             (talk/stop-talk tx))
+                             (-> tx stop-quiz! talk/stop-talk))
 
                            (doall (map  #(talk/send-text token id %)
                                         (map (fn [question scores]
-
                                                (str (:ask question) "\n\n"
                                                     (str/join "\n" (map #(str "- [" %1 "] " (when (:correct %2) (tr :quiz/answer-correct)) (:text %2)) scores (:options question)))))
                                              (-> quiz :questions)
@@ -297,6 +298,10 @@
                      question-index (count results)
                      next-question-index (+ 1 question-index)
                      new-results (concat results (list text))]
+                 (when (nil? quiz-key)
+                   (talk/send-text token id (tr :quiz/already-stopped))
+                   (-> tx talk/stop-talk))
+
                  (when-not (is-answer quiz question-index text)
                    (talk/send-text token id (tr :quiz/incorrect-answer))
                    (talk/wait tx))
@@ -309,8 +314,9 @@
 
                  ; finish quiz
                  (talk/send-text token id (tr :quiz/quiz-passed))
-                 (talk/send-text token (-> conf :admin-chat-id)
-                                 (str (tr :quiz/quiz-answers) (str/join ", " new-results)))
+                 (let [{student-name :name group :group} (codax/get-at tx [id])]
+                   (talk/send-text token (-> conf :admin-chat-id)
+                                   (str (format (tr :quiz/quiz-answers-5) (str/join ", " new-results) (:name quiz) student-name group id))))
                  (-> tx
                      (codax/assoc-at [:quiz :results quiz-key id] new-results)
                      talk/stop-talk)))))

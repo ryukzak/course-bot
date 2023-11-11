@@ -45,7 +45,8 @@
     :restarted-and-notified "Restarted and notified: "
     :use-start-once-more "You can use /start once more."
     :not-restarted "Not restarted."
-    :yes-no-question "Please yes or no?"}}
+    :yes-no-question "Please yes or no?"
+    :edited-message-not-allowed "Edited message not allowed."}}
   :ru
   {:general
    {:who-am-i-4 "Имя: %s; Группа: %s; Telegram ID: %s; Группа на первую лабораторную работу: %s"
@@ -70,7 +71,8 @@
     :restarted-and-notified "Перезапущено и уведомлено: "
     :use-start-once-more "Вы можете использовать /start еще раз."
     :not-restarted "Не перезапущено."
-    :yes-no-question "Пожалуйста, yes или no?"}}})
+    :yes-no-question "Пожалуйста, yes или no?"
+    :edited-message-not-allowed "Редактирование сообщений не поддерживается."}}})
 
 (defn assert-admin
   ([tx {token :token admin-chat-id :admin-chat-id} id]
@@ -198,3 +200,10 @@
                  (talk/stop-talk tx))
         (do (talk/send-text token id (tr :general/yes-no-question))
             (talk/repeat-branch tx))))))
+
+(defn warning-on-edited-message [{token :token}]
+  (fn [{{{id :id} :from :as edited-message} :edited_message}]
+    (when (some? edited-message)
+      (talk/send-text token id (tr :general/edited-message-not-allowed))
+      true)))
+
