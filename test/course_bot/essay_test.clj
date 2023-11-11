@@ -292,7 +292,7 @@
       (talk 2 "/essay1myfeedback")
       (is (= (tt/history *chat :user-id 2 :number 2)
              ["Rank: 3; Feedback: 333bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla"
-              "You received 1 reviews."]))
+              "You received 1 review."]))
 
       (testing "send review again"
         (talk 1 "/essay1review")

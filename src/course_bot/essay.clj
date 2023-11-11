@@ -48,7 +48,8 @@
     :essay-feedback-saved "Your feedback has been saved and will be available to essay writers."
     :essay-feedback "Feedback: "
     :feedback-on-your-essay "feedback on your essay "
-    :number-of-reviews-1 "You received %d reviews."
+    :number-of-reviews-one-1 "You received %d review."
+    :number-of-reviews-many-1 "You received %d reviews."
     :plagirism-report-3 "%s original: %s new: %s"
     :warmup-plagiarism-help "Recheck and register existed essays for plagiarism."
     :warmup-no-plagiarsm "No plagiarism found."
@@ -93,7 +94,8 @@
     :essay-feedback-saved "Ваш отзыв сохранен и будет доступен авторам эссе."
     :essay-feedback "Отзыв: "
     :feedback-on-your-essay "отзыв на ваше эссе "
-    :number-of-reviews-1 "Вы получили %d отзывов."
+    :number-of-reviews-one-1 "Вы получили %d отзыв."
+    :number-of-reviews-many-1 "Вы получили %d отзыва."
     :plagirism-report-3 "%s оригинал: %s новое: %s"
     :warmup-plagiarism-help "Перепроверить и зарегистрировать существующие эссе на плагиат."
     :warmup-no-plagiarsm "Плагиат не найден."
@@ -325,7 +327,9 @@
       (fn [tx {{id :id} :from}]
         (let [reviews (my-reviews tx essay-code id)]
           (doall (map #(talk/send-text token id %) reviews))
-          (talk/send-text token id (str (format (tr :essay/number-of-reviews-1) (count reviews)))))
+          (if (= (count reviews) 1))
+          (talk/send-text token id (str (format (tr :essay/number-of-reviews-one-1) (count reviews))))
+          (talk/send-text token id (str (format (tr :essay/number-of-reviews-many-1) (count reviews)))))
         (talk/stop-talk tx)))))
 
 (defn review-score [conf essay-code]
