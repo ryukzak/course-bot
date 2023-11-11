@@ -1,11 +1,11 @@
 (ns course-bot.quiz-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest testing is] :as t]
             [clojure.string :as str])
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
             [course-bot.report :as report]
             [course-bot.quiz :as quiz]
-            [course-bot.talk-test :as tt]
+            [course-bot.talk-test :refer [answers?] :as tt]
             [course-bot.misc :as misc]))
 
 (defn start-user [*chat talk id name]
@@ -19,103 +19,114 @@
 (deftest startquiz-talk-test
   (let [conf  (misc/get-config "conf-example/csa-2023.edn")
         db    (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk  (tt/handlers (general/start-talk db conf)
-                           (quiz/startquiz-talk db conf))]
+        {talk :talk
+         *chat :*chat} (tt/test-handler (general/start-talk db conf)
+                                        (quiz/startquiz-talk db conf))]
 
     (tt/with-mocked-morse *chat
       (start-user *chat talk 1 "Bot Botovich")
 
-      (talk 1 "/startquiz")
-      (tt/match-text *chat 1 "That action requires admin rights.")
+      (is (answers? (talk 1 "/startquiz")
+                    "That action requires admin rights."))
 
-      (talk 0 "/startquiz missed-quiz")
-      (tt/match-text *chat 0 "Quiz is not defined.")
+      (is (answers? (talk 0 "/startquiz missed-quiz")
+                    "Quiz is not defined."))
 
-      (talk 0 "/startquiz")
-      (tt/match-text *chat 0
-                     (str/join "\n"
-                               '("Available quizzes:"
-                                 "- test-quiz (Test quiz)"
-                                 "- test-quiz-2 (Test quiz 2)"
-                                 "- test-quiz-3 (Test quiz 3)")))
+      (is (answers? (talk 0 "/startquiz missed-quiz")
+                    "Quiz is not defined."))
 
-      (talk 0 "/startquiz test-quiz")
-      (tt/match-text *chat 0 "Are you sure to run 'Test quiz' quiz?")
+      (is (answers? (talk 0 "/startquiz")
+                    (tt/unlines "Available quizzes:"
+                                "- test-quiz (Test quiz)"
+                                "- test-quiz-2 (Test quiz 2)"
+                                "- test-quiz-3 (Test quiz 3)")))
 
-      (talk 0 "no")
-      (tt/match-text *chat 0 "In a next time.")
+      (is (answers? (talk 0 "/startquiz test-quiz")
+                    "Are you sure to run 'Test quiz' quiz?"))
 
-      (talk 0 "/startquiz test-quiz")
-      (tt/match-text *chat 0 "Are you sure to run 'Test quiz' quiz?")
+      (is (answers? (talk 0 "no")
+                    "In a next time."))
 
-      (talk 0 "yes")
-      (tt/match-text *chat 0 "The quiz was started.")
+      (is (answers? (talk 0 "/startquiz test-quiz")
+                    "Are you sure to run 'Test quiz' quiz?"))
+
+      (is (answers? (talk 0 "yes")
+                    "The quiz was started."))
       (is (= {:current :test-quiz} (codax/get-at! db [:quiz])))
 
-      (talk 0 "/startquiz test-quiz")
-      (tt/match-text *chat 0 "Quiz is already running.")
+      (is (answers? (talk 0 "/startquiz test-quiz")
+                    "Quiz is already running."))
 
-      (talk 0 "/startquiz")
-      (tt/match-text *chat 0 "Quiz is already running."))))
+      (is (answers? (talk 0 "/startquiz")
+                    "Quiz is already running.")))))
 
 (deftest quiz-talk-test
   (let [conf  (misc/get-config "conf-example/csa-2023.edn")
         db    (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk  (tt/handlers (general/start-talk db conf)
-                           (quiz/startquiz-talk db conf)
-                           (quiz/quiz-talk db conf))]
+        {talk :talk
+         *chat :*chat} (tt/test-handler (general/start-talk db conf)
+                                        (quiz/startquiz-talk db conf)
+                                        (quiz/stopquiz-talk db conf)
+                                        (quiz/quiz-talk db conf))]
 
     (tt/with-mocked-morse *chat
       (start-user *chat talk 1 "Bot Botovich")
 
-      (talk 1 "/quiz")
-      (tt/match-text *chat 1 "The quiz is not running, wait for the teacher's signal.")
+      (is (answers? (talk 1 "/quiz")
+                    "The quiz is not running, wait for the teacher's signal."))
 
       (talk 0 "/startquiz test-quiz")
-      (talk 0 "yes")
-      (tt/match-text *chat 0 "The quiz was started.")
+      (is (answers? (talk 0 "yes")
+                    "The quiz was started."))
 
-      (talk 1 "/quiz")
-      (tt/match-text *chat 1 "Would you like to start quiz 'Test quiz' (2 question(s))?")
+      (is (answers? (talk 1 "/quiz")
+                    "Would you like to start quiz 'Test quiz' (2 question(s))?"))
 
-      (talk 1 "nooooooo")
-      (tt/match-text *chat 1 "What (yes/no)?")
+      (is (answers? (talk 1 "nooooooo")
+                    "What (yes/no)?"))
 
-      (talk 1 "no")
-      (tt/match-text *chat 1 "Your right.")
+      (is (answers? (talk 1 "no")
+                    "Your right."))
 
-      (talk 1 "/quiz")
-      (tt/match-text *chat 1 "Would you like to start quiz 'Test quiz' (2 question(s))?")
-      (talk 1 "yes")
-      (tt/match-history *chat
-                        (tt/text 1 "Answer with a number. Your first question:")
-                        (tt/text 1 "Q1\n"
-                                 "1. a1"
-                                 "2. a2"))
-      (talk 1 "first")
-      (tt/match-text *chat 1 "I don't understand you, send the correct answer number (1, 2...).")
+      (is (answers? (talk 1 "/quiz")
+                    "Would you like to start quiz 'Test quiz' (2 question(s))?"))
 
-      (talk 1 "0")
-      (tt/match-text *chat 1 "I don't understand you, send the correct answer number (1, 2...).")
+      (is (answers? (talk 1 "yes")
+                    "Answer with a number. Your first question:"
+                    (tt/unlines "Q1\n"
+                                "1. a1"
+                                "2. a2")))
 
-      (talk 1 "3")
-      (tt/match-text *chat 1 "I don't understand you, send the correct answer number (1, 2...).")
+      (is (answers? (talk 1 "first" "0" "3")
+                    "I don't understand you, send the correct answer number (1, 2...)."
+                    "I don't understand you, send the correct answer number (1, 2...)."
+                    "I don't understand you, send the correct answer number (1, 2...).")
+          "Wrong answer")
 
-      (talk 1 "1")
-      (tt/match-history *chat
-                        (tt/text 1 "Remember your answer: 1")
-                        (tt/text 1 "Q2\n"
-                                 "1. a3"
-                                 "2. a4"))
+      (is (answers? (talk 1 "1")
+                    "Remember your answer: 1"
+                    (tt/unlines "Q2\n"
+                                "1. a3"
+                                "2. a4")))
 
-      (talk 1 "2")
-      (tt/match-history *chat
-                        (tt/text 1 "Thanks, quiz passed. The results will be sent when the quiz is closed.")
-                        (tt/text 0 "Quiz answers: 1, 2 (Test quiz, Bot Botovich, gr1, 1)"))
+      (is (answers? (talk 1 "2")
+                    [1 "Remember your answer: 2"]
+                    [1 "Thanks, quiz passed. The results will be sent when the quiz is closed."]
+                    [0 "Quiz answers: 1, 2 (Test quiz, Bot Botovich, gr1, 1)"]))
+      (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results])))
 
-      (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results]))))))
+      (is (answers? (talk 0 "/stopquiz")
+                    "Are you sure to stop 'Test quiz' quiz?"))
+
+      (is (answers? (talk 0 "yes")
+                    [0 "The quiz 'Test quiz' was stopped"]
+                    [0 (tt/unlines "Q1\n"
+                                   "- [1] a1"
+                                   "- [0] CORRECT a2")]
+                    [0 (tt/unlines "Q2\n"
+                                   "- [0] CORRECT a3"
+                                   "- [1] a4")]
+                    [1 "Your result: 0/2"])))))
 
 (deftest stopquiz-talk-test
   (let [conf  (misc/get-config "conf-example/csa-2023.edn")
@@ -301,7 +312,6 @@
                                                  "fail" (quiz/fail-tests conf)
                                                  "percent" (quiz/success-tests-percent conf)))]
     (tt/with-mocked-morse *chat
-
       (start-user *chat talk 1 "Alice")
 
       (talk 0 "/startquiz test-quiz-3")
