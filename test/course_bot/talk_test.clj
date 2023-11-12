@@ -103,7 +103,7 @@
 (defmethod t/assert-expr answers? [msg form]
   `(let [actual# ~(nth form 1)
          answers# ~(into [] (drop 2 form))
-         result#  (= actual# answers#)]
+         result# (= actual# answers#)]
      (t/do-report
       {:type (if result# :pass :fail)
        :message ~msg
