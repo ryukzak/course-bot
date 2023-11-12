@@ -2,9 +2,9 @@
   (:require [clojure.test :refer [deftest testing is]])
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
+            [course-bot.misc :as misc]
             [course-bot.report :as report]
-            [course-bot.talk-test :as tt]
-            [course-bot.misc :as misc]))
+            [course-bot.talk-test :as tt]))
 
 (deftest start-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")

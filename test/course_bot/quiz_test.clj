@@ -1,12 +1,12 @@
 (ns course-bot.quiz-test
-  (:require [clojure.test :refer [deftest testing is] :as t]
-            [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest testing is] :as t])
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
-            [course-bot.report :as report]
+            [course-bot.misc :as misc]
             [course-bot.quiz :as quiz]
-            [course-bot.talk-test :refer [answers?] :as tt]
-            [course-bot.misc :as misc]))
+            [course-bot.report :as report]
+            [course-bot.talk-test :refer [answers?] :as tt]))
 
 (defn start-user [*chat talk id name]
   (testing "register user"
@@ -17,8 +17,8 @@
     (tt/match-text *chat id "You are already registered. To change your information, contact the teacher and send /whoami")))
 
 (deftest startquiz-talk-test
-  (let [conf  (misc/get-config "conf-example/csa-2023.edn")
-        db    (tt/test-database (-> conf :db-path))
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
         {talk :talk
          *chat :*chat} (tt/test-handler (general/start-talk db conf)
                                         (quiz/startquiz-talk db conf))]
@@ -61,8 +61,8 @@
                     "Quiz is already running.")))))
 
 (deftest quiz-talk-test
-  (let [conf  (misc/get-config "conf-example/csa-2023.edn")
-        db    (tt/test-database (-> conf :db-path))
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
         {talk :talk
          *chat :*chat} (tt/test-handler (general/start-talk db conf)
                                         (quiz/startquiz-talk db conf)
@@ -129,18 +129,18 @@
                     [1 "Your result: 0/2"])))))
 
 (deftest stopquiz-talk-test
-  (let [conf  (misc/get-config "conf-example/csa-2023.edn")
-        db    (tt/test-database (-> conf :db-path))
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
-        talk  (tt/handlers
-               (general/start-talk db conf)
-               (quiz/startquiz-talk db conf)
-               (quiz/quiz-talk db conf)
-               (quiz/stopquiz-talk db conf)
-               (report/report-talk db conf
-                                   "ID" report/stud-id
-                                   "fail" (quiz/fail-tests conf)
-                                   "percent" (quiz/success-tests-percent conf)))]
+        talk (tt/handlers
+              (general/start-talk db conf)
+              (quiz/startquiz-talk db conf)
+              (quiz/quiz-talk db conf)
+              (quiz/stopquiz-talk db conf)
+              (report/report-talk db conf
+                                  "ID" report/stud-id
+                                  "fail" (quiz/fail-tests conf)
+                                  "percent" (quiz/success-tests-percent conf)))]
 
     (tt/with-mocked-morse *chat
 
@@ -205,17 +205,17 @@
                  "1;:test-quiz, :test-quiz-3;0")]))))))
 
 (deftest report-talk-test
-  (let [conf    (misc/get-config "conf-example/csa-2023.edn")
-        db      (tt/test-database (-> conf :db-path))
-        *chat   (atom (list))
-        talk    (tt/handlers (general/start-talk db conf)
-                             (quiz/startquiz-talk db conf)
-                             (quiz/quiz-talk db conf)
-                             (quiz/stopquiz-talk db conf)
-                             (report/report-talk db conf
-                                                 "ID" report/stud-id
-                                                 "fail" (quiz/fail-tests conf)
-                                                 "percent" (quiz/success-tests-percent conf)))
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
+        *chat (atom (list))
+        talk (tt/handlers (general/start-talk db conf)
+                          (quiz/startquiz-talk db conf)
+                          (quiz/quiz-talk db conf)
+                          (quiz/stopquiz-talk db conf)
+                          (report/report-talk db conf
+                                              "ID" report/stud-id
+                                              "fail" (quiz/fail-tests conf)
+                                              "percent" (quiz/success-tests-percent conf)))
         format-quiz-answers (fn [new-results quiz-name student-name group id]
                               (format "Quiz answers: %s (%s, %s, %s, %s)" (str/join ", " new-results) quiz-name student-name group id))
         do-test (fn [quiz-name id & answers]
@@ -300,17 +300,17 @@
                                    ""))))))
 
 (deftest stop-quiz-without-answers-talk-test
-  (let [conf    (misc/get-config "conf-example/csa-2023.edn")
-        db      (tt/test-database (-> conf :db-path))
-        *chat   (atom (list))
-        talk    (tt/handlers (general/start-talk db conf)
-                             (quiz/startquiz-talk db conf)
-                             (quiz/quiz-talk db conf)
-                             (quiz/stopquiz-talk db conf)
-                             (report/report-talk db conf
-                                                 "ID" report/stud-id
-                                                 "fail" (quiz/fail-tests conf)
-                                                 "percent" (quiz/success-tests-percent conf)))]
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
+        *chat (atom (list))
+        talk (tt/handlers (general/start-talk db conf)
+                          (quiz/startquiz-talk db conf)
+                          (quiz/quiz-talk db conf)
+                          (quiz/stopquiz-talk db conf)
+                          (report/report-talk db conf
+                                              "ID" report/stud-id
+                                              "fail" (quiz/fail-tests conf)
+                                              "percent" (quiz/success-tests-percent conf)))]
     (tt/with-mocked-morse *chat
       (start-user *chat talk 1 "Alice")
 
@@ -326,13 +326,13 @@
                         (tt/text 0 "Answers did not received.")))))
 
 (deftest quiz-yes-no-test
-  (let [conf  (misc/get-config "conf-example/csa-2023.edn")
-        db    (tt/test-database (-> conf :db-path))
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
         *chat (atom (list))
-        talk  (tt/handlers (general/start-talk db conf)
-                           (quiz/startquiz-talk db conf)
-                           (quiz/quiz-talk db conf)
-                           (quiz/stopquiz-talk db conf))]
+        talk (tt/handlers (general/start-talk db conf)
+                          (quiz/startquiz-talk db conf)
+                          (quiz/quiz-talk db conf)
+                          (quiz/stopquiz-talk db conf))]
     (tt/with-mocked-morse *chat
       (start-user *chat talk 1 "Alice")
 
