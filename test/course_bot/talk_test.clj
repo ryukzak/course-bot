@@ -1,12 +1,12 @@
 (ns course-bot.talk-test
-  (:require [clojure.test :refer [deftest is] :as t]
+  (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.data.csv :as csv])
+            [clojure.test :refer [deftest is] :as t])
   (:require [codax.core :as codax]
             [morse.handlers :as handlers])
-  (:require [course-bot.talk :as talk]
-            [course-bot.plagiarism :as plagiarism]))
+  (:require [course-bot.plagiarism :as plagiarism]
+            [course-bot.talk :as talk]))
 
 (defn csv [tid & rows]
   (if (number? tid)

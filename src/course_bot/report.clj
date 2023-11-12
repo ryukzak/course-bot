@@ -1,8 +1,8 @@
 (ns course-bot.report
   (:require [codax.core :as codax]
             [course-bot.misc :as misc])
-  (:require [clojure.java.io :as io]
-            [clojure.data.csv :as csv])
+  (:require [clojure.data.csv :as csv]
+            [clojure.java.io :as io])
   (:require [course-bot.talk :as talk]))
 
 (defn stud-id [_tx _data id] id)

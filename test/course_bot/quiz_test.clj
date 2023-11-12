@@ -1,12 +1,12 @@
 (ns course-bot.quiz-test
-  (:require [clojure.test :refer [deftest testing is] :as t]
-            [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest testing is] :as t])
   (:require [codax.core :as codax])
   (:require [course-bot.general :as general]
-            [course-bot.report :as report]
+            [course-bot.misc :as misc]
             [course-bot.quiz :as quiz]
-            [course-bot.talk-test :refer [answers?] :as tt]
-            [course-bot.misc :as misc]))
+            [course-bot.report :as report]
+            [course-bot.talk-test :refer [answers?] :as tt]))
 
 (defn start-user [*chat talk id name]
   (testing "register user"

@@ -2,9 +2,9 @@
    (:require [clojure.java.io :as io]
              [clojure.string :as str])
    (:require [codax.core :as codax])
-   (:require [course-bot.talk :as talk]
-             [course-bot.general :as general :refer [tr]]
-             [course-bot.misc :as misc]))
+   (:require [course-bot.general :as general :refer [tr]]
+             [course-bot.misc :as misc]
+             [course-bot.talk :as talk]))
 
 (general/add-dict
  {:en

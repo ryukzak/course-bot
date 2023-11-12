@@ -1,9 +1,9 @@
 (ns course-bot.talk
   (:require [clojure.string :as str])
-  (:require [codax.core :as codax]
-            [morse.handlers :as handlers]
+  (:require [clj-http.client :as http]
+            [codax.core :as codax]
             [morse.api :as morse]
-            [clj-http.client :as http]))
+            [morse.handlers :as handlers]))
 
 ;; Talk flow
 

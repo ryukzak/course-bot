@@ -3,9 +3,9 @@
             [clojure.string :as str]
             [course-bot.misc :as misc])
   (:require [consimilo.core :as consimilo])
-  (:require [course-bot.talk :as talk]
+  (:require [course-bot.general :as general :refer [tr]]
             [course-bot.plagiarism :as plagiarism]
-            [course-bot.general :as general :refer [tr]]))
+            [course-bot.talk :as talk]))
 
 (general/add-dict
  {:en

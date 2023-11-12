@@ -1,10 +1,10 @@
 (ns course-bot.presentation-test
-  (:require [clojure.test :refer [deftest testing is]]
-            [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest testing is]])
   (:require [codax.core :as codax])
-  (:require [course-bot.presentation :as pres]
-            [course-bot.general :as general]
+  (:require [course-bot.general :as general]
             [course-bot.misc :as misc]
+            [course-bot.presentation :as pres]
             [course-bot.report :as report]
             [course-bot.talk-test :as tt]))
 

@@ -1,11 +1,11 @@
 (ns course-bot.essay
-  (:require [course-bot.talk :as talk]
-            [course-bot.general :as general :refer [tr]]
+  (:require [course-bot.general :as general :refer [tr]]
             [course-bot.misc :as misc]
-            [course-bot.plagiarism :as plagiarism])
+            [course-bot.plagiarism :as plagiarism]
+            [course-bot.talk :as talk])
   (:require [codax.core :as codax])
-  (:require [clojure.string :as str]
-            [clojure.java.io :as io]))
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]))
 
 (general/add-dict
  {:en
