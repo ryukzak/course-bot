@@ -429,7 +429,7 @@
             (talk/send-text token id (format (tr :pres/incorrect-group-one-from-2) arg groups-text)))
           (talk/stop-talk tx))))))
 
-(defn soon-talk [db {token :token  :as conf} pres-key-name]
+(defn soon-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "soon")
         pres-key (keyword pres-key-name)
         name (-> conf (get pres-key) :name)
@@ -463,7 +463,7 @@
             (talk/stop-talk tx))
 
           (when (-> pres :scheduled?)
-            (talk/send-text token id (format (tr :pres/already-scheduled-help-1)  pres-key-name))
+            (talk/send-text token id (format (tr :pres/already-scheduled-help-1) pres-key-name))
             (talk/stop-talk tx))
 
           (let [future (future-lessons conf pres-key group (misc/today))]

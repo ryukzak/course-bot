@@ -1,10 +1,10 @@
 (ns course-bot.presentation-test
-  (:require [clojure.test :refer [deftest testing is]]
-            [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest testing is]])
   (:require [codax.core :as codax])
-  (:require [course-bot.presentation :as pres]
-            [course-bot.general :as general]
+  (:require [course-bot.general :as general]
             [course-bot.misc :as misc]
+            [course-bot.presentation :as pres]
             [course-bot.report :as report]
             [course-bot.talk-test :as tt]))
 
@@ -154,14 +154,14 @@
 
       (testing "check and reject 2"
         (talk 0 "/lab1check")
-        (tt/match-history  *chat
-                           (tt/text 0 "Wait for review: 1")
-                           (tt/text 0 "Approved presentation in 'lgr1':\n")
-                           (tt/text 0 "Remarks:")
-                           (tt/text 0 "Please, add details!")
-                           (tt/text 0 "We receive from the student (group gr1): \n\nTopic: bla-bla-bla the best (second reject)")
-                           (tt/text 0 "bla-bla-bla the best (second reject)")
-                           (tt/text 0 "Approve (yes or no)?"))
+        (tt/match-history *chat
+                          (tt/text 0 "Wait for review: 1")
+                          (tt/text 0 "Approved presentation in 'lgr1':\n")
+                          (tt/text 0 "Remarks:")
+                          (tt/text 0 "Please, add details!")
+                          (tt/text 0 "We receive from the student (group gr1): \n\nTopic: bla-bla-bla the best (second reject)")
+                          (tt/text 0 "bla-bla-bla the best (second reject)")
+                          (tt/text 0 "Approve (yes or no)?"))
 
         (talk 0 "no")
         (tt/match-text *chat 0 "OK, you need to send your remark for the student:")

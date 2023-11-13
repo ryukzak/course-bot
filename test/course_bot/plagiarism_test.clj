@@ -1,7 +1,7 @@
 (ns course-bot.plagiarism-test
-  (:require [clojure.test :refer [deftest is]]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
             [clojure.string :as str]
+            [clojure.test :refer [deftest is]]
             [course-bot.plagiarism :as sut]))
 
 (def text1

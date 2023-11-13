@@ -3,20 +3,21 @@
             [clojure.string :as str]
             [course-bot.misc :as misc])
   (:require [consimilo.core :as consimilo])
-  (:require [course-bot.talk :as talk]
+  (:require [course-bot.general :as general :refer [tr]]
             [course-bot.plagiarism :as plagiarism]
             [course-bot.internationalization :as i18n :refer [tr]]
-            [course-bot.general :as general]))
+            [course-bot.general :as general]
+            [course-bot.talk :as talk]))
 
 (i18n/add-dict
  {:en
   {:plagiarism
-   {:forest-failure  "I failed to reach forest file, my Lord!"
+   {:forest-failure "I failed to reach forest file, my Lord!"
     :processed-1 "Processed %d texts, my Lord!"
     :restore-forest-done "Forest restored, my Lord!"}}
   :ru
   {:plagiarism
-   {:forest-failure  "Не удалось подключиться к хэш-лесу, мой господин!"
+   {:forest-failure "Не удалось подключиться к хэш-лесу, мой господин!"
     :processed-1 "Обработано %d текстов, мой господин!"
     :restore-forest-done "Хэш-лес восстановлен, мой господин!"}}})
 
@@ -106,6 +107,6 @@
              (map (fn [{file :file key :key}]
                     (register-text! plagiarism-db key (slurp file))))
              (misc/count-with-report
-              50 #(talk/send-text token id (format (tr :plagiarism/processed-1)  %))))
+              50 #(talk/send-text token id (format (tr :plagiarism/processed-1) %))))
         (talk/send-text token id (tr :plagiarism/restore-forest-done))
         (talk/stop-talk tx)))))

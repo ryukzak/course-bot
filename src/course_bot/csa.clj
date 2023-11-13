@@ -1,6 +1,8 @@
 (ns course-bot.csa
   (:gen-class)
   (:require [codax.core :as codax]
+            [compojure.core :refer [POST defroutes]]
+            [compojure.route :as route]
             [course-bot.essay :as essay]
             [course-bot.general :as general]
             [course-bot.internationalization :as i18n :refer [tr]]
@@ -10,25 +12,30 @@
             [course-bot.quiz :as quiz]
             [course-bot.report :as report]
             [course-bot.talk :as talk]
+            [morse.api :as api]
             [morse.handlers :as handlers]
-            [morse.polling :as polling]))
+            [morse.polling :as polling]
+            [ring.adapter.jetty :as jetty]
+            [ring.middleware.json :as middleware]))
 
 (i18n/set-locales [:ru :en])
 (i18n/add-dict
  {:en
   {:csa
-   {:start           "Bot activated, my Lord!"
-    :dot             "."
-    :stop            "Bot is dead, my Lord!"
-    :unknown-1       "Unknown message: %s"
-    :db-failure      "I failed to reach the database, my Lord!"
+   {:start "Bot activated, my Lord!"
+    :webhook-1 "Webhook is set, my Lord: %s"
+    :dot "."
+    :stop "Bot is dead, my Lord!"
+    :unknown-1 "Unknown message: %s"
+    :db-failure "I failed to reach the database, my Lord!"
     :db-failure-path "Can't find the database path, my Lord!"}}
   :ru
   {:csa
-   {:start           "Бот активирован, мой господин!"
-    :stop            "Бот погиб, мой господин!"
-    :unknown-1       "Неизвестное сообщение: %s, а вы точно мой господин?"
-    :db-failure      "Не удалось подключиться к базе данных, мой господин!"
+   {:start "Бот активирован, мой господин!"
+    :webhook-1 "Вебхук установлен, мой господин: %s"
+    :stop "Бот погиб, мой господин!"
+    :unknown-1 "Неизвестное сообщение: %s, а вы точно мой господин?"
+    :db-failure "Не удалось подключиться к базе данных, мой господин!"
     :db-failure-path "Не удалось найти путь к базе данных, мой господин!"}}})
 
 (defn open-database-or-fail [path]
@@ -49,6 +56,9 @@
   (let [{token :token
          db-path :db-path
          plagiarism-path :plagiarism-path
+         webhook-url :webhook-url
+         webhook-secrete :webhook-secrete
+         webhook-port :webhook-port
          :as conf} (misc/get-config "../edu-csa-internal/csa-2023.edn") ; FIXME:
         db (open-database-or-fail db-path)
         plagiarism-db (plagiarism/open-path-or-fail plagiarism-path)]
@@ -128,12 +138,35 @@
                           (println err)
                           (talk/send-text token id err))))
 
+    #_:clj-kondo/ignore
+    (defroutes bot-routes
+      (POST (str "/handler-" webhook-secrete)
+        {body :body :as request}
+        (bot-api body)
+        "ok")
+      (route/not-found "Not Found"))
+
+    #_:clj-kondo/ignore
+    (def bot-app
+      (-> bot-routes
+          (middleware/wrap-json-body {:keywords? true})
+          (middleware/wrap-json-response)))
+
     (println (tr :csa/start))
-    (loop [channel (polling/start token bot-api)]
-      (Thread/sleep 500)
-      (print (tr :csa/dot)) (flush)
-      (if (.closed? channel)
-        (do (print (tr :csa/stop))
-            (recur (polling/start token bot-api)))
-        (recur channel)))
-    (println (tr :csa/stop))))
+
+    (cond (some? webhook-url)
+          (let [url (str webhook-url "-" webhook-secrete)]
+            (println (tr :csa/webhook-1) url)
+            (api/set-webhook token url)
+            (jetty/run-jetty bot-app {:port webhook-port}))
+
+          :else ; polling
+          (do (api/set-webhook token nil)
+              (loop [channel (polling/start token bot-api)]
+                (Thread/sleep 500)
+                (print (tr :csa/dot)) (flush)
+                (if (.closed? channel)
+                  (do (print (tr :csa/stop))
+                      (recur (polling/start token bot-api)))
+                  (recur channel)))
+              (println (tr :csa/stop))))))

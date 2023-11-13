@@ -3,10 +3,11 @@
             [course-bot.internationalization :as i18n :refer [tr, normalize-yes-no-text]]
             [course-bot.general :as general]
             [course-bot.misc :as misc]
-            [course-bot.plagiarism :as plagiarism])
+            [course-bot.plagiarism :as plagiarism]
+            [course-bot.talk :as talk])
   (:require [codax.core :as codax])
-  (:require [clojure.string :as str]
-            [clojure.java.io :as io]))
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]))
 
 (i18n/add-dict
  {:en

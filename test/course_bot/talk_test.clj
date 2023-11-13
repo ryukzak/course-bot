@@ -1,12 +1,12 @@
 (ns course-bot.talk-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.data.csv :as csv])
+            [clojure.test :refer [deftest is] :as t])
   (:require [codax.core :as codax]
             [morse.handlers :as handlers])
-  (:require [course-bot.talk :as talk]
-            [course-bot.plagiarism :as plagiarism]))
+  (:require [course-bot.plagiarism :as plagiarism]
+            [course-bot.talk :as talk]))
 
 (defn csv [tid & rows]
   (if (number? tid)
@@ -77,6 +77,40 @@
     ([_*chat id msg] (let [handler (apply handlers/handlers handlers)]
                        (handler {:message {:from {:id id} :text msg}})))))
 
+(defn test-handler [& handlers]
+  (let [*chat (atom (list))]
+    {:*chat *chat
+     :talk (fn rec
+             ([id & msgs]
+              (let [msg-count-before (count @*chat)
+                    handler (apply handlers/handlers handlers)
+                    _ (doall (map #(handler {:message {:from {:id id} :text %}}) msgs))
+                    msg-count-after (count @*chat)
+                    new-msgs-count (- msg-count-after msg-count-before)
+                    new-msgs (->> @*chat (take new-msgs-count) reverse)]
+                (cond
+                  (and (= id (->> new-msgs first :id))
+                       (= 1 (->> new-msgs (map :id) dedupe count)))
+                  (->> new-msgs (map :msg) (into []))
+
+                  :else
+                  (->> new-msgs (map #(vector (:id %) (:msg %))) (into []))))))}))
+
+(defn answers? [actual & answers]
+  (let [expect (into [] answers)]
+    (= actual expect)))
+
+(defmethod t/assert-expr answers? [msg form]
+  `(let [actual# ~(nth form 1)
+         answers# ~(into [] (drop 2 form))
+         result# (= actual# answers#)]
+     (t/do-report
+      {:type (if result# :pass :fail)
+       :message ~msg
+       :expected answers#
+       :actual actual#})
+     result#))
+
 (defn history
   [*chat & {:keys [user-id number] :or {user-id nil number 1}}]
   (->> @*chat
@@ -101,4 +135,3 @@
   (test-if-parse-yes-or-no-helper "yes" "ret-yes")
   (test-if-parse-yes-or-no-helper "NO" "ret-no")
   (test-if-parse-yes-or-no-helper "no" "ret-no"))
-

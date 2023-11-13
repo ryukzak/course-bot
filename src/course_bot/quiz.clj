@@ -227,15 +227,14 @@
                            (talk/send-text token id (str (format (tr :quiz/quiz-was-stopped-1) quiz-name)))
                            (when (empty? results)
                              (talk/send-text token id (str (tr :quiz/no-answers)))
-                             (talk/stop-talk tx))
+                             (-> tx stop-quiz! talk/stop-talk))
 
-                           (doall (map  #(talk/send-text token id %)
-                                        (map (fn [question scores]
-
-                                               (str (:ask question) "\n\n"
-                                                    (str/join "\n" (map #(str "- [" %1 "] " (when (:correct %2) (tr :quiz/answer-correct)) (:text %2)) scores (:options question)))))
-                                             (-> quiz :questions)
-                                             (result-stat quiz results))))
+                           (doall (map #(talk/send-text token id %)
+                                       (map (fn [question scores]
+                                              (str (:ask question) "\n\n"
+                                                   (str/join "\n" (map #(str "- [" %1 "] " (when (:correct %2) (tr :quiz/answer-correct)) (:text %2)) scores (:options question)))))
+                                            (-> quiz :questions)
+                                            (result-stat quiz results))))
 
                            (doall (map (fn [[stud-id _cur info]] (talk/send-text token stud-id (str (tr :quiz/quiz-your-result) info)))
                                        per-studs))

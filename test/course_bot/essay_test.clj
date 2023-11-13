@@ -1,8 +1,8 @@
 (ns course-bot.essay-test
   (:require [clojure.test :refer [deftest testing is]])
   (:require [codax.core :as codax])
-  (:require [course-bot.general :as general]
-            [course-bot.essay :as essay]
+  (:require [course-bot.essay :as essay]
+            [course-bot.general :as general]
             [course-bot.misc :as misc]
             [course-bot.report :as report]
             [course-bot.talk-test :as tt]))

@@ -1,8 +1,9 @@
 (ns course-bot.talk
   (:require [clojure.string :as str])
-  (:require [codax.core :as codax]
-            [morse.handlers :as handlers]
+  (:require [clj-http.client :as http]
+            [codax.core :as codax]
             [morse.api :as morse]
+            [morse.handlers :as handlers]
             [clj-http.client :as http])
   (:require [course-bot.internationalization :as i18n :refer [tr]]))
 
@@ -140,11 +141,11 @@
   "Sends json to the chat"
   ([token chat-id data] (send-message token chat-id {} data))
   ([token chat-id options data]
-   (let [url  (str morse/base-url token "/sendMessage")
+   (let [url (str morse/base-url token "/sendMessage")
          body (merge {:chat_id chat-id} options data)
          resp (http/post url {:content-type :json
-                              :as           :json
-                              :form-params  body})]
+                              :as :json
+                              :form-params body})]
      (-> resp :body))))
 
 (defn send-yes-no-kbd [token id msg]
