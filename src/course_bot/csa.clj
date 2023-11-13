@@ -3,7 +3,7 @@
   (:require [codax.core :as codax]
             [course-bot.essay :as essay]
             [course-bot.general :as general]
-            [course-bot.localization :as l10z :refer [tr]]
+            [course-bot.internationalization :as i18n :refer [tr]]
             [course-bot.misc :as misc]
             [course-bot.plagiarism :as plagiarism]
             [course-bot.presentation :as pres]
@@ -13,8 +13,8 @@
             [morse.handlers :as handlers]
             [morse.polling :as polling]))
 
-(l10z/set-locales [:ru :en])
-(l10z/add-dict
+(i18n/set-locales [:ru :en])
+(i18n/add-dict
  {:en
   {:csa
    {:start           "Bot activated, my Lord!"

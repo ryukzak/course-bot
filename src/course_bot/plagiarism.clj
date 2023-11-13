@@ -5,10 +5,10 @@
   (:require [consimilo.core :as consimilo])
   (:require [course-bot.talk :as talk]
             [course-bot.plagiarism :as plagiarism]
-            [course-bot.localization :as l10z :refer [tr]]
+            [course-bot.internationalization :as i18n :refer [tr]]
             [course-bot.general :as general]))
 
-(l10z/add-dict
+(i18n/add-dict
  {:en
   {:plagiarism
    {:forest-failure  "I failed to reach forest file, my Lord!"

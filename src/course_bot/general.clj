@@ -2,10 +2,10 @@
   (:require [clojure.string :as str])
   (:require [codax.core :as codax])
   (:require [course-bot.talk :as talk]
-            [course-bot.localization :as l10z :refer [tr]]))
+            [course-bot.internationalization :as i18n :refer [tr, normalize-yes-no-text]]))
 
 
-(l10z/add-dict
+(i18n/add-dict
  {:en
   {:general
    {:who-am-i-3 "Name: %s; Group: %s; Telegram ID: %s"
@@ -56,7 +56,7 @@
     :restarted-and-notified "Перезапущено и уведомлено: "
     :use-start-once-more "Вы можете использовать /start еще раз."
     :not-restarted "Не перезапущено."
-    :yes-no-question "Пожалуйста, yes или no?"
+    :yes-no-question "Пожалуйста, да или нет?"
     :edited-message-not-allowed "Редактирование сообщений не поддерживается."}}})
 
 (defn assert-admin
@@ -174,17 +174,14 @@
 
     :approve
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
-      (cond
-        (= (str/lower-case text) (tr :talk/yes))
-        (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
-            (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
-            (-> tx
-                (codax/assoc-at [stud-id :allow-restart] true)
-                (talk/stop-talk)))
-        (= (str/lower-case text) (tr :talk/no))
-        (do (talk/send-text token id (tr :general/not-restarted))
-            (talk/stop-talk tx))
-        :else
+      (case (normalize-yes-no-text text)
+        "yes" (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
+                  (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
+                  (-> tx
+                      (codax/assoc-at [stud-id :allow-restart] true)
+                      (talk/stop-talk)))
+        "no" (do (talk/send-text token id (tr :general/not-restarted))
+                 (talk/stop-talk tx))
         (do (talk/send-text token id (tr :general/yes-no-question))
             (talk/repeat-branch tx))))))
 

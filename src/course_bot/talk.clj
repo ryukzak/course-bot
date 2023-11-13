@@ -4,9 +4,9 @@
             [morse.handlers :as handlers]
             [morse.api :as morse]
             [clj-http.client :as http])
-  (:require [course-bot.localization :as l10z :refer [tr]]))
+  (:require [course-bot.internationalization :as i18n :refer [tr]]))
 
-(l10z/add-dict
+(i18n/add-dict
  {:en
   {:talk
    {:yes "yes"
@@ -155,17 +155,17 @@
                            :keyboard
                            [[{:text (tr :talk/yes)} {:text (tr :talk/no)}]]}}))
 
-(defmacro if-parse-yes-or-no [tx token id text if-yes if-no]
+(defmacro if-parse-yes-or-no [tx token id text yes-no-question if-yes if-no]
   `(case (str/lower-case ~text)
      "yes" (do ~if-yes)
      "no" (do ~if-no)
-     (do (talk/send-text ~token ~id "What (yes or no)?")
+     (do (talk/send-text ~token ~id ~yes-no-question)
          (talk/repeat-branch ~tx))))
 
-(defmacro when-parse-yes-or-no [tx token id text & body]
-  `(if-parse-yes-or-no ~tx ~token ~id ~text
+(defmacro when-parse-yes-or-no [tx token id text yes-no-question cancelled & body]
+  `(if-parse-yes-or-no ~tx ~token ~id ~text ~yes-no-question
                        (do ~@body)
-                       (do (talk/send-text ~token ~id "Cancelled.")
+                       (do (talk/send-text ~token ~id ~cancelled)
                            (talk/stop-talk ~tx))))
 
 ;; tests
