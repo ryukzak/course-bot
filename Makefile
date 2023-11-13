@@ -33,7 +33,7 @@ stop:
 	docker rm ${NAME}
 
 run:
-	docker run --name ${NAME} --restart=always -d -v ${CONF}:/edu-csa-internal -v ${PLAGIARISM_DB}:/plagiarism-db -v ${DB}:/csa-db ${NAME}
+	docker run --name ${NAME} --restart=always -d -v ${CONF}:/edu-csa-internal -p 3100:3100 -v ${PLAGIARISM_DB}:/plagiarism-db -v ${DB}:/csa-db ${NAME}
 
 test:
 	clojure -X:test
