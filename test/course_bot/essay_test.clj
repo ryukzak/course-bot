@@ -287,12 +287,12 @@
 
       (talk 1 "/essay1myfeedback")
       (is (= (tt/history *chat :user-id 1)
-             ["You received 0 reviews."]))
+             ["Review count: 0."]))
 
       (talk 2 "/essay1myfeedback")
       (is (= (tt/history *chat :user-id 2 :number 2)
              ["Rank: 3; Feedback: 333bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla"
-              "You received 1 reviews."]))
+              "Review count: 1."]))
 
       (testing "send review again"
         (talk 1 "/essay1review")
@@ -342,7 +342,7 @@
              ["Rank: 3; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 4"
               "Rank: 2; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 3"
               "Rank: 1; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 2"
-              "You received 3 reviews."]))
+              "Review count: 3."]))
 
       (testing "report"
         (is (= "2022.01.03 11:30 +0000"
