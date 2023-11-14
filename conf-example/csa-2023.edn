@@ -10,4 +10,5 @@
  :essay1 [:inline "essay1.edn"]
  :quiz {:test-quiz [:inline "quiz/test-quiz.edn"]
         :test-quiz-2 [:inline "quiz/test-quiz-2.edn"]
-        :test-quiz-3 [:inline "quiz/test-quiz-3.edn"]}}
+        :test-quiz-3 [:inline "quiz/test-quiz-3.edn"]
+        :test-quiz-10 [:inline "quiz/test-quiz-10.edn"]}}

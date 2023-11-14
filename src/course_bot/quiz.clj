@@ -108,6 +108,10 @@
   (swap! *current-quiz assoc :stopping true)
   (codax/assoc-at tx [:quiz :current] nil))
 
+(defn extract-number [s]
+  (let [m (re-find #"\d+" s)]
+    (if m (parse-long m) 0)))
+
 (defn startquiz-talk [db {token :token :as conf}]
   (talk/talk db "startquiz"
              :start
@@ -121,7 +125,10 @@
                      quiz (-> conf :quiz (get quiz-key))]
                  (when-not quiz-key
                    (let [quizs (->> (-> conf :quiz)
-                                    (sort-by first)
+                                    (map #(vector % (extract-number (name (first %)))))
+                                    ; order by extracted numbers. String without number goes first
+                                    (sort-by second)
+                                    (map first)
                                     (map (fn [[k v]] (str "- " (name k) " (" (-> v :name) ")"))))]
                      (talk/send-text token id (str (tr :quiz/available-quizzes)
                                                    (str/join "\n" quizs)))
