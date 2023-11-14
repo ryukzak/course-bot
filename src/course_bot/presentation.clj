@@ -3,7 +3,7 @@
             [clojure.string :as str])
   (:require [codax.core :as codax])
   (:require [course-bot.talk :as talk]
-            [course-bot.internationalization :as i18n :refer [tr, normalize-yes-no-text]]
+            [course-bot.internationalization :as i18n :refer [tr]]
             [course-bot.general :as general]
             [course-bot.misc :as misc]))
 
@@ -215,16 +215,14 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {desc :desc}]
-        (case (normalize-yes-no-text text)
-          "yes" (do (talk/send-text token id (tr :pres/teacher-will-check))
-                    (-> tx
-                        (codax/assoc-at [id :presentation pres-key :on-review?] true)
-                        (codax/assoc-at [id :presentation pres-key :description] desc)
-                        talk/stop-talk))
-          "no" (do (talk/send-text token id (tr :pres/later))
-                   (talk/stop-talk tx))
-          (do (talk/send-text token id (tr :pres/yes-or-no))
-              (talk/repeat-branch tx)))))))
+        (let [normalized-text (i18n/normalize-yes-no-text text)]
+          (case normalized-text
+            "yes" (do (talk/send-text token id (tr :pres/teacher-will-check))
+                      (-> tx
+                          (codax/assoc-at [id :presentation pres-key :on-review?] true)
+                          (codax/assoc-at [id :presentation pres-key :description] desc)
+                          talk/stop-talk))
+            (talk/process-answer token id tx normalized-text (tr :pres/later) (tr :pres/yes-or-no))))))))
 
 (defn wait-for-reviews [tx pres-key]
   (->> (codax/get-at tx [])
@@ -293,17 +291,17 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
-        (talk/if-parse-yes-or-no
-         tx token id (normalize-yes-no-text text) (tr :talk/question-yes-no)
-         (do (talk/send-text token id (format (tr :pres/ok-stud-will-receive-approve-1) cmd))
-             (talk/send-text token stud-id (format (tr :pres/approved-description-1) name))
-             (-> tx
-                 (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
-                 (codax/assoc-at [stud-id :presentation pres-key :approved?] true)
-                 talk/stop-talk))
-
-         (do (talk/send-text token id (tr :pres/ok-need-send-remark-for-student))
-             (talk/change-branch tx :remark {:stud-id stud-id}))))
+        (case (i18n/normalize-yes-no-text text)
+          "yes" (do (talk/send-text token id (format (tr :pres/ok-stud-will-receive-approve-1) cmd))
+                    (talk/send-text token stud-id (format (tr :pres/approved-description-1) name))
+                    (-> tx
+                        (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
+                        (codax/assoc-at [stud-id :presentation pres-key :approved?] true)
+                        talk/stop-talk))
+          "no" (do (talk/send-text token id (tr :pres/ok-need-send-remark-for-student))
+                   (talk/change-branch tx :remark {:stud-id stud-id}))
+          (do (talk/send-text token id (tr :talk/question-yes-no))
+              (talk/repeat-branch tx))))
 
       :remark
       (fn [tx {{id :id} :from remark :text} {stud-id :stud-id}]
@@ -605,22 +603,23 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
-        (talk/when-parse-yes-or-no
-         tx token id (normalize-yes-no-text text) (tr :talk/question-yes-no) (tr :talk/cancelled)
-         (let [group (codax/get-at tx [stud-id :presentation pres-key :group])
-               lessons (codax/get-at tx [:presentation pres-key group])]
-           (talk/send-text token id (format (tr :pres/drop-student-1) stud-id))
-           (talk/send-text token stud-id (format (tr :pres/drop-state-1) name))
-           (-> (if drop-all
-                 (codax/assoc-at tx [stud-id :presentation pres-key] nil)
-                 (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
-               (codax/assoc-at [:presentation pres-key group]
-                               (->> lessons
-                                    (map (fn [[dt desc]]
-                                           [dt (assoc desc
-                                                      :stud-ids (filter #(not= stud-id %) (:stud-ids desc)))]))
-                                    (into {})))
-               talk/stop-talk)))))))
+        (let [normalized-text (i18n/normalize-yes-no-text text)]
+          (case normalized-text
+            "yes" (let [group (codax/get-at tx [stud-id :presentation pres-key :group])
+                        lessons (codax/get-at tx [:presentation pres-key group])]
+                    (talk/send-text token id (format (tr :pres/drop-student-1) stud-id))
+                    (talk/send-text token stud-id (format (tr :pres/drop-state-1) name))
+                    (-> (if drop-all
+                          (codax/assoc-at tx [stud-id :presentation pres-key] nil)
+                          (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
+                        (codax/assoc-at [:presentation pres-key group]
+                                        (->> lessons
+                                             (map (fn [[dt desc]]
+                                                    [dt (assoc desc
+                                                               :stud-ids (filter #(not= stud-id %) (:stud-ids desc)))]))
+                                             (into {})))
+                        talk/stop-talk))
+            (talk/process-answer token id tx normalized-text (tr :talk/cancelled) (tr :talk/question-yes-no))))))))
 
 (defn avg-rank [tx pres-key stud-id]
   (let [group (codax/get-at tx [stud-id :presentation pres-key :group])

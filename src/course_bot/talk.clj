@@ -3,8 +3,7 @@
   (:require [clj-http.client :as http]
             [codax.core :as codax]
             [morse.api :as morse]
-            [morse.handlers :as handlers]
-            [clj-http.client :as http])
+            [morse.handlers :as handlers])
   (:require [course-bot.internationalization :as i18n :refer [tr]]))
 
 (i18n/add-dict
@@ -156,18 +155,12 @@
                            :keyboard
                            [[{:text (tr :talk/yes)} {:text (tr :talk/no)}]]}}))
 
-(defmacro if-parse-yes-or-no [tx token id text yes-no-question if-yes if-no]
-  `(case (str/lower-case ~text)
-     "yes" (do ~if-yes)
-     "no" (do ~if-no)
-     (do (talk/send-text ~token ~id ~yes-no-question)
-         (talk/repeat-branch ~tx))))
-
-(defmacro when-parse-yes-or-no [tx token id text yes-no-question cancelled & body]
-  `(if-parse-yes-or-no ~tx ~token ~id ~text ~yes-no-question
-                       (do ~@body)
-                       (do (talk/send-text ~token ~id ~cancelled)
-                           (talk/stop-talk ~tx))))
+(defn process-answer [token id tx text no_answer else_answer]
+  (case text
+    "no" (do (send-text token id no_answer)
+             (stop-talk tx))
+    (do (send-text token id else_answer)
+        (repeat-branch tx))))
 
 ;; tests
 

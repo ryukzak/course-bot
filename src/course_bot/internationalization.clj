@@ -35,4 +35,4 @@
     (if inner-key
       (let [val (get-by-lang-and-type lang type inner-key)]
         val)
-      "Invalid input")))
+      text)))

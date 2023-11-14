@@ -1,7 +1,7 @@
 (ns course-bot.quiz
   (:require [clojure.string :as str])
   (:require [codax.core :as codax])
-  (:require [course-bot.internationalization :as i18n :refer [tr, normalize-yes-no-text]]
+  (:require [course-bot.internationalization :as i18n :refer [tr]]
             [course-bot.general :as general]
             [course-bot.talk :as talk]))
 
@@ -135,11 +135,12 @@
                  (talk/change-branch tx :approve {:quiz-key quiz-key})))
              :approve
              (fn [tx {{id :id} :from text :text} {quiz-key :quiz-key}]
-               (case (normalize-yes-no-text text)
-                 "yes" (do
-                         (talk/send-text token id (tr :quiz/quiz-started))
-                         (start-quiz! tx quiz-key))
-                 "no" (do (talk/send-text token id (tr :quiz/quiz-canceled)) (talk/stop-talk tx))))))
+               (let [normalized-text (i18n/normalize-yes-no-text text)]
+                 (case normalized-text
+                   "yes" (do
+                           (talk/send-text token id (tr :quiz/quiz-started))
+                           (start-quiz! tx quiz-key))
+                   (talk/process-answer token id tx normalized-text (tr :quiz/quiz-canceled) (tr :talk/question-yes-no)))))))
 
 (defn get-test-keys-for-score [conf]
   (->> conf
@@ -216,7 +217,7 @@
                (let [quiz-key (codax/get-at tx [:quiz :current])
                      quiz-name (-> conf :quiz (get quiz-key) :name)
                      quiz (-> conf :quiz (get quiz-key))] 
-                 (case (normalize-yes-no-text text)
+                 (case (i18n/normalize-yes-no-text text)
                    "yes" (let [results (codax/get-at tx [:quiz :results quiz-key])
                                per-studs (map (fn [stud-id]
                                                 (let [{cur :count-correct max :count-questions} (evaluate-answers (:questions quiz)
@@ -284,7 +285,7 @@
              (fn [tx {{id :id} :from text :text}]
                (let [quiz-key (codax/get-at tx [:quiz :current])
                      quiz (-> conf :quiz (get quiz-key))]
-                 (case (normalize-yes-no-text text)
+                 (case (i18n/normalize-yes-no-text text)
                    "yes" (do (talk/send-text token id (tr :quiz/quiz-after-run-info))
                              (talk/send-text token id (question-msg quiz 0))
                              (talk/change-branch tx :quiz-step {:results '()}))

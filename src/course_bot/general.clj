@@ -2,7 +2,7 @@
   (:require [clojure.string :as str])
   (:require [codax.core :as codax])
   (:require [course-bot.talk :as talk]
-            [course-bot.internationalization :as i18n :refer [tr, normalize-yes-no-text]]))
+            [course-bot.internationalization :as i18n :refer [tr]]))
 
 
 (i18n/add-dict
@@ -174,16 +174,14 @@
 
     :approve
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
-      (case (normalize-yes-no-text text)
-        "yes" (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
-                  (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
-                  (-> tx
-                      (codax/assoc-at [stud-id :allow-restart] true)
-                      (talk/stop-talk)))
-        "no" (do (talk/send-text token id (tr :general/not-restarted))
-                 (talk/stop-talk tx))
-        (do (talk/send-text token id (tr :general/yes-no-question))
-            (talk/repeat-branch tx))))))
+      (let [normalized-text (i18n/normalize-yes-no-text text)]
+        (case normalized-text
+          "yes" (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
+                    (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
+                    (-> tx
+                        (codax/assoc-at [stud-id :allow-restart] true)
+                        (talk/stop-talk)))
+          (talk/process-answer token id tx normalized-text (tr :general/not-restarted) (tr :general/yes-no-question)))))))
 
 (defn warning-on-edited-message [{token :token}]
   (fn [{{{id :id} :from :as edited-message} :edited_message}]
