@@ -61,7 +61,7 @@
     :setgroup-talk-1 "set your group for '%s'"
     :submit-talk-1 "submit your '%s' description"
     :check-talk "for teacher, check submitted presentation description"
-    :submisstion-talk "list submissions and their status (no args -- your group, with args -- specified)"
+    :submission-talk "list submissions and their status (no args -- your group, with args -- specified)"
     :agenda-talk "agenda (no args -- your group, with args -- specified)"
     :soon-talk-help "what will happen soon"
     :schedule-talk "select your presentation day"
@@ -122,7 +122,7 @@
     :setgroup-talk-1 "установить вашу группу для '%s'"
     :submit-talk-1 "отправьте описание '%s'"
     :check-talk "для преподавателя, ревью загруженных тем"
-    :submisstion-talk "статус загруженных эссе (опциональный аргумент -- группа)"
+    :submission-talk "статус загруженных эссе (опциональный аргумент -- группа)"
     :agenda-talk "расписание докладов (опциональный аргумент -- группа)"
     :soon-talk-help "что произойдет в ближайшее время"
     :schedule-talk "выберите день презентации"
@@ -321,7 +321,7 @@
         groups-text (->> groups keys sort (str/join ", "))]
 
     (talk/def-command db cmd
-      (tr :pres/submisstion-talk)
+      (tr :pres/submission-talk)
       (fn [tx {{id :id} :from text :text}]
         (let [arg (talk/command-text-arg text)]
           (cond
