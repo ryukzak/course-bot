@@ -9,28 +9,28 @@
 (deftest start-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (general/listgroups-talk db conf)
-                          (report/report-talk db conf
-                                              "ID" report/stud-id
-                                              "name" report/stud-name
-                                              "group" report/stud-group))]
+        {talk :talk
+         *chat :*chat} (tt/test-handler (general/start-talk db conf)
+                                        (general/listgroups-talk db conf)
+                                        (report/report-talk db conf
+                                                            "ID" report/stud-id
+                                                            "name" report/stud-name
+                                                            "group" report/stud-group))]
     (tt/with-mocked-morse *chat
-      (talk "bla-bla")
+      (talk 1 "bla-bla")
       (is (= '() @*chat))
 
       (testing "registration"
-        (talk "/start")
+        (talk 1 "/start")
         (tt/match-text *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?")
 
-        (talk "Bot Botovich")
+        (talk 1 "Bot Botovich")
         (tt/match-text *chat "What is your group (gr1, gr2)?")
 
-        (talk "wrong group")
+        (talk 1 "wrong group")
         (tt/match-text *chat "I don't know this group. Please, repeat it (gr1, gr2):")
 
-        (talk "gr1")
+        (talk 1 "gr1")
         (tt/match-history *chat
                           (tt/text 1 "Hi Bot Botovich!")
                           (tt/text 1 "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
@@ -61,7 +61,7 @@
                                   ["1" "Bot Botovich" "gr1"])))
 
       (testing "second registration"
-        (talk "/start")
+        (talk 1 "/start")
         (tt/match-text *chat "You are already registered. To change your information, contact the teacher and send /whoami")))))
 
 (deftest restart-talk-test

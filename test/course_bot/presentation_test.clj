@@ -623,7 +623,6 @@
         (talk 0 "/report")
         (tt/match-csv *chat 0
                       ["ID" "pres-group" "feedback-avg" "feedback" "classes" "lesson-counter"]
-                      ["0" "" "" "" "0" "0"]
                       ["1" "lgr1" "" "4" "1" "1"]
                       ["2" "lgr1" "" "2" "1" "1"]
                       ["3" "lgr1" "" "" "1" "1"]))
@@ -687,11 +686,9 @@
           (talk 0 "/report")
           (tt/match-csv *chat 0
                         ["ID" "pres-group" "feedback-avg" "feedback" "classes" "lesson-counter"]
-                        ["0" "" "" "" "0" "0"]
                         ["1" "lgr1" "1,5" "2" "1" "1"]
                         ["2" "lgr1" "1,5" "4" "1" "1"]
-                        ["3" "lgr1" "" "" "1" "1"]
-                        ["4" "" "" "" "0" "0"]))
+                        ["3" "lgr1" "" "" "1" "1"]))
 
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
           (talk 3 "/lab1feedback")
@@ -730,8 +727,6 @@
         (talk 0 "/report")
         (tt/match-csv *chat 0
                       ["ID" "pres-group" "feedback-avg" "feedback" "classes" "lesson-counter"]
-                      ["0" "" "" "" "0" "0"]
                       ["1" "lgr1" "1,33" "4" "1" "1"]
                       ["2" "lgr1" "1,67" "2" "1" "1"]
-                      ["3" "lgr1" "" "" "1" "1"]
-                      ["4" "" "" "" "0" "0"])))))
+                      ["3" "lgr1" "" "" "1" "1"])))))
