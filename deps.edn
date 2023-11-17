@@ -1,7 +1,14 @@
 {:paths   ["src" "test"]
  :deps    {clj-kondo/clj-kondo                  {:mvn/version "2023.01.20"}
            dev.weavejester/cljfmt               {:mvn/version "0.11.2"}
-           codax/codax                          {:mvn/version "1.3.1"}
+
+           io.github.dscarpetti/codax           {:git/sha "bdfa11bf878012884b5c82f5fa230b40e8677d84"
+                                                 :git/url "https://github.com/dscarpetti/codax.git"
+                                                 :deps/manifest :deps}
+           com.taoensso/nippy                   {:mvn/version "3.2.0"}
+           clj-time/clj-time                    {:mvn/version "0.13.0"}
+           org.clojure/core.cache               {:mvn/version "0.6.5"}
+
            com.taoensso/tempura                 {:mvn/version "1.5.3"}
            consimilo/consimilo                  {:mvn/version "0.1.1"}
 
