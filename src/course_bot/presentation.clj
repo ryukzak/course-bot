@@ -62,7 +62,7 @@
     :setgroup-talk-1 "set your group for '%s'"
     :submit-talk-1 "submit your '%s' description"
     :check-talk "for teacher, check submitted presentation description"
-    :submisstion-talk "list submissions and their status (no args -- your group, with args -- specified)"
+    :submission-talk "list submissions and their status (no args -- your group, with args -- specified)"
     :agenda-talk "agenda (no args -- your group, with args -- specified)"
     :soon-talk-help "what will happen soon"
     :schedule-talk "select your presentation day"
@@ -76,11 +76,11 @@
     :select-group-2 "Пожалуйста, выберите вашу группу %s: %s"
     :missing-group-1 "Я не знаю эту группу. Попробуйте еще раз (%s)"
     :group-is-already-set-2 "Ваш набор групп %s: %s"
-    :on-review "На рассмотрении вы будете проинформированы, когда оно будет завершено."
+    :on-review "На рассмотрении. Вы будете проинформированы, когда оно будет завершено."
     :provide-description-1 "Пожалуйста, предоставьте описание вашего '%s' (в одном сообщении):"
     :your-description "Ваше описание:"
     :do-you-approve "Вы одобряете это?"
-    :teacher-will-check "Зарегистрировался, учитель скоро проверит."
+    :teacher-will-check "Зарегистрировано, учитель скоро проверит."
     :later "Вы можете сделать это позже."
     :yes-or-no "Пожалуйста, да или нет?"
     :wait-for-review-1 "Дождитесь проверки: %s"
@@ -95,7 +95,7 @@
     :incorrect-group-one-from-2 "Я не знаю '%s', вы должны указать один из: %s"
     :agenda-2 "Повестка дня %s (%s)"
     :expect-soon-1 "Мы ожидаем для %s в ближайшее время:"
-    :not-have-options "У меня нет для тебя вариантов."
+    :not-have-options "У меня нет для вас вариантов."
     :select-option "Выберите свой вариант:\n"
     :not-found-allow-only "Не найдено, разрешить только:\n"
     :enter-pres-number "Введите номер лучшей презентации в списке:\n"
@@ -120,14 +120,14 @@
     :already-scheduled-help-1 "Уже запланировано, проверьте /%sagenda."
     :ok-check-schedule-help-1 "Хорошо, вы можете проверить это: /%sagenda"
     :should-set-group-to-send-feedback-help-2 "Чтобы отправить отзыв, вы должны установить свою группу для %s с помощью /%ssetgroup"
-    :setgroup-talk-1 "установить вашу группу для '%s'"
-    :submit-talk-1 "отправьте описание '%s'"
-    :check-talk "для преподавателя, ревью загруженных тем"
-    :submisstion-talk "статус загруженных эссе (опциональный аргумент -- группа)"
-    :agenda-talk "расписание докладов (опциональный аргумент -- группа)"
-    :soon-talk-help "что произойдет в ближайшее время"
-    :schedule-talk "выберите день презентации"
-    :feedback-talk "отправить отзыв для отчета"
+    :setgroup-talk-1 "Установить вашу группу для '%s'"
+    :submit-talk-1 "Отправьте описание '%s'"
+    :check-talk "Для преподавателя, ревью загруженных тем"
+    :submission-talk "Статус загруженных эссе (опциональный аргумент -- группа)"
+    :agenda-talk "Расписание докладов (опциональный аргумент -- группа)"
+    :soon-talk-help "Что произойдет в ближайшее время"
+    :schedule-talk "Выберите день презентации"
+    :feedback-talk "Отправить отзыв для отчета"
     :drop-talk-2 "для учителя, отбросить '%s' для конкретного ученика (%s)"
     :all-scheduled-descriptions-dump-talk "дамп всех запланированных описаний (только для администратора)"}}})
 
@@ -320,7 +320,7 @@
         groups-text (->> groups keys sort (str/join ", "))]
 
     (talk/def-command db cmd
-      (tr :pres/submisstion-talk)
+      (tr :pres/submission-talk)
       (fn [tx {{id :id} :from text :text}]
         (let [arg (talk/command-text-arg text)]
           (cond

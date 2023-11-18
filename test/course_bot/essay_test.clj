@@ -40,7 +40,7 @@
                           "<<<<<<<<<<<<<<<<<<<<")
               "u1 essay1 text"
               ">>>>>>>>>>>>>>>>>>>>"
-              "Is loading (yes/no)?"]))
+              "Uploading (yes/no)?"]))
 
       (testing "cancelation"
         (talk 1 "hmmm")
@@ -59,7 +59,7 @@
       (testing "submit"
         (talk 1 "/essay1submit")
         (talk 1 "u1 essay1 text")
-        (is (= (tt/history *chat :user-id 1) ["Is loading (yes/no)?"]))
+        (is (= (tt/history *chat :user-id 1) ["Uploading (yes/no)?"]))
 
         (talk 1 "yes")
         (is (= (tt/history *chat :user-id 1) ["Thank you, the text has been uploaded and will be submitted for review soon."]))
@@ -86,7 +86,7 @@
 (defn essay-submit [*chat essay-submit-talk id]
   (essay-submit-talk id "/essay1submit")
   (essay-submit-talk id (str "user" id " essay1 text" (hash id)))
-  (is (= (tt/history *chat :user-id id) ["Is loading (yes/no)?"]))
+  (is (= (tt/history *chat :user-id id) ["Uploading (yes/no)?"]))
 
   (essay-submit-talk id "yes")
   (is (= (tt/history *chat :user-id id)
@@ -287,12 +287,12 @@
 
       (talk 1 "/essay1myfeedback")
       (is (= (tt/history *chat :user-id 1)
-             ["You received 0 reviews."]))
+             ["Review count: 0."]))
 
       (talk 2 "/essay1myfeedback")
       (is (= (tt/history *chat :user-id 2 :number 2)
              ["Rank: 3; Feedback: 333bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla"
-              "You received 1 reviews."]))
+              "Review count: 1."]))
 
       (testing "send review again"
         (talk 1 "/essay1review")
@@ -342,7 +342,7 @@
              ["Rank: 3; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 4"
               "Rank: 2; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 3"
               "Rank: 1; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 2"
-              "You received 3 reviews."]))
+              "Review count: 3."]))
 
       (testing "report"
         (is (= "2022.01.03 11:30 +0000"
@@ -432,5 +432,5 @@
             (talk 7 "/essay1submit")
             (talk 7 (str "1 user7 essay1 text" (hash 7))))
 
-          (is (= ["Is loading (yes/no)?"]
+          (is (= ["Uploading (yes/no)?"]
                  (tt/history *chat :user-id 7 :number 1))))))))

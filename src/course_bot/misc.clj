@@ -43,8 +43,70 @@
         count
         (recur counter' tail)))))
 
-(defn codax-backup-fn [info] (println "\n"
-                                      "codax-backup:" info))
+(defn codax-clean-archives [dir archive-dir archive-deep]
+  (let [now (new java.util.Date)
+        files (->> (io/file dir)
+                   (file-seq)
+                   (filter #(.isFile %))
+                   (map (fn [file]
+                          ;; manifest_20231111T161402Z_195657001998041 or "nodes_20231111T161402Z_195657001998041"
+                          (let [filename (.getName file)
+                                dt-str (re-find #"\d{8}T\d{6}Z" filename)
+                                suffix (re-find #"_\d+$" filename)]
+                            {:filename filename
+                             :dt-str dt-str
+                             :dir (.getParent file)
+                             :key (str dt-str suffix)})))
+                   (filter #(and (= dir (:dir %))
+                                 (some? (:dt-str %))))
+                   (map (fn [{filename :filename dt-str :dt-str :as info}]
+                          (let [dt (.parse (java.text.SimpleDateFormat. "yyyyMMdd'T'HHmmss") dt-str)
+                                ymd (.format (java.text.SimpleDateFormat. "yyyyMMdd") dt)
+                                delta (- (.getTime now) (.getTime dt))]
+                            (assoc info
+                                   :filename filename
+                                   :dt dt
+                                   :ymd ymd
+                                   :delta delta)))))
+
+        archives (->> files
+                      (group-by :key)
+                      (map (fn [[_key files]]
+                             (-> (first files)
+                                 (dissoc :filename :key :dt-str :dir)
+                                 (assoc :files (map :filename files))))))
+
+        old-archives (->> archives
+                          (filter #(> (:delta %) archive-deep)))
+
+        grouped-by-days (->> old-archives
+                             (group-by :ymd)
+                             (map (fn [[_ymd archives]]
+                                    (->> archives
+                                         (sort-by :dt)
+                                         reverse))))
+
+        for-process (->> grouped-by-days
+                         (map #(->> % (drop 1)
+                                    (map :files)
+                                    flatten))
+                         flatten)]
+    (doall (for [file for-process]
+             (let [src (str dir "/" file)
+                   dst (when (some? archive-dir)
+                         (str archive-dir "/" file))]
+               (println "move" src "->" dst)
+               (try
+                 (when (some? dst)
+                   (io/make-parents (io/file dst))
+                   (io/copy (io/file src) (io/file dst)))
+                 (io/delete-file (io/file src))
+                 (catch Exception e (println e))))))))
+
+(defn codax-backup-fn [{:keys [dir archive-dir archive-deep]}]
+  (fn [info]
+    (println "\n" "codax-backup:" info)
+    (codax-clean-archives dir archive-dir archive-deep)))
 
 (defn merge-codaxs
   "Merge two codax databases, a and b, into out-db."
