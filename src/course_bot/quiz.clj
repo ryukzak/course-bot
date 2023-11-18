@@ -108,9 +108,15 @@
   (swap! *current-quiz assoc :stopping true)
   (codax/assoc-at tx [:quiz :current] nil))
 
-(defn extract-number [s]
-  (let [m (re-find #"\d+" s)]
-    (if m (parse-long m) 0)))
+(defn get-longest-digits-seq [string] (apply max (conj (map count (re-seq #"\d+" string)) 0)))
+(defn find-longest-digits-seq-in-array [array] (apply max (map get-longest-digits-seq array)))
+
+(defn prepend-leading-zeros [s, total-digits-count]
+  (str/replace s #"\d+" #(format (str "%0" total-digits-count "d") (parse-long %))))
+
+(defn sort-map-by-digits-in-key [m]
+  (let [digits (find-longest-digits-seq-in-array (map (fn [[k _]] (name k)) m))]
+    (sort-by (fn [[k _]] (prepend-leading-zeros (name k) digits)) m)))
 
 (defn startquiz-talk [db {token :token :as conf}]
   (talk/talk db "startquiz"
@@ -125,10 +131,7 @@
                      quiz (-> conf :quiz (get quiz-key))]
                  (when-not quiz-key
                    (let [quizs (->> (-> conf :quiz)
-                                    (map #(vector % (extract-number (name (first %)))))
-                                    ; order by extracted numbers. String without number goes first
-                                    (sort-by second)
-                                    (map first)
+                                    (sort-map-by-digits-in-key)
                                     (map (fn [[k v]] (str "- " (name k) " (" (-> v :name) ")"))))]
                      (talk/send-text token id (str (tr :quiz/available-quizzes)
                                                    (str/join "\n" quizs)))
