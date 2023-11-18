@@ -17,7 +17,7 @@ Course bot for performing laboratory works for "Computer Architecture" disciplin
 
 ### Лабораторная работа №1:
 #### Ссылки
-[Описание](https://gitlab.se.ifmo.ru/computer-systems/csa-rolling/-/blob/master/README.md#%D0%BB%D0%B0%D0%B1%D0%BE%D1%80%D0%B0%D1%82%D0%BE%D1%80%D0%BD%D0%B0%D1%8F-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0-1-%D1%80%D0%B0%D0%B7%D0%B1%D0%BE%D1%80-%D0%BF%D0%BE%D0%BB%D0%B5%D1%82%D0%BE%D0%B2) и [FAQ](https://gitlab.se.ifmo.ru/computer-systems/csa-rolling/-/blob/master/lab1faq.md) для лабораторной работы.
+[Описание](https://gitlab.se.ifmo.ru/computer-systems/csa-rolling/-/blob/master/README.md#лабораторная-работа-1-техническая-проблема) и [FAQ](https://gitlab.se.ifmo.ru/computer-systems/csa-rolling/-/blob/master/lab1-guide-for-teacher.md) для лабораторной работы.
 #### Команды
   - `/lab1agenda` -- расписание выступлений групп для лабораторной работы №1.
   - `/lab1schedule` -- выбрать день своего выступления.
