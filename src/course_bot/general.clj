@@ -56,7 +56,7 @@
     :restarted-and-notified "Перезапущено и уведомлено: "
     :use-start-once-more "Вы можете использовать /start еще раз."
     :not-restarted "Не перезапущено."
-    :yes-no-question "Пожалуйста, да или нет?"
+    :yes-no-question "Пожалуйста, yes или no?"
     :edited-message-not-allowed "Редактирование сообщений не поддерживается."}}})
 
 (defn assert-admin
@@ -181,11 +181,11 @@
                     (-> tx
                         (codax/assoc-at [stud-id :allow-restart] true)
                         (talk/stop-talk)))
-          (talk/process-answer token id tx normalized-text (tr :general/not-restarted) (tr :general/yes-no-question)))))))
+          "no" (talk/send-stop tx token id (tr :general/not-restarted))
+          (talk/clarify-input tx token id (tr :general/yes-no-question)))))))
 
 (defn warning-on-edited-message [{token :token}]
   (fn [{{{id :id} :from :as edited-message} :edited_message}]
     (when (some? edited-message)
       (talk/send-text token id (tr :general/edited-message-not-allowed))
       true)))
-

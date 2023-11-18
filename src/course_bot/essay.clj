@@ -158,8 +158,9 @@
                       (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
                       (-> tx
                           (codax/assoc-at [id :essays essay-code :text] essay-text)
-                          talk/stop-talk)) 
-            (talk/process-answer token id tx normalized-text (tr :talk/cancelled) (tr :talk/question-yes-no))))))))
+                          talk/stop-talk))
+            "no" (talk/send-stop tx token id)
+            (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))))))
 
 (defn get-essays [tx essay-code]
   (->> (codax/get-at tx [])
@@ -314,7 +315,8 @@
                           (codax/assoc-at [id :essays essay-code :my-reviews] reviews)
                           (codax/assoc-at [id :essays essay-code :my-reviews-submitted-at] (misc/str-time (misc/today)))
                           talk/stop-talk))
-            (talk/process-answer token id tx normalized-text (tr :talk/cancelled) (tr :talk/question-yes-no))))))))
+            "no" (talk/send-stop tx token id)
+            (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))))))
 
 (defn my-reviews [tx essay-code id]
   (->> (codax/get-at tx [id :essays essay-code :received-review])

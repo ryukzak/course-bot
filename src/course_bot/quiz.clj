@@ -135,12 +135,12 @@
                  (talk/change-branch tx :approve {:quiz-key quiz-key})))
              :approve
              (fn [tx {{id :id} :from text :text} {quiz-key :quiz-key}]
-               (let [normalized-text (i18n/normalize-yes-no-text text)]
+               (let [normalized-text (i18n/normalize-yes-no-text text)] 
                  (case normalized-text
-                   "yes" (do
-                           (talk/send-text token id (tr :quiz/quiz-started))
-                           (start-quiz! tx quiz-key))
-                   (talk/process-answer token id tx normalized-text (tr :quiz/quiz-canceled) (tr :talk/question-yes-no)))))))
+                   "yes" (do (talk/send-text token id (tr :quiz/quiz-started))
+                             (start-quiz! tx quiz-key))
+                   "no" (talk/send-stop tx token id (tr :quiz/quiz-canceled))
+                   (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
 
 (defn get-test-keys-for-score [conf]
   (->> conf
@@ -243,7 +243,7 @@
                                        tx per-studs)
                                stop-quiz!
                                talk/stop-talk))
-                   "no" (do (talk/send-text token id (tr :quiz/quiz-is-still-in-progress)) (talk/stop-talk tx))
+                   "no" (talk/send-stop tx token id (tr :quiz/quiz-is-still-in-progress))
                    (do (talk/send-text token id (tr :quiz/what-question)) (talk/wait tx)))))))
 
 (defn question-msg [quiz question-idx]
@@ -289,8 +289,7 @@
                    "yes" (do (talk/send-text token id (tr :quiz/quiz-after-run-info))
                              (talk/send-text token id (question-msg quiz 0))
                              (talk/change-branch tx :quiz-step {:results '()}))
-                   "no" (do (talk/send-text token id (tr :quiz/your-right))
-                            (talk/stop-talk tx))
+                   "no" (talk/send-stop tx token id (tr :quiz/your-right))
                    (do (talk/send-yes-no-kbd token id (str (tr :quiz/what-question-yes-no)))
                        (talk/wait tx)))))
 

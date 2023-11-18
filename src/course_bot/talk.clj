@@ -12,13 +12,15 @@
    {:yes "yes"
     :no "no"
     :cancelled "Cancelled."
-    :question-yes-no "What (yes or no)?"}}
+    :question-yes-no "What (yes or no)?"
+    :clarify-input-tmpl "Didn't understand: %s. Yes or no?"}}
   :ru
   {:talk
    {:yes "да"
     :no "нет"
     :cancelled "Отменено."
-    :question-yes-no "Что (да или нет)?"}}})
+    :question-yes-no "Что (да или нет)?"
+    :clarify-input-tmpl "Не разобрал: %s. Да или нет?"}}})
 
 ;; Talk flow
 
@@ -155,13 +157,15 @@
                            :keyboard
                            [[{:text (tr :talk/yes)} {:text (tr :talk/no)}]]}}))
 
-(defn process-answer [token id tx text no_answer else_answer]
-  (case text
-    "no" (do (send-text token id no_answer)
-             (stop-talk tx))
-    (do (send-text token id else_answer)
-        (repeat-branch tx))))
+(defn send-stop
+  ([tx token id] (send-stop tx token id (tr :talk/cancelled)))
+  ([tx token id msg] (send-text token id msg)
+                     (stop-talk tx)))
 
+(defn clarify-input
+  ([tx token id] (clarify-input tx token id (tr :talk/question-yes-no)))
+  ([tx token id msg] (send-text token id msg)
+                     (repeat-branch tx)))
 ;; tests
 
 (defn msg

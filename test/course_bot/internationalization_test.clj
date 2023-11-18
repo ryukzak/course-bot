@@ -1,5 +1,5 @@
 (ns course-bot.internationalization-test
-  (:require [clojure.test :refer [deftest testing is are]])
+  (:require [clojure.test :refer [deftest testing are]])
   (:require [course-bot.internationalization :as i18n :refer [normalize-yes-no-text]]))
 
 (deftest test-normalize-yes-no-text-en

@@ -222,7 +222,8 @@
                           (codax/assoc-at [id :presentation pres-key :on-review?] true)
                           (codax/assoc-at [id :presentation pres-key :description] desc)
                           talk/stop-talk))
-            (talk/process-answer token id tx normalized-text (tr :pres/later) (tr :pres/yes-or-no))))))))
+            "no" (talk/send-stop tx token id (tr :pres/later))
+            (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))))))
 
 (defn wait-for-reviews [tx pres-key]
   (->> (codax/get-at tx [])
@@ -300,8 +301,7 @@
                         talk/stop-talk))
           "no" (do (talk/send-text token id (tr :pres/ok-need-send-remark-for-student))
                    (talk/change-branch tx :remark {:stud-id stud-id}))
-          (do (talk/send-text token id (tr :talk/question-yes-no))
-              (talk/repeat-branch tx))))
+          (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))
 
       :remark
       (fn [tx {{id :id} :from remark :text} {stud-id :stud-id}]
@@ -619,7 +619,8 @@
                                                                :stud-ids (filter #(not= stud-id %) (:stud-ids desc)))]))
                                              (into {})))
                         talk/stop-talk))
-            (talk/process-answer token id tx normalized-text (tr :talk/cancelled) (tr :talk/question-yes-no))))))))
+            "no" (talk/send-stop tx token id (tr :talk/cancelled))
+            (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))))))
 
 (defn avg-rank [tx pres-key stud-id]
   (let [group (codax/get-at tx [stud-id :presentation pres-key :group])
