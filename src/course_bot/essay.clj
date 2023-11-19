@@ -53,7 +53,7 @@
     :warmup-plagiarism-help "Recheck and register existed essays for plagiarism."
     :warmup-no-plagiarsm "No plagiarism found."
     :warmup-processed-1 "Processed %d essays."
-    :for-admin-only "for admin only"}}
+    :assignreviewers-info "for admin only"}}
   :ru
   {:essay
    {:submit "Отправить "
@@ -68,7 +68,7 @@
     :thank-you-your-essay-submited "Спасибо, текст загружен и скоро попадёт на рецензирование."
     :status " статус"
     :total-essays "Всего эссе: "
-    :number-of-reviewers "Человек сделало ревью: "
+    :number-of-reviewers "Количество человек, сделавших ревью: "
     :set-of-reviews "Есть комплект ревью на: "
     :essays " эссе."
     :assignment-error "ОШИБКА: почему-то не удается найти задание!"
@@ -78,7 +78,7 @@
     :rank-1 "Ранг: %d, "
     :preview-reviews "Ранг: %d, номер эссе в списке: #%d, ваше ревью: %s \n(несколько слов из эссе: "
     :the-last-essay-worst "\n\nПоследнее эссе -- худшее."
-    :write-review-for "написать ревью для "
+    :write-review-for "Написать ревью для "
     :not-assigned-reviews "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё эссе вовремя или поспешили с отправкой ревью."
     :you-already-sent-reviews "Вы уже отправили ревью."
     :essays-submitted-for-review-1 "Вам на ревью пришло: %d эссе. Их текст сейчас отправлю ниже отдельными сообщениями."
@@ -93,13 +93,13 @@
     :correct "Корректно?"
     :essay-feedback-saved "Ваш отзыв сохранен и будет доступен авторам эссе."
     :essay-feedback "Отзыв: "
-    :feedback-on-your-essay "посмотреть отзывы на ваше эссе "
+    :feedback-on-your-essay "Посмотреть отзывы на ваше эссе "
     :number-of-reviews-1 "Количество отзывов на ваше эссе: %d."
     :plagirism-report-3 "%s оригинал: %s новое: %s"
     :warmup-plagiarism-help "Перепроверить и зарегистрировать существующие эссе на плагиат."
     :warmup-no-plagiarsm "Плагиат не найден."
     :warmup-processed-1 "Обработано %d эссе."
-    :for-admin-only "только для администратора"}}})
+    :assignreviewers-info "только для администратора"}}})
 
 (defn plagiarism-key [essay-code stud-id]
   (str stud-id " - " essay-code))
@@ -215,7 +215,7 @@
 
 (defn assignreviewers-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "assignreviewers")
-        help (str (tr :essay/for-admin-only))]
+        help (str (tr :essay/assignreviewers-info))]
     (talk/def-command db cmd help
       (fn [tx {{id :id} :from}]
         (general/assert-admin tx conf id)
