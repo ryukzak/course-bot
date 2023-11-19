@@ -8,7 +8,7 @@ BACKUP_PATH = ..
 NOW = $(shell date +'%Y-%m-%d-%H-%M')
 
 
-.PHONY: all format format-check lint test build run-jar run update pull backup docker-build docker-run docker-down clean repl
+.PHONY: all format format-check lint test build run-jar run update pull backup docker-pull docker-build docker-run docker-stop clean repl
 
 all: format test lint build
 
@@ -49,6 +49,9 @@ backup:
 #   file should be more than 100 Kb
 	[ `stat -c %s "${BACKUP_PATH}/plagiarism-db-${NOW}.tar.gz"` -gt 100 ]
 
+
+docker-pull:
+	docker pull ghcr.io/ryukzak/course-bot:master
 
 docker-build: build
 	docker build -t ${NAME} .
