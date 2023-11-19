@@ -394,7 +394,6 @@
         (->> ids (map #(future (talk % "/start" (str "Bot-" %) "gr1")
                                (talk % "/quiz" "yes")
                                (talk % "1" "1" "1")))
-
              doall
              (map deref)
              doall)))))

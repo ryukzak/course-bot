@@ -31,7 +31,7 @@
     :remember-your-answer "Remember your answer: "
     :quiz-passed "Thanks, quiz passed. The results will be sent when the quiz is closed."
     :already-stopped "The quiz is already stopped."
-    :quiz-answers-6 "Quiz answers: %s (%s, %s, %s, %s) - %s"
+    :quiz-answers-:answers-:stud-info-:stat "Quiz answers: %s (%s) - %s"
     :incorrect-answer "I don't understand you, send the correct answer number (1, 2...)."}}
   :ru
   {:quiz
@@ -59,15 +59,15 @@
     :remember-your-answer "Запомнили ваш ответ: "
     :quiz-passed "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."
     :already-stopped "Тест уже остановлен."
-    :quiz-answers-6 "Ответы на тест: %s (%s, %s, %s, %s) - %s"
+    :quiz-answers-:answers-:stud-info-:stat "Ответы на тест: %s (%s) - %s"
     :incorrect-answer "Не понял, укажите корректный номер ответа (1, 2...)."}}})
 
 (def *quiz-state (atom {:started 0 :finished 0 :answers {}}))
 
 (defn quiz-stud-start! [] (swap! *quiz-state update :started inc))
-(defn quiz-stud-finish! [] (swap! *quiz-state update :finished inc))
 
-(defn quiz-answers-add! [stud-id answers] (swap! *quiz-state assoc-in [:answers stud-id] answers))
+(defn quiz-stud-finish! [stud-id answers]
+  (swap! *quiz-state #(-> % (update :finished inc) (assoc-in [:answers stud-id] answers))))
 
 (defn start-quiz! [tx quiz-key]
   (reset! *quiz-state {:started 0 :finished 0 :answers {}})
@@ -110,7 +110,9 @@
              (fn [tx {{id :id} :from text :text} {quiz-key :quiz-key}]
                (case (str/lower-case text)
                  "yes" (do (talk/send-text token id (tr :quiz/quiz-started))
-                           (start-quiz! tx quiz-key))
+                           (-> tx
+                               (start-quiz! quiz-key)
+                               talk/stop-talk))
                  "no" (do (talk/send-text token id (tr :quiz/quiz-canceled))
                           (talk/stop-talk tx))))))
 
@@ -162,16 +164,17 @@
       (Math/round (* 100.0 (/ count-success (count tests)))))))
 
 (defn result-stat [questions results]
-  (->> results
-       vals
-       (filter #(= (count %) (count questions)))
-       (apply mapv vector)
-       (map-indexed (fn [index anss]
-                      (->>
-                       (-> questions (get index) :options)
-                       (map-indexed (fn [opt-index _text]
-                                      (filter #(= % (str (+ 1 opt-index))) anss)))
-                       (map #(str (count %))))))))
+  (let [full-answers (->> results
+                          vals
+                          (filter #(= (count %) (count questions)))
+                          (apply mapv vector))]
+    (->> full-answers
+         (map-indexed (fn [index answers]
+                        (let [options (-> questions (get index) :options)]
+                          (->> options
+                               (map-indexed (fn [opt-index _text]
+                                              (filter #(= % (str (inc opt-index))) answers)))
+                               (map #(str (count %))))))))))
 
 (defn stopquiz-talk [db {token :token :as conf}]
   (talk/talk db "stopquiz"
@@ -205,9 +208,10 @@
                            (->> (map vector questions (result-stat questions results))
                                 (map (fn [[{:keys [ask options] :as _question} scores]]
                                        (str ask "\n\n"
-                                            (str/join "\n" (map #(str "- [" %1 "] "
-                                                                      (when (:correct %2) (tr :quiz/answer-correct))
-                                                                      (:text %2))
+                                            (str/join "\n" (map (fn [score {:keys [correct text]}]
+                                                                  (str "- [" score "] "
+                                                                       (when correct (tr :quiz/answer-correct))
+                                                                       text))
                                                                 scores
                                                                 options)))))
                                 (map #(talk/send-text token id %))
@@ -295,16 +299,12 @@
                    (talk/change-branch tx :quiz-step {:results new-results}))
 
                  ; finish quiz
-                 (quiz-stud-finish!)
-                 (quiz-answers-add! id new-results)
+                 (quiz-stud-finish! id new-results)
                  (talk/send-text token id (tr :quiz/quiz-passed))
                  (let [{student-name :name group :group} (codax/get-at tx [id])]
                    (talk/send-text token (-> conf :admin-chat-id)
-                                   (str (format (tr :quiz/quiz-answers-6)
-                                                (str/join ", " new-results)
-                                                (:name quiz)
-                                                student-name
-                                                group
-                                                id
-                                                (dissoc @*quiz-state :answers)))))
+                                   (format (tr :quiz/quiz-answers-:answers-:stud-info-:stat)
+                                           (str/join ", " new-results)
+                                           (format "%s, %s, %s, %s" (:name quiz) student-name group id)
+                                           (dissoc @*quiz-state :answers))))
                  (-> tx talk/stop-talk)))))
