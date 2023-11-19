@@ -94,7 +94,7 @@
 
 (defn restore-forest-talk [db {token :token :as conf} {texts-path :texts-path :as plagiarism-db}]
   (let [cmd "restoreforest"
-        help (str (tr :essay/restore-forest-help))]
+        help (tr :essay/restore-forest-help)]
     (talk/def-command db cmd help
       (fn [tx {{id :id} :from}]
         (general/assert-admin tx conf id)

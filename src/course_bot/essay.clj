@@ -114,7 +114,7 @@
       (fn [tx {{id :id} :from}]
         (let [submitted? (codax/get-at tx [id :essays essay-code :text])]
           (when submitted?
-            (talk/send-text token id (str (format (tr :essay/your-essay-already-uploaded-1) essay-code)))
+            (talk/send-text token id (format (tr :essay/your-essay-already-uploaded-1) essay-code))
             (talk/stop-talk tx))
           (talk/send-text token id (str (format (tr :essay/send-essay-text-in-one-message-1) essay-code)
                                         (when topics-msg (str (tr :essay/themes) topics-msg))))

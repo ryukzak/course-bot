@@ -112,8 +112,7 @@
       (is (answers? (talk 1 "2")
                     [1 "Remember your answer: 2"]
                     [1 "Thanks, quiz passed. The results will be sent when the quiz is closed."]
-                    [0 "Quiz answers: 1, 2 (Test quiz, Bot Botovich, gr1, 1)"]))
-      (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results])))
+                    [0 "Quiz answers: 1, 2 (Test quiz, Bot Botovich, gr1, 1) - {:started 1, :finished 1}"]))
 
       (is (answers? (talk 0 "/stopquiz")
                     "Are you sure to stop 'Test quiz' quiz?"))
@@ -126,7 +125,8 @@
                     [0 (tt/unlines "Q2\n"
                                    "- [0] CORRECT a3"
                                    "- [1] a4")]
-                    [1 "Your result: 0/2"])))))
+                    [1 "Your result: 0/2"]))
+      (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results]))))))
 
 (deftest stopquiz-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
@@ -159,8 +159,7 @@
       (talk 1 "1")
       (is (= (tt/history *chat :number 2)
              [[1 "Thanks, quiz passed. The results will be sent when the quiz is closed."]
-              [0 "Quiz answers: 1, 1 (Test quiz, Bot Botovich, gr1, 1)"]]))
-      (is (= {:test-quiz {1 '("1" "1")}} (codax/get-at! db [:quiz :results])))
+              [0 "Quiz answers: 1, 1 (Test quiz, Bot Botovich, gr1, 1) - {:started 1, :finished 1}"]]))
 
       (talk 1 "/stopquiz")
       (is (= (tt/history *chat :user-id 1)
@@ -196,6 +195,8 @@
       (is (= (tt/history *chat :user-id 1)
              ["Your result: 1/2"]))
 
+      (is (= {:test-quiz {1 '("1" "1")}} (codax/get-at! db [:quiz :results])))
+
       (testing "report"
         (talk 0 "/report")
         (is (= (tt/history *chat :user-id 0)
@@ -216,9 +217,12 @@
                                               "ID" report/stud-id
                                               "fail" (quiz/fail-tests conf)
                                               "percent" (quiz/success-tests-percent conf)))
-        format-quiz-answers (fn [new-results quiz-name student-name group id]
-                              (format "Quiz answers: %s (%s, %s, %s, %s)" (str/join ", " new-results) quiz-name student-name group id))
-        do-test (fn [quiz-name id & answers]
+        format-quiz-answers (fn [new-results quiz-name student-name group id n]
+                              (format "Quiz answers: %s (%s, %s, %s, %s) - %s"
+                                      (str/join ", " new-results)
+                                      quiz-name student-name group id
+                                      {:started n :finished n}))
+        do-test (fn [quiz-name id n & answers]
                   (talk id "/quiz")
                   (tt/match-text *chat id
                                  (str "Would you like to start quiz '" quiz-name "' ("
@@ -229,7 +233,7 @@
                   (let [{stud-name :name stud-group :group} (codax/get-at! db [id])]
                     (tt/match-history *chat
                                       (tt/text id "Thanks, quiz passed. The results will be sent when the quiz is closed.")
-                                      (tt/text 0 (format-quiz-answers answers quiz-name stud-name stud-group id)))))]
+                                      (tt/text 0 (format-quiz-answers answers quiz-name stud-name stud-group id n)))))]
 
     (tt/with-mocked-morse *chat
 
@@ -242,10 +246,10 @@
       (talk 0 "yes")
       (tt/match-text *chat 0 "The quiz was started.")
 
-      (do-test "Test quiz 3" 1 "1" "2" "2")
-      (do-test "Test quiz 3" 2 "1" "2" "1")
-      (do-test "Test quiz 3" 3 "1" "1" "1")
-      (do-test "Test quiz 3" 4 "2" "1" "1")
+      (do-test "Test quiz 3" 1 1 "1" "2" "2")
+      (do-test "Test quiz 3" 2 2 "1" "2" "1")
+      (do-test "Test quiz 3" 3 3 "1" "1" "1")
+      (do-test "Test quiz 3" 4 4 "2" "1" "1")
 
       (talk 0 "/stopquiz")
       (tt/match-text *chat 0 "Are you sure to stop 'Test quiz 3' quiz?")
@@ -280,8 +284,8 @@
       (talk 0 "yes")
       (tt/match-text *chat 0 "The quiz was started.")
 
-      (do-test "Test quiz" 1 "2" "1")
-      (do-test "Test quiz" 4 "2" "1")
+      (do-test "Test quiz" 1 1 "2" "1")
+      (do-test "Test quiz" 4 2 "2" "1")
 
       (talk 0 "/stopquiz")
       (tt/match-text *chat 0 "Are you sure to stop 'Test quiz' quiz?")
@@ -371,3 +375,27 @@
       (talk 0 "YES")
       (is (not= (tt/history *chat :user-id 0)
                 ["Are you sure to stop 'Test quiz' quiz?"])))))
+
+(defn quiz-performance [n]
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
+        {talk :talk
+         *chat :*chat} (tt/test-handler (general/start-talk db conf)
+                                        (quiz/startquiz-talk db conf)
+                                        (quiz/stopquiz-talk db conf)
+                                        (quiz/quiz-talk db conf))]
+
+    (tt/with-mocked-morse *chat
+      (talk 0 "/startquiz test-quiz-3")
+      (is (answers? (talk 0 "yes")
+                    "The quiz was started."))
+
+      (let [ids (range 1 n)]
+        (->> ids (map #(future (talk % "/start" (str "Bot-" %) "gr1")
+                               (talk % "/quiz" "yes")
+                               (talk % "1" "1" "1")))
+             doall
+             (map deref)
+             doall)))))
+
+(deftest quiz-performance-test (time (quiz-performance 100)))
