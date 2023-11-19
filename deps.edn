@@ -1,5 +1,5 @@
 {:paths   ["src" "test"]
- :deps    {clj-kondo/clj-kondo                  {:mvn/version "2023.01.20"}
+ :deps    {clj-kondo/clj-kondo                  {:mvn/version "2023.10.20"}
            dev.weavejester/cljfmt               {:mvn/version "0.11.2"}
 
            io.github.dscarpetti/codax           {:git/sha "bdfa11bf878012884b5c82f5fa230b40e8677d84"
@@ -24,12 +24,11 @@
 
  :linters {:not-empty? {:level :off}}
 
- :aliases {:uberjar {:extra-deps {seancorfield/depstar {:mvn/version "2.0.216"}}
-                     :exec-fn    hf.depstar/uberjar
-                     :exec-args  {:jar "course-bot.jar" :compile-ns [course-bot.csa] :main-class "course-bot.csa"}}
+ :aliases {:build   {:deps {io.github.clojure/tools.build {:mvn/version "0.9.6"}}
+                     :ns-default build}
            :dev     {:jvm-opts ["-XX:-OmitStackTraceInFastThrow"]}
            :lint    {:main-opts ["-m" "clj-kondo.main" "--lint" "src" "--lint" "test" "--config" "deps.edn"]}
-           :fmt     {:main-opts ["-m" "cljfmt.main" "check"]}
+           :fmt     {:main-opts ["-m" "cljfmt.main"]}
            :test    {:extra-paths ["test"]
                      :extra-deps  {io.github.cognitect-labs/test-runner
                                    {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
