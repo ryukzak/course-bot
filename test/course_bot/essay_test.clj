@@ -354,12 +354,10 @@
         (talk 0 "/report")
         (tt/match-csv *chat 0
                       ["ID" "review-score" "essay-score"]
-                      ["0" "0" "x"]
                       ["1" "3" "3"]
                       ["2" "1,5" "3"]
                       ["3" "1,5" "3"]
-                      ["4" "1,5" "3"]
-                      ["5" "0" "x"]))
+                      ["4" "1,5" "3"]))
 
       (testing "additional essays from new users"
         (doall (map #(register-user *chat talk %1 %2)
@@ -369,31 +367,35 @@
         (doall (map #(essay-submit *chat talk %1)
                     [5 6 7 8]))
 
-        (let [*shuffles (atom [[6 5 8 7] [5 8 7 6] [8 7 6 5]])]
+        (let [*shuffles (atom [[6 7 8 5]
+                               [7 8 5 6]
+                               [8 5 6 7]])]
+          (println "shuffle init")
           (with-redefs [shuffle (fn [lst]
-                                  (is (= lst (list 7 6 5 8)))
+                                  (is (= '(5 6 7 8) lst) "should be only new users")
                                   (let [res (first @*shuffles)]
                                     (swap! *shuffles rest)
                                     res))]
-            (talk 0 "/essay1assignreviewers")
-            (tt/match-text *chat 0 "Assignment count: 4; Examples: (8 5 6)")))
 
-        (is (= (list {:request-review '(8 5 6), :text (str "user7 essay1 text" (hash 7))}
-                     {:my-reviews-submitted-at "2022.01.03 11:30 +0000",
-                      :request-review '(4 3 2),
-                      :text (str "user1 essay1 text" (hash 1))}
-                     {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
-                      :request-review '(3 2 1),
-                      :text (str "user4 essay1 text" (hash 4))}
-                     {:request-review '(7 8 5), :text (str "user6 essay1 text" (hash 6))}
-                     {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
-                      :request-review '(2 1 4),
-                      :text (str "user3 essay1 text" (hash 3))}
-                     {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
-                      :request-review '(1 4 3),
-                      :text (str "user2 essay1 text" (hash 2))}
-                     {:request-review '(6 7 8), :text (str "user5 essay1 text" (hash 5))}
-                     {:request-review '(5 6 7), :text (str "user8 essay1 text" (hash 8))})
+            (talk 0 "/essay1assignreviewers")
+            (tt/match-text *chat 0 "Assignment count: 4; Examples: (8 7 6)")))
+
+        (is (= '({:my-reviews-submitted-at "2022.01.03 11:30 +0000",
+                  :request-review (4 3 2),
+                  :text "user1 essay1 text1392991556"}
+                 {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
+                  :request-review (1 4 3),
+                  :text "user2 essay1 text-971005196"}
+                 {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
+                  :request-review (2 1 4),
+                  :text "user3 essay1 text-1556392013"}
+                 {:my-reviews-submitted-at "2022.01.15 12:00 +0100",
+                  :request-review (3 2 1),
+                  :text "user4 essay1 text-803074778"}
+                 {:request-review (8 7 6), :text "user5 essay1 text1740791543"}
+                 {:request-review (5 8 7), :text "user6 essay1 text1795257809"}
+                 {:request-review (6 5 8), :text "user7 essay1 text-137604029"}
+                 {:request-review (7 6 5), :text "user8 essay1 text-153401025"})
                (->> (codax/get-at! db [])
                     vals
                     (map #(-> % :essays (get "essay1")))

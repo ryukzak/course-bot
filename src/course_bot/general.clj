@@ -128,7 +128,7 @@
                      (codax/assoc-at [id :group] text)
                      (codax/assoc-at [id :reg-date] (str (new java.util.Date)))
                      (codax/assoc-at [id :allow-restart] false))]
-          (talk/send-text token id (str (format (tr :general/hi-user-1) name)))
+          (talk/send-text token id (format (tr :general/hi-user-1) name))
           (send-whoami tx token id)
           (talk/send-text token id (tr :general/send-help-for-help))
           (talk/stop-talk tx))))))

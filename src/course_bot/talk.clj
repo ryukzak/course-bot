@@ -37,11 +37,19 @@
 
 (defn repeat-branch [tx] (wait tx))
 
+(def talk-states (atom {}))
+
+(defn reset-talk-states! []
+  (reset! talk-states {}))
+
+(defn get-talk-state [_tx id]
+  (get @talk-states id nil))
+
 (defn set-talk-branch [tx id talk branch state]
-  (-> tx
-      (codax/assoc-at [id :talk] {:current-talk talk
-                                  :current-branch branch
-                                  :state state})))
+  (swap! talk-states assoc id {:current-talk talk
+                               :current-branch branch
+                               :state state})
+  tx)
 
 (defn command-args [text] (filter #(not (empty? %)) (str/split (str/replace-first text #"^/\w+\s*" "") #"\s+")))
 
@@ -87,23 +95,27 @@
     (fn talk-top [update]
       (let [res (atom nil)]
         (declare tx)
-        (codax/with-write-transaction [db tx]
+        #_:clj-kondo/ignore [:unresolved-symbol] ; for some reason clj-kondo work with mainstream version.
+        (codax/with-upgradable-transaction [db tx]
           (let [id (-> update :message :from :id)
                 msg (:message update)
                 {current-talk :current-talk
                  current-branch :current-branch
-                 state :state} (codax/get-at tx [id :talk])]
+                 state :state} (get-talk-state tx id)]
             (try
               (let [tmp (cond
-                          (handlers/command? update name) (start-handler tx msg)
+                          (handlers/command? update name)
+                          (start-handler tx msg)
 
                           (nil? msg) nil
                           (str/starts-with? (-> msg :text) "/") nil
 
                           (and (= current-talk name) (contains? handlers current-branch))
-                          (if (nil? state)
-                            ((get handlers current-branch) tx msg)
-                            ((get handlers current-branch) tx msg state)))]
+                          (let [handler (get handlers current-branch)]
+                            (if (empty? state)
+                              (handler tx msg)
+                              (handler tx msg state))))]
+
                 (swap! res (constantly tmp))
                 (if (nil? @res) tx @res))
               (catch clojure.lang.ExceptionInfo e
