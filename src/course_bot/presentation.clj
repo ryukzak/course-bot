@@ -68,8 +68,8 @@
     :feedback-talk "Send feedback for report"
     :drop-talk-2 "For teacher, drop '%s' for specific student (%s)"
     :all-scheduled-descriptions-dump-talk "All-scheduled-descriptions-dump (admin only)"
-    :approved-presentations "Approved presentations in '%s':\n"
-    :submitted-presentations "Submitted presentations in '%s':\n"
+    :approved-presentations-1 "Approved presentations in '%s':\n"
+    :submitted-presentations-1 "Submitted presentations in '%s':\n"
     :scheduled-decision "SCHEDULED"
     :on-review-decision "ON-REVIEW"
     :approved-decision "APPROVED"
@@ -135,8 +135,8 @@
     :feedback-talk "Отправить отзыв для отчета"
     :drop-talk-2 "Для учителя, отбросить '%s' для конкретного ученика (%s)"
     :all-scheduled-descriptions-dump-talk "Дамп всех запланированных описаний (только для администратора)"
-    :approved-presentations "Одобренные доклады в '%s':\n"
-    :submitted-presentations "Отправленные доклады в '%s':\n"
+    :approved-presentations-1 "Одобренные доклады в '%s':\n"
+    :submitted-presentations-1 "Отправленные доклады в '%s':\n"
     :scheduled-decision "ЗАПЛАНИРОВАН"
     :on-review-decision "НА РАССМОТРЕНИИ"
     :approved-decision "ОДОБРЕНО"
@@ -250,7 +250,7 @@
        " (" (codax/get-at tx [id :name]) ")"))
 
 (defn approved-submissions [tx pres-key group]
-  ((format (tr :pres/approved-presentations) group)
+  ((format (tr :pres/approved-presentations-1) group)
        (->> (codax/get-at tx [])
             (filter #(and (-> % second :presentation (get pres-key) :group (= group))
                           (-> % second :presentation (get pres-key) :approved?)))
@@ -260,7 +260,7 @@
             (str/join "\n"))))
 
 (defn all-submissions [tx pres-key group]
-  ((format (tr :pres/submitted-presentations) group)
+  ((format (tr :pres/submitted-presentations-1) group)
        (->> (codax/get-at tx [])
             (filter #(and (-> % second :presentation (get pres-key) :group (= group))
                           (-> % second :presentation (get pres-key) :description some?)))
