@@ -46,7 +46,7 @@
     :essays-have-rated "You have rated all the essays. Let's take a look:"
     :correct "Correct?"
     :essay-feedback-saved "Your feedback has been saved and will be available to essay writers."
-    :essay-feedback "Feedback: "
+    :essay-feedback-1 "Feedback: %s"
     :feedback-on-your-essay "feedback on your essay "
     :number-of-reviews-1 "Review count: %d."
     :plagirism-report-3 "%s original: %s new: %s"
@@ -91,7 +91,7 @@
     :essays-have-rated "Вы оценили все эссе. Давайте посмотрим:"
     :correct "Корректно?"
     :essay-feedback-saved "Ваш отзыв сохранен и будет доступен авторам эссе."
-    :essay-feedback "Отзыв: "
+    :essay-feedback-1 "Отзыв: %s"
     :feedback-on-your-essay "отзыв на ваше эссе "
     :number-of-reviews-1 "Количество отзывов на ваше эссе: %d."
     :plagirism-report-3 "%s оригинал: %s новое: %s"
@@ -146,7 +146,7 @@
         (talk/send-text token id (tr :essay/text-of-your-essay))
         (talk/send-text token id text)
         (talk/send-text token id ">>>>>>>>>>>>>>>>>>>>")
-        (talk/send-yes-no-kbd token id (str (tr :essay/is-loading-question)))
+        (talk/send-yes-no-kbd token id (tr :essay/is-loading-question))
         (talk/change-branch tx :approve {:essay-text text}))
 
       :approve
@@ -316,7 +316,7 @@
 (defn my-reviews [tx essay-code id]
   (->> (codax/get-at tx [id :essays essay-code :received-review])
        (map #(str (format (tr :essay/rank-1) (:rank %))
-                  (when-let [fb (:feedback %)] (str (tr :essay/essay-feedback) fb))))))
+                  (when-let [fb (:feedback %)] (format (tr :essay/essay-feedback-1) fb))))))
 
 (defn myfeedback-talk [db {token :token} essay-code]
   (let [cmd (str essay-code "myfeedback")
@@ -325,7 +325,7 @@
       (fn [tx {{id :id} :from}]
         (let [reviews (my-reviews tx essay-code id)]
           (doall (map #(talk/send-text token id %) reviews))
-          (talk/send-text token id (str (format (tr :essay/number-of-reviews-1) (count reviews)))))
+          (talk/send-text token id (format (tr :essay/number-of-reviews-1) (count reviews))))
         (talk/stop-talk tx)))))
 
 (defn review-score [conf essay-code]

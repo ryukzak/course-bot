@@ -42,7 +42,7 @@
     :telegram-id-not-found "User with specific telegram id not found."
     :restart-this-student-question "Restart this student?"
     :restart-wrong-input "Wrong input. Expect: /restart 12345"
-    :restarted-and-notified "Restarted and notified: "
+    :restarted-and-notified-1 "Restarted and notified: %s"
     :use-start-once-more "You can use /start once more."
     :not-restarted "Not restarted."
     :yes-no-question "Please yes or no?"
@@ -68,7 +68,7 @@
     :telegram-id-not-found "Пользователь с указанным Telegram ID не найден."
     :restart-this-student-question "Перезапустить этого студента?"
     :restart-wrong-input "Неправильный ввод. Ожидается: /restart 12345"
-    :restarted-and-notified "Перезапущено и уведомлено: "
+    :restarted-and-notified-1 "Перезапущено и уведомлено: %s"
     :use-start-once-more "Вы можете использовать /start еще раз."
     :not-restarted "Не перезапущено."
     :yes-no-question "Пожалуйста, yes или no?"
@@ -156,7 +156,7 @@
         (when (nil? (:name info))
           (talk/send-text token id (tr :general/unregistered-rename-warn))
           (talk/stop-talk tx))
-        (talk/send-text token id (str (tr :general/what-is-your-new-name)))
+        (talk/send-text token id (tr :general/what-is-your-new-name))
         (talk/change-branch tx :get-name)))
 
     :get-name
@@ -190,8 +190,8 @@
     :approve
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
       (case (str/lower-case text)
-        "yes" (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
-                  (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
+        "yes" (do (talk/send-text token id (format (tr :general/restarted-and-notified-1) stud-id))
+                  (talk/send-text token stud-id (tr :general/use-start-once-more))
                   (-> tx
                       (codax/assoc-at [stud-id :allow-restart] true)
                       (talk/stop-talk)))

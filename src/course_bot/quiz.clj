@@ -96,7 +96,7 @@
                  (when-not quiz-key
                    (let [quizs (->> (-> conf :quiz)
                                     (sort-by first)
-                                    (map (fn [[k v]] (str "- " (name k) " (" (-> v :name) ")"))))]
+                                    (map (fn [[k v]] (format "- %s (%s)" (name k) (-> v :name)))))]
                      (talk/send-text token id (str (tr :quiz/available-quizzes)
                                                    (str/join "\n" quizs)))
                      (talk/stop-talk tx)))
@@ -104,7 +104,7 @@
                  (when-not quiz
                    (talk/send-text token id (tr :quiz/quiz-not-defined)) (talk/stop-talk tx))
 
-                 (talk/send-yes-no-kbd token id (str (format (tr :quiz/confirm-run-quiz-1) (:name quiz))))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/confirm-run-quiz-1) (:name quiz)))
                  (talk/change-branch tx :approve {:quiz-key quiz-key})))
              :approve
              (fn [tx {{id :id} :from text :text} {quiz-key :quiz-key}]
@@ -200,9 +200,9 @@
                                                       info (str cur "/" max)]
                                                   [stud-id cur info]))
                                               (keys results))]
-                           (talk/send-text token id (str (format (tr :quiz/quiz-was-stopped-1) quiz-name)))
+                           (talk/send-text token id (format (tr :quiz/quiz-was-stopped-1) quiz-name))
                            (when (empty? results)
-                             (talk/send-text token id (str (tr :quiz/no-answers)))
+                             (talk/send-text token id (tr :quiz/no-answers))
                              (-> tx stop-quiz! talk/stop-talk))
 
                            (->> (map vector questions (result-stat questions results))
@@ -218,7 +218,7 @@
                                 doall)
 
                            (doall (map (fn [[stud-id _cur info]]
-                                         (talk/send-text token stud-id (str (tr :quiz/quiz-your-result) info)))
+                                         (talk/send-text token stud-id (tr :quiz/quiz-your-result) info))
                                        per-studs))
                            (-> (reduce (fn [tx [_stud-id cur _info]] (codax/assoc-at tx [id :quiz quiz-name] cur))
                                        tx per-studs)
@@ -255,14 +255,14 @@
                      results (codax/get-at tx [:quiz :results quiz-key id])]
 
                  (when (some? results)
-                   (talk/send-text token id (str (format (tr :quiz/quiz-already-taking-1) quiz-key)))
+                   (talk/send-text token id (format (tr :quiz/quiz-already-taking-1) quiz-key))
                    (-> tx talk/stop-talk))
 
                  (when (nil? quiz)
-                   (talk/send-text token id (str (tr :quiz/quiz-not-running)))
+                   (talk/send-text token id (tr :quiz/quiz-not-running))
                    (-> tx talk/stop-talk))
 
-                 (talk/send-yes-no-kbd token id (str (format (tr :quiz/student-confirm-run-quiz-2) quiz-name questions-count)))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/student-confirm-run-quiz-2) quiz-name questions-count))
                  (talk/change-branch tx :quiz-approve)))
 
              :quiz-approve
@@ -275,7 +275,7 @@
                              (talk/change-branch tx :quiz-step {:results '()}))
                    "no" (do (talk/send-text token id (tr :quiz/your-right))
                             (talk/stop-talk tx))
-                   (do (talk/send-yes-no-kbd token id (str (tr :quiz/what-question-yes-no)))
+                   (do (talk/send-yes-no-kbd token id (tr :quiz/what-question-yes-no))
                        (talk/wait tx)))))
 
              :quiz-step
@@ -292,7 +292,7 @@
                    (talk/send-text token id (tr :quiz/incorrect-answer))
                    (talk/wait tx))
 
-                 (talk/send-text token id (str (tr :quiz/remember-your-answer) text))
+                 (talk/send-text token id (tr :quiz/remember-your-answer) text)
 
                  (when-let [next-question (question-msg quiz next-question-index)]
                    (talk/send-text token id next-question)
