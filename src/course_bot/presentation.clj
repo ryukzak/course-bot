@@ -58,16 +58,22 @@
     :already-scheduled-help-1 "Already scheduled, check /%sagenda."
     :ok-check-schedule-help-1 "OK, you can check it by: /%sagenda"
     :should-set-group-to-send-feedback-help-2 "To send feedback, you should set your group for %s by /%ssetgroup"
-    :setgroup-talk-1 "set your group for '%s'"
-    :submit-talk-1 "submit your '%s' description"
-    :check-talk "for teacher, check submitted presentation description"
-    :submission-talk "list submissions and their status (no args -- your group, with args -- specified)"
-    :agenda-talk "agenda (no args -- your group, with args -- specified)"
-    :soon-talk-help "what will happen soon"
-    :schedule-talk "select your presentation day"
-    :feedback-talk "send feedback for report"
-    :drop-talk-2 "for teacher, drop '%s' for specific student (%s)"
-    :all-scheduled-descriptions-dump-talk "all-scheduled-descriptions-dump (admin only)"}}
+    :setgroup-talk-1 "Set your group for '%s'"
+    :submit-talk-1 "Submit your '%s' description"
+    :check-talk "For teacher, check submitted presentation description"
+    :submission-talk "List submissions and their status (no args -- your group, with args -- specified)"
+    :agenda-talk "Agenda (no args -- your group, with args -- specified)"
+    :soon-talk-help "What will happen soon"
+    :schedule-talk "Select your presentation day"
+    :feedback-talk "Send feedback for report"
+    :drop-talk-2 "For teacher, drop '%s' for specific student (%s)"
+    :all-scheduled-descriptions-dump-talk "All-scheduled-descriptions-dump (admin only)"
+    :approved-presentations "Approved presentations in '%s':\n"
+    :submitted-presentations "Submitted presentations in '%s':\n"
+    :scheduled-decision "SCHEDULED"
+    :on-review-decision "ON-REVIEW"
+    :approved-decision "APPROVED"
+    :rejected-decision "REJECTED"}}
   :ru
   {:pres
    {:nothing-to-check "Нечего проверять."
@@ -127,8 +133,14 @@
     :soon-talk-help "Что произойдет в ближайшее время"
     :schedule-talk "Выберите день презентации"
     :feedback-talk "Отправить отзыв для отчета"
-    :drop-talk-2 "для учителя, отбросить '%s' для конкретного ученика (%s)"
-    :all-scheduled-descriptions-dump-talk "дамп всех запланированных описаний (только для администратора)"}}})
+    :drop-talk-2 "Для учителя, отбросить '%s' для конкретного ученика (%s)"
+    :all-scheduled-descriptions-dump-talk "Дамп всех запланированных описаний (только для администратора)"
+    :approved-presentations "Одобренные доклады в '%s':\n"
+    :submitted-presentations "Отправленные доклады в '%s':\n"
+    :scheduled-decision "ЗАПЛАНИРОВАН"
+    :on-review-decision "НА РАССМОТРЕНИИ"
+    :approved-decision "ОДОБРЕНО"
+    :rejected-decision "ОТКЛОНЕНО"}}})
 
 (defn send-please-set-group [token id pres-key-name name]
   (talk/send-text token id (format (tr :pres/set-group-help-2) name pres-key-name)))
@@ -238,7 +250,7 @@
        " (" (codax/get-at tx [id :name]) ")"))
 
 (defn approved-submissions [tx pres-key group]
-  (str "Approved presentation in '" group "':\n"
+  ((format (tr :pres/approved-presentations) group)
        (->> (codax/get-at tx [])
             (filter #(and (-> % second :presentation (get pres-key) :group (= group))
                           (-> % second :presentation (get pres-key) :approved?)))
@@ -248,17 +260,17 @@
             (str/join "\n"))))
 
 (defn all-submissions [tx pres-key group]
-  (str "Submitted presentation in '" group "':\n"
+  ((format (tr :pres/submitted-presentations) group)
        (->> (codax/get-at tx [])
             (filter #(and (-> % second :presentation (get pres-key) :group (= group))
                           (-> % second :presentation (get pres-key) :description some?)))
             (map #(str "- " (-> % second :presentation (get pres-key) :description topic)
                        " (" (-> % second :name) ") - "
                        (cond
-                         (-> % second :presentation (get pres-key) :scheduled?) "SCHEDULED"
-                         (-> % second :presentation (get pres-key) :on-review?) "ON-REVIEW"
-                         (-> % second :presentation (get pres-key) :approved?) "APPROVED"
-                         :else "REJECTED")))
+                         (-> % second :presentation (get pres-key) :scheduled?) (tr :pres/scheduled-decision)
+                         (-> % second :presentation (get pres-key) :on-review?) (tr :pres/on-review-decision)
+                         (-> % second :presentation (get pres-key) :approved?) (tr :pres/approved-decision)
+                         :else (tr :pres/rejected-decision))))
             sort
             (str/join "\n"))))
 
