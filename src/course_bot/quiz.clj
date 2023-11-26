@@ -31,7 +31,7 @@
     :remember-your-answer "Remember your answer: "
     :quiz-passed "Thanks, quiz passed. The results will be sent when the quiz is closed."
     :already-stopped "The quiz is already stopped."
-    :quiz-answers-5 "Quiz answers: %s (%s, %s, %s, %s)"
+    :quiz-answers-:answers-:stud-info-:stat "Quiz answers: %s (%s) - %s"
     :incorrect-answer "I don't understand you, send the correct answer number (1, 2...)."}}
   :ru
   {:quiz
@@ -59,53 +59,27 @@
     :remember-your-answer "Запомнил ваш ответ: "
     :quiz-passed "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."
     :already-stopped "Тест уже остановлен."
-    :quiz-answers-5 "Ответы на тест: %s (%s, %s, %s, %s)"
+    :quiz-answers-:answers-:stud-info-:stat "Ответы на тест: %s (%s) - %s"
     :incorrect-answer "Не понял, укажите корректный номер ответа (1, 2...)."}}})
 
-(def *current-quiz (atom {:stopping false :current nil}))
+(def *quiz-state (atom {:started 0 :finished 0 :answers {}}))
+
+(defn quiz-stud-start! [] (swap! *quiz-state update :started inc))
+
+(defn quiz-stud-finish! [stud-id answers]
+  (swap! *quiz-state #(-> % (update :finished inc) (assoc-in [:answers stud-id] answers))))
 
 (defn start-quiz! [tx quiz-key]
+  (reset! *quiz-state {:started 0 :finished 0 :answers {}})
   (codax/assoc-at tx [:quiz :current] quiz-key))
 
-(defn quiz-info [conf quiz-key]
-  {:key quiz-key
-   :quiz (-> conf :quiz (get quiz-key))
-   :name (-> conf :quiz (get quiz-key) :name)})
-
-(defn empty-quiz-info []
-  {:key nil :quiz nil :name nil})
-
 (defn current-quiz! [tx conf]
-  (let [{current :current stopping :stopping} @*current-quiz]
-    (cond
-      stopping
-      (let [quiz-key (codax/get-at tx [:quiz :current])]
-        (cond
-          (= quiz-key current)
-          (empty-quiz-info)
-
-          (nil? quiz-key)
-          (do (reset! *current-quiz {:stopping false :current nil})
-              (empty-quiz-info))
-
-          (not= quiz-key current)
-          (do (reset! *current-quiz {:stopping false :current (quiz-info conf quiz-key)})
-              (quiz-info conf quiz-key))
-
-          (= quiz-key current)
-          (do (reset! *current-quiz {:stopping false :current nil})
-              (empty-quiz-info))))
-
-      (some? current) current
-
-      :else
-      (let [quiz-key (codax/get-at tx [:quiz :current])]
-        (if (nil? quiz-key)
-          (empty-quiz-info)
-          (quiz-info conf quiz-key))))))
+  (let [quiz-key (codax/get-at tx [:quiz :current])]
+    {:key quiz-key
+     :quiz (-> conf :quiz (get quiz-key))
+     :name (-> conf :quiz (get quiz-key) :name)}))
 
 (defn stop-quiz! [tx]
-  (swap! *current-quiz assoc :stopping true)
   (codax/assoc-at tx [:quiz :current] nil))
 
 (defn startquiz-talk [db {token :token :as conf}]
@@ -135,10 +109,12 @@
              :approve
              (fn [tx {{id :id} :from text :text} {quiz-key :quiz-key}]
                (case (str/lower-case text)
-                 "yes" (do
-                         (talk/send-text token id (tr :quiz/quiz-started))
-                         (start-quiz! tx quiz-key))
-                 "no" (do (talk/send-text token id (tr :quiz/quiz-canceled)) (talk/stop-talk tx))))))
+                 "yes" (do (talk/send-text token id (tr :quiz/quiz-started))
+                           (-> tx
+                               (start-quiz! quiz-key)
+                               talk/stop-talk))
+                 "no" (do (talk/send-text token id (tr :quiz/quiz-canceled))
+                          (talk/stop-talk tx))))))
 
 (defn get-test-keys-for-score [conf]
   (->> conf
@@ -187,17 +163,18 @@
                              count)]
       (Math/round (* 100.0 (/ count-success (count tests)))))))
 
-(defn result-stat [quiz results]
-  (->> results
-       vals
-       (filter #(= (count %) (count (-> quiz :questions))))
-       (apply mapv vector)
-       (map-indexed (fn [index anss]
-                      (->>
-                       (-> quiz :questions (get index) :options)
-                       (map-indexed (fn [opt-index _text]
-                                      (filter #(= % (str (+ 1 opt-index))) anss)))
-                       (map #(str (count %))))))))
+(defn result-stat [questions results]
+  (let [full-answers (->> results
+                          vals
+                          (filter #(= (count %) (count questions)))
+                          (apply mapv vector))]
+    (->> full-answers
+         (map-indexed (fn [index answers]
+                        (let [options (-> questions (get index) :options)]
+                          (->> options
+                               (map-indexed (fn [opt-index _text]
+                                              (filter #(= % (str (inc opt-index))) answers)))
+                               (map #(str (count %))))))))))
 
 (defn stopquiz-talk [db {token :token :as conf}]
   (talk/talk db "stopquiz"
@@ -212,14 +189,14 @@
                  (talk/change-branch tx :approve)))
              :approve
              (fn [tx {{id :id} :from text :text}]
-               (let [quiz-key (codax/get-at tx [:quiz :current])
-                     quiz-name (-> conf :quiz (get quiz-key) :name)
-                     quiz (-> conf :quiz (get quiz-key))]
+               (let [{quiz-key :key quiz-name :name
+                      {:keys [questions]} :quiz} (current-quiz! tx conf)]
                  (case (str/lower-case text)
-                   "yes" (let [results (codax/get-at tx [:quiz :results quiz-key])
+                   "yes" (let [results (:answers @*quiz-state)
                                per-studs (map (fn [stud-id]
-                                                (let [{cur :count-correct max :count-questions} (evaluate-answers (:questions quiz)
-                                                                                                                  (get results stud-id))
+                                                (let [answers (get results stud-id)
+                                                      {cur :count-correct
+                                                       max :count-questions} (evaluate-answers questions answers)
                                                       info (str cur "/" max)]
                                                   [stud-id cur info]))
                                               (keys results))]
@@ -228,21 +205,30 @@
                              (talk/send-text token id (str (tr :quiz/no-answers)))
                              (-> tx stop-quiz! talk/stop-talk))
 
-                           (doall (map #(talk/send-text token id %)
-                                       (map (fn [question scores]
-                                              (str (:ask question) "\n\n"
-                                                   (str/join "\n" (map #(str "- [" %1 "] " (when (:correct %2) (tr :quiz/answer-correct)) (:text %2)) scores (:options question)))))
-                                            (-> quiz :questions)
-                                            (result-stat quiz results))))
+                           (->> (map vector questions (result-stat questions results))
+                                (map (fn [[{:keys [ask options] :as _question} scores]]
+                                       (str ask "\n\n"
+                                            (str/join "\n" (map (fn [score {:keys [correct text]}]
+                                                                  (str "- [" score "] "
+                                                                       (when correct (tr :quiz/answer-correct))
+                                                                       text))
+                                                                scores
+                                                                options)))))
+                                (map #(talk/send-text token id %))
+                                doall)
 
-                           (doall (map (fn [[stud-id _cur info]] (talk/send-text token stud-id (str (tr :quiz/quiz-your-result) info)))
+                           (doall (map (fn [[stud-id _cur info]]
+                                         (talk/send-text token stud-id (str (tr :quiz/quiz-your-result) info)))
                                        per-studs))
-                           (-> (reduce (fn [tx [_stud-id cur _info]] (codax/assoc-at tx [id :quiz (:name quiz)] cur))
+                           (-> (reduce (fn [tx [_stud-id cur _info]] (codax/assoc-at tx [id :quiz quiz-name] cur))
                                        tx per-studs)
+                               (codax/assoc-at [:quiz :results quiz-key] results)
                                stop-quiz!
                                talk/stop-talk))
-                   "no" (do (talk/send-text token id (tr :quiz/quiz-is-still-in-progress)) (talk/stop-talk tx))
-                   (do (talk/send-text token id (tr :quiz/what-question)) (talk/wait tx)))))))
+                   "no" (do (talk/send-text token id (tr :quiz/quiz-is-still-in-progress))
+                            (talk/stop-talk tx))
+                   (do (talk/send-text token id (tr :quiz/what-question))
+                       (talk/wait tx)))))))
 
 (defn question-msg [quiz question-idx]
   (-> quiz
@@ -281,10 +267,10 @@
 
              :quiz-approve
              (fn [tx {{id :id} :from text :text}]
-               (let [quiz-key (codax/get-at tx [:quiz :current])
-                     quiz (-> conf :quiz (get quiz-key))]
+               (let [{quiz :quiz} (current-quiz! tx conf)]
                  (case (str/lower-case text)
-                   "yes" (do (talk/send-text token id (tr :quiz/quiz-after-run-info))
+                   "yes" (do (quiz-stud-start!)
+                             (talk/send-text token id (tr :quiz/quiz-after-run-info))
                              (talk/send-text token id (question-msg quiz 0))
                              (talk/change-branch tx :quiz-step {:results '()}))
                    "no" (do (talk/send-text token id (tr :quiz/your-right))
@@ -313,10 +299,12 @@
                    (talk/change-branch tx :quiz-step {:results new-results}))
 
                  ; finish quiz
+                 (quiz-stud-finish! id new-results)
                  (talk/send-text token id (tr :quiz/quiz-passed))
                  (let [{student-name :name group :group} (codax/get-at tx [id])]
                    (talk/send-text token (-> conf :admin-chat-id)
-                                   (str (format (tr :quiz/quiz-answers-5) (str/join ", " new-results) (:name quiz) student-name group id))))
-                 (-> tx
-                     (codax/assoc-at [:quiz :results quiz-key id] new-results)
-                     talk/stop-talk)))))
+                                   (format (tr :quiz/quiz-answers-:answers-:stud-info-:stat)
+                                           (str/join ", " new-results)
+                                           (format "%s, %s, %s, %s" (:name quiz) student-name group id)
+                                           (dissoc @*quiz-state :answers))))
+                 (-> tx talk/stop-talk)))))

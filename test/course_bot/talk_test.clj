@@ -57,6 +57,7 @@
        ~@body)))
 
 (defn test-database [path]
+  (talk/reset-talk-states!)
   (codax/destroy-database! path)
   (codax/open-database! path))
 
