@@ -411,14 +411,14 @@
         {:keys [name groups] :as pres-conf} (-> conf (get pres-key))
         groups-text (->> groups keys sort (str/join ", "))]
 
-    (talk/def-command db cmd
-      (tr :pres/agenda-talk)
+    (talk/def-command db cmd (tr :pres/agenda-talk)
       (fn [tx {{id :id} :from text :text}]
         (let [arg (talk/command-text-arg text)]
           (cond
-            (and (= id admin-chat-id) (= arg ""))
+            (and (= id admin-chat-id) (or (= arg "")
+                                          (= arg "all")))
             (doall (->> groups keys sort
-                        (map #(agenda tx pres-conf pres-key % (misc/today)))
+                        (map #(agenda tx pres-conf pres-key % (when (= arg "") (misc/today))))
                         (apply concat)
                         (map #(talk/send-text token id %))))
 
