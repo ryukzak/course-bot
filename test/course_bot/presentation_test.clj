@@ -6,7 +6,7 @@
             [course-bot.misc :as misc]
             [course-bot.presentation :as pres]
             [course-bot.report :as report]
-            [course-bot.talk-test :as tt]))
+            [course-bot.talk-test :as tt :refer [answers?]]))
 
 (defn register-user [*chat talk id name]
   (testing "register user"
@@ -556,21 +556,21 @@
 (deftest feedback-and-rank-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (pres/setgroup-talk db conf "lab1")
-                          (pres/submit-talk db conf "lab1")
-                          (pres/check-talk db conf "lab1")
-                          (pres/schedule-talk db conf "lab1")
-                          (pres/agenda-talk db conf "lab1")
-                          (pres/feedback-talk db conf "lab1")
-                          (report/report-talk db conf
-                                              "ID" report/stud-id
-                                              "pres-group" (pres/report-presentation-group "lab1")
-                                              "feedback-avg" (pres/report-presentation-avg-rank "lab1")
-                                              "feedback" (pres/report-presentation-score conf "lab1")
-                                              "classes" (pres/report-presentation-classes "lab1")
-                                              "lesson-counter" (pres/lesson-count "lab1")))]
+        {talk :talk
+         *chat :*chat} (tt/test-handler (general/start-talk db conf)
+                                        (pres/setgroup-talk db conf "lab1")
+                                        (pres/submit-talk db conf "lab1")
+                                        (pres/check-talk db conf "lab1")
+                                        (pres/schedule-talk db conf "lab1")
+                                        (pres/agenda-talk db conf "lab1")
+                                        (pres/feedback-talk db conf "lab1")
+                                        (report/report-talk db conf
+                                                            "ID" report/stud-id
+                                                            "pres-group" (pres/report-presentation-group "lab1")
+                                                            "feedback-avg" (pres/report-presentation-avg-rank "lab1")
+                                                            "feedback" (pres/report-presentation-score conf "lab1")
+                                                            "classes" (pres/report-presentation-classes "lab1")
+                                                            "lesson-counter" (pres/lesson-count "lab1")))]
 
     (tt/with-mocked-morse *chat
       (register-user *chat talk 1 "Alice")
@@ -628,16 +628,35 @@
                       ["3" "lgr1" "" "" "1" "1"]))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
-        (talk 1 "/lab1feedback")
-        (tt/match-text *chat 1 "Feedback collecting disabled (too early or too late)."))
+        (is (answers? (talk 1 "/lab1feedback")
+                      "Lesson feedback is not available.")))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:29 +0000"))]
-        (talk 1 "/lab1feedback")
-        (tt/match-text *chat 1 "Feedback collecting disabled (too early or too late)."))
+        (is (answers? (talk 1 "/lab1feedback")
+                      (tt/unlines
+                       "You need to specify lesson datetime explicitly:"
+                       "- 2022.01.01 12:00 +0000"))))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 15:01 +0000"))]
-        (talk 1 "/lab1feedback")
-        (tt/match-text *chat 1 "Feedback collecting disabled (too early or too late)."))
+        (is (answers? (talk 1 "/lab1feedback")
+                      (tt/unlines
+                       "You need to specify lesson datetime explicitly:"
+                       "- 2022.01.01 12:00 +0000"))))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.10 12:29 +0000"))]
+        (is (answers? (talk 1 "/lab1feedback")
+                      (tt/unlines
+                       "You need to specify lesson datetime explicitly:"
+                       "- 2022.01.01 12:00 +0000"
+                       "- 2022.01.02 12:00 +0000"))))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.10 12:29 +0000"))]
+        (is (answers? (talk 1 "/lab1feedback 2022.01.01 12:00 +0000")
+                      "Collect feedback for 'Lab 1 presentation' (lgr1) at 2022.01.01 12:00 +0000"
+                      (tt/unlines
+                       "Enter the number of the best presentation in the list:"
+                       "0. Bob (pres 2)"
+                       "1. Alice (pres 1)"))))
 
       (testing "pres group not set"
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
