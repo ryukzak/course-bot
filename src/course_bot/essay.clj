@@ -215,7 +215,7 @@
 
 (defn assignreviewers-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "assignreviewers")
-        help (str (tr :essay/assignreviewers-info))]
+        help  (tr :essay/assignreviewers-info)]
     (talk/def-command db cmd help
       (fn [tx {{id :id} :from}]
         (general/assert-admin tx conf id)
