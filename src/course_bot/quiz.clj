@@ -292,7 +292,7 @@
                    (talk/send-text token id (tr :quiz/incorrect-answer))
                    (talk/wait tx))
 
-                 (talk/send-text token id (tr :quiz/remember-your-answer) text)
+                 (talk/send-text token id (str (tr :quiz/remember-your-answer) text))
 
                  (when-let [next-question (question-msg quiz next-question-index)]
                    (talk/send-text token id next-question)
