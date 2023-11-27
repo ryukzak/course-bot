@@ -218,7 +218,7 @@
                                 doall)
 
                            (doall (map (fn [[stud-id _cur info]]
-                                         (talk/send-text token stud-id (format (tr :quiz/quiz-your-result) info)))
+                                         (talk/send-text token stud-id (format (tr :quiz/quiz-your-result-1) info)))
                                        per-studs))
                            (-> (reduce (fn [tx [_stud-id cur _info]] (codax/assoc-at tx [id :quiz quiz-name] cur))
                                        tx per-studs)
