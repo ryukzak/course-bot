@@ -18,7 +18,7 @@
     :quiz-was-stopped-1 "The quiz '%s' was stopped"
     :no-answers "Answers did not received."
     :answer-correct "CORRECT "
-    :quiz-your-result "Your result: "
+    :quiz-your-result-1 "Your result: %s"
     :quiz-is-still-in-progress "In a next time. The quiz is still in progress."
     :what-question "What?"
     :quiz-cmd-description "start the quiz if it is running"
@@ -46,7 +46,7 @@
     :quiz-was-stopped-1 "Тест '%s' был остановлен."
     :no-answers "Ответы не получены."
     :answer-correct "КОРРЕКТНЫЙ "
-    :quiz-your-result "Ваш результат: "
+    :quiz-your-result-1 "Ваш результат: %s"
     :quiz-is-still-in-progress "В следующий раз. Тест еще продолжается."
     :what-question "Что?"
     :quiz-cmd-description "Начать прохождение теста, если он запущен"
@@ -218,7 +218,7 @@
                                 doall)
 
                            (doall (map (fn [[stud-id _cur info]]
-                                         (talk/send-text token stud-id (tr :quiz/quiz-your-result) info))
+                                         (talk/send-text token stud-id (format (tr :quiz/quiz-your-result) info)))
                                        per-studs))
                            (-> (reduce (fn [tx [_stud-id cur _info]] (codax/assoc-at tx [id :quiz quiz-name] cur))
                                        tx per-studs)
