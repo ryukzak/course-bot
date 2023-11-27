@@ -28,7 +28,7 @@
     :quiz-after-run-info "Answer with a number. Your first question:"
     :your-right "Your right."
     :what-question-yes-no "What (yes/no)?"
-    :remember-your-answer "Remember your answer: "
+    :remember-your-answer-1 "Remember your answer: %s"
     :quiz-passed "Thanks, quiz passed. The results will be sent when the quiz is closed."
     :already-stopped "The quiz is already stopped."
     :quiz-answers-:answers-:stud-info-:stat "Quiz answers: %s (%s) - %s"
@@ -56,7 +56,7 @@
     :quiz-after-run-info "Отвечайте цифрой. Ваш первый вопрос:"
     :your-right "Ваше право."
     :what-question-yes-no "Что (yes/no)?"
-    :remember-your-answer "Запомнил ваш ответ: "
+    :remember-your-answer-1 "Запомнил ваш ответ: %s"
     :quiz-passed "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."
     :already-stopped "Тест уже остановлен."
     :quiz-answers-:answers-:stud-info-:stat "Ответы на тест: %s (%s) - %s"
@@ -292,7 +292,7 @@
                    (talk/send-text token id (tr :quiz/incorrect-answer))
                    (talk/wait tx))
 
-                 (talk/send-text token id (str (tr :quiz/remember-your-answer) text))
+                 (talk/send-text token id (format (tr :quiz/remember-your-answer-1) text))
 
                  (when-let [next-question (question-msg quiz next-question-index)]
                    (talk/send-text token id next-question)
