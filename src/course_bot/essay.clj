@@ -349,7 +349,7 @@
     (let [reviews (-> data (get id) :essays (get essay-code) :received-review)
           scores (->> reviews (map :rank))]
       (if (empty? scores)
-        "x"
+        0
         (-> (/ (apply + scores) (count scores))
             float
             Math/round
