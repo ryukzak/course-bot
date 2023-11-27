@@ -57,6 +57,10 @@
       (talk 1 "/lab1submit")
       (tt/match-text *chat 1 "hint")
 
+      (testing "too long description. After fail -- just send smaller text"
+        (talk 1 "bla-bla-bla zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
+        (tt/match-text *chat 1 "Description is too long, max length is 50."))
+
       (talk 1 "bla-bla-bla the best")
       (tt/match-history *chat
                         (tt/text 1 "Your description:")

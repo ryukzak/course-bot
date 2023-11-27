@@ -20,6 +20,7 @@
     :your-description "Your description:"
     :do-you-approve "Do you approve it?"
     :teacher-will-check "Registered, the teacher will check it soon."
+    :description-is-too-long-:max "Description is too long, max length is %s."
     :later "You can do this later."
     :yes-or-no "Please, yes or no?"
     :wait-for-review-1 "Wait for review: %s"
@@ -82,6 +83,7 @@
     :your-description "Ваше описание:"
     :do-you-approve "Вы одобряете это?"
     :teacher-will-check "Зарегистрировано, учитель скоро проверит."
+    :description-is-too-long-:max "Описание слишком длинное, максимальная длина %s."
     :later "Вы можете сделать это позже."
     :yes-or-no "Пожалуйста, да или нет?"
     :wait-for-review-1 "Дождитесь проверки: %s"
@@ -181,8 +183,7 @@
 (defn submit-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "submit")
         pres-key (keyword pres-key-name)
-        hint (-> conf (get pres-key) :submition-hint)
-        name (-> conf (get pres-key) :name)]
+        {:keys [max-description-length submition-hint name]} (-> conf (get pres-key))]
 
     (talk/def-talk db cmd
       (format (tr :pres/submit-talk-1) name)
@@ -203,8 +204,8 @@
             (talk/send-text token id (format (tr :pres/already-submitted-and-approved-help-1) pres-key-name))
             (talk/stop-talk tx))
 
-          (talk/send-text token id (if hint
-                                     hint
+          (talk/send-text token id (if submition-hint
+                                     submition-hint
                                      (format (tr :pres/provide-description-1) name)))
           (talk/change-branch tx :recieve-description)))
 
@@ -213,6 +214,10 @@
         (talk/send-text token id (tr :pres/your-description))
         (talk/send-text token id text)
         (talk/send-yes-no-kbd token id (tr :pres/do-you-approve))
+        (when-not (or (nil? max-description-length)
+                      (<= (count text) max-description-length))
+          (talk/send-text token id (format (tr :pres/description-is-too-long-:max) max-description-length))
+          (talk/wait tx))
         (talk/change-branch tx :approve {:desc text}))
 
       :approve

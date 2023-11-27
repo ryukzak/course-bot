@@ -2,6 +2,7 @@
  :submition-hint "hint"
  :schedule-cut-off-time-in-min 30
  :agenda-hide-cut-off-time-in-min -1440
+ :max-description-length 50
  :groups {"lgr1" {:comment "ABC"
                   :lessons [{:datetime "2022.01.01 12:00 +0000"}
                             {:datetime "2022.01.02 12:00 +0000"}]}
