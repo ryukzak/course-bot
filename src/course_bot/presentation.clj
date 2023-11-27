@@ -250,7 +250,7 @@
        " (" (codax/get-at tx [id :name]) ")"))
 
 (defn approved-submissions [tx pres-key group]
-  ((format (tr :pres/approved-presentations-:group) group)
+  (Str (format (tr :pres/approved-presentations-:group) group)
        (->> (codax/get-at tx [])
             (filter #(and (-> % second :presentation (get pres-key) :group (= group))
                           (-> % second :presentation (get pres-key) :approved?)))
@@ -260,7 +260,7 @@
             (str/join "\n"))))
 
 (defn all-submissions [tx pres-key group]
-  ((format (tr :pres/submitted-presentations-:group) group)
+  (str (format (tr :pres/submitted-presentations-:group) group)
        (->> (codax/get-at tx [])
             (filter #(and (-> % second :presentation (get pres-key) :group (= group))
                           (-> % second :presentation (get pres-key) :description some?)))
