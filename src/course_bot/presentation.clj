@@ -68,8 +68,8 @@
     :feedback-talk "Send feedback for report"
     :drop-talk-2 "For teacher, drop '%s' for specific student (%s)"
     :all-scheduled-descriptions-dump-talk "All-scheduled-descriptions-dump (admin only)"
-    :approved-presentations-:group "Approved presentations in '%s':\n"
-    :submitted-presentations-:group "Submitted presentations in '%s':\n"
+    :approved-presentations-:group "Approved presentation in '%s':\n"
+    :submitted-presentations-:group "Submitted presentation in '%s':\n"
     :scheduled-decision "SCHEDULED"
     :on-review-decision "ON-REVIEW"
     :approved-decision "APPROVED"
@@ -250,7 +250,7 @@
        " (" (codax/get-at tx [id :name]) ")"))
 
 (defn approved-submissions [tx pres-key group]
-  (Str (format (tr :pres/approved-presentations-:group) group)
+  (str (format (tr :pres/approved-presentations-:group) group)
        (->> (codax/get-at tx [])
             (filter #(and (-> % second :presentation (get pres-key) :group (= group))
                           (-> % second :presentation (get pres-key) :approved?)))
