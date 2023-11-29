@@ -32,7 +32,7 @@
 
         (talk 1 "gr1")
         (tt/match-history *chat
-                          (tt/text 1 "Hi Bot Botovich!")
+                          (tt/text 1 "Hi, Bot Botovich!")
                           (tt/text 1 "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
                           (tt/text 1 "Send /help for help."))
 
