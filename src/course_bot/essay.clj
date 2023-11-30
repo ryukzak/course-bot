@@ -152,15 +152,14 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
-        (let [normalized-text (i18n/normalize-yes-no-text text)]
-          (case normalized-text
-            "yes" (do (plagiarism/register-text! plagiarism-db (plagiarism-key essay-code id) essay-text)
-                      (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
-                      (-> tx
-                          (codax/assoc-at [id :essays essay-code :text] essay-text)
-                          talk/stop-talk))
-            "no" (talk/send-stop tx token id)
-            (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))))))
+        (case (i18n/normalize-yes-no-text text)
+          "yes" (do (plagiarism/register-text! plagiarism-db (plagiarism-key essay-code id) essay-text)
+                    (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
+                    (-> tx
+                        (codax/assoc-at [id :essays essay-code :text] essay-text)
+                        talk/stop-talk))
+          "no" (talk/send-stop tx token id)
+          (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
 
 (defn get-essays [tx essay-code]
   (->> (codax/get-at tx [])
@@ -306,17 +305,16 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {reviews :reviews}]
-        (let [normalized-text (i18n/normalize-yes-no-text text)]
-          (case normalized-text
-            "yes" (do (talk/send-text token id (tr :essay/essay-feedback-saved))
-                      (-> (reduce (fn [tx' review]
-                                    (codax/update-at tx' [(:essay-author review) :essays essay-code :received-review] conj review))
-                                  tx reviews)
-                          (codax/assoc-at [id :essays essay-code :my-reviews] reviews)
-                          (codax/assoc-at [id :essays essay-code :my-reviews-submitted-at] (misc/str-time (misc/today)))
-                          talk/stop-talk))
-            "no" (talk/send-stop tx token id)
-            (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))))))
+        (case (i18n/normalize-yes-no-text text)
+          "yes" (do (talk/send-text token id (tr :essay/essay-feedback-saved))
+                    (-> (reduce (fn [tx' review]
+                                  (codax/update-at tx' [(:essay-author review) :essays essay-code :received-review] conj review))
+                                tx reviews)
+                        (codax/assoc-at [id :essays essay-code :my-reviews] reviews)
+                        (codax/assoc-at [id :essays essay-code :my-reviews-submitted-at] (misc/str-time (misc/today)))
+                        talk/stop-talk))
+          "no" (talk/send-stop tx token id)
+          (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
 
 (defn my-reviews [tx essay-code id]
   (->> (codax/get-at tx [id :essays essay-code :received-review])

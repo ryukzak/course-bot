@@ -109,14 +109,13 @@
                  (talk/change-branch tx :approve {:quiz-key quiz-key})))
              :approve
              (fn [tx {{id :id} :from text :text} {quiz-key :quiz-key}]
-               (let [normalized-text (i18n/normalize-yes-no-text text)] 
-                 (case normalized-text
-                   "yes" (do (talk/send-text token id (tr :quiz/quiz-started))
+               (case (i18n/normalize-yes-no-text text)
+                 "yes" (do (talk/send-text token id (tr :quiz/quiz-started))
                            (-> tx
                                (start-quiz! quiz-key)
                                talk/stop-talk))
-                   "no" (talk/send-stop tx token id (tr :quiz/quiz-canceled))
-                   (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
+                 "no" (talk/send-stop tx token id (tr :quiz/quiz-canceled))
+                 (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))))
 
 (defn get-test-keys-for-score [conf]
   (->> conf

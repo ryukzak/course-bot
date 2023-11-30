@@ -174,15 +174,14 @@
 
     :approve
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
-      (let [normalized-text (i18n/normalize-yes-no-text text)]
-        (case normalized-text
-          "yes" (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
-                    (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
-                    (-> tx
-                        (codax/assoc-at [stud-id :allow-restart] true)
-                        (talk/stop-talk)))
-          "no" (talk/send-stop tx token id (tr :general/not-restarted))
-          (talk/clarify-input tx token id (tr :general/yes-no-question)))))))
+      (case (i18n/normalize-yes-no-text text)
+        "yes" (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
+                  (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
+                  (-> tx
+                      (codax/assoc-at [stud-id :allow-restart] true)
+                      (talk/stop-talk)))
+        "no" (talk/send-stop tx token id (tr :general/not-restarted))
+        (talk/clarify-input tx token id (tr :general/yes-no-question))))))
 
 (defn warning-on-edited-message [{token :token}]
   (fn [{{{id :id} :from :as edited-message} :edited_message}]
