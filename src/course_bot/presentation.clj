@@ -154,6 +154,9 @@
       (codax/update-at [:presentation pres-key pres-group datetime :stud-ids] #(concat % [stud-id]))
       (codax/assoc-at [stud-id :presentation pres-key :scheduled?] true)))
 
+(defn set-presentation-group [tx pres-key stud-id pres-group]
+  (codax/assoc-at tx [stud-id :presentation pres-key :group] pres-group))
+
 (defn send-please-set-group [token id pres-key-name name]
   (talk/send-text token id (format (tr :pres/set-group-help-2) name pres-key-name)))
 
@@ -183,7 +186,7 @@
 
         (talk/send-text token id (format (tr :pres/group-is-already-set-2) name text))
         (-> tx
-            (codax/assoc-at [id :presentation pres-key :group] text)
+            (set-presentation-group pres-key id text)
             talk/stop-talk)))))
 
 (defn report-presentation-group [pres-key-name]
@@ -244,8 +247,7 @@
         (case (i18n/normalize-yes-no-text text)
           "yes" (do (talk/send-text token id (tr :pres/teacher-will-check))
                     (-> tx
-                        (codax/assoc-at [id :presentation pres-key :on-review?] true)
-                        (codax/assoc-at [id :presentation pres-key :description] desc)
+                        (submit-presentation pres-key id desc)
                         talk/stop-talk))
           "no" (talk/send-stop tx token id (tr :pres/later))
           (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
@@ -321,11 +323,12 @@
           "yes" (do (talk/send-text token id (format (tr :pres/ok-stud-will-receive-approve-1) cmd))
                     (talk/send-text token stud-id (format (tr :pres/approved-description-1) name))
                     (-> tx
-                        (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
-                        (codax/assoc-at [stud-id :presentation pres-key :approved?] true)
+                        (approve-presentation pres-key stud-id)
                         talk/stop-talk))
+
           "no" (do (talk/send-text token id (tr :pres/ok-need-send-remark-for-student))
                    (talk/change-branch tx :remark {:stud-id stud-id}))
+
           (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))
 
       :remark
@@ -527,9 +530,7 @@
             (talk/repeat-branch tx))
           (talk/send-text token id (format (tr :pres/ok-check-schedule-help-1) pres-key-name))
           (-> tx
-              (codax/update-at [:presentation pres-key group text :stud-ids]
-                               #(concat % [id]))
-              (codax/assoc-at [id :presentation pres-key :scheduled?] true)
+              (schedule-lesson pres-key group text id)
               talk/stop-talk))))))
 
 (defn feedback-str [studs]
