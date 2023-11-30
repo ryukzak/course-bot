@@ -64,11 +64,15 @@
      (talk/send-text token id (tr :general/need-admin))
      (talk/stop-talk tx))))
 
+(defn stud-info [tx id]
+  (let [{name :name group :group} (codax/get-at tx [id])]
+    {:name name :group group}))
+
 (defn send-whoami
   ([tx token id] (send-whoami tx token id id))
-  ([tx token id about]
-   (let [{name :name group :group} (codax/get-at tx [about])]
-     (talk/send-text token id (format (tr :general/who-am-i-3) name group about)))))
+  ([tx token id stud-id]
+   (let [{name :name group :group} (stud-info tx stud-id)]
+     (talk/send-text token id (format (tr :general/who-am-i-3) name group stud-id)))))
 
 (defn whoami-talk [db {token :token}]
   (talk/def-command db "whoami" (tr :general/who-am-i-info)

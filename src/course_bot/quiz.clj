@@ -309,7 +309,7 @@
                  ; finish quiz
                  (quiz-stud-finish! id new-results)
                  (talk/send-text token id (tr :quiz/quiz-passed))
-                 (let [{student-name :name group :group} (codax/get-at tx [id])]
+                 (let [{student-name :name group :group} (general/stud-info tx id)]
                    (talk/send-text token (-> conf :admin-chat-id)
                                    (format (tr :quiz/quiz-answers-:answers-:stud-info-:stat)
                                            (str/join ", " new-results)
