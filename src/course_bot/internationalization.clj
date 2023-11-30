@@ -28,9 +28,15 @@
                 types))
         @*tr-options-dict))
 
-(defn normalize-yes-no-text [text] 
+(defn normalize-yes-no-text-1 [text] 
   (if (= (str/lower-case text) (tr :talk/yes))
     "yes"
     (if (= (str/lower-case text) (tr :talk/no))
       "no"
       text)))
+
+(defn normalize-yes-no-text [text]
+  (cond
+    (= (str/lower-case text) (tr :talk/yes)) "yes"
+    (= (str/lower-case text) (tr :talk/no)) "no"
+    :else text))
