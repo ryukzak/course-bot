@@ -22,7 +22,7 @@
     (talk stud-id "/start")
     (talk stud-id name)
     (is (answers? (talk stud-id "gr1")
-                  (str "Hi " name "!")
+                  (str "Hi, " name "!")
                   (str "Name: " name "; Group: gr1; Telegram ID: " stud-id)
                   "Send /help for help."))
     (talk stud-id "/lab1setgroup")
