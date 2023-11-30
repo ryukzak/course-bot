@@ -39,7 +39,8 @@
                     (tt/unlines "Available quizzes:"
                                 "- test-quiz (Test quiz)"
                                 "- test-quiz-2 (Test quiz 2)"
-                                "- test-quiz-3 (Test quiz 3)")))
+                                "- test-quiz-3 (Test quiz 3)"
+                                "- test-quiz-10 (Test quiz 10)")))
 
       (is (answers? (talk 0 "/startquiz test-quiz")
                     "Are you sure to run 'Test quiz' quiz?"))
