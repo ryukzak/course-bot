@@ -28,11 +28,9 @@
                 types))
         @*tr-options-dict))
 
-(defn normalize-yes-no-text [text]
-  (let [inner-key (find-command (str/lower-case text))
-        lang :en
-        type :talk]
-    (if inner-key
-      (let [val (get-by-lang-and-type lang type inner-key)]
-        val)
+(defn normalize-yes-no-text [text] 
+  (if (= (str/lower-case text) (tr :talk/yes))
+    "yes"
+    (if (= (str/lower-case text) (tr :talk/no))
+      "no"
       text)))
