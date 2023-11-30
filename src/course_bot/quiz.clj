@@ -82,6 +82,16 @@
 (defn stop-quiz! [tx]
   (codax/assoc-at tx [:quiz :current] nil))
 
+(defn get-longest-digits-seq [string] (apply max 0 (map count (re-seq #"\d+" string))))
+(defn find-longest-digits-seq-in-list [list] (apply max (map get-longest-digits-seq list)))
+
+(defn prepend-leading-zeros [s total-digits-count]
+  (str/replace s #"\d+" #(format (str "%0" total-digits-count "d") (parse-long %))))
+
+(defn sort-map-by-digits-in-key [m]
+  (let [digits (find-longest-digits-seq-in-list (map (fn [[k _]] (name k)) m))]
+    (sort-by (fn [[k _]] (prepend-leading-zeros (name k) digits)) m)))
+
 (defn startquiz-talk [db {token :token :as conf}]
   (talk/talk db "startquiz"
              :start
@@ -95,7 +105,7 @@
                      quiz (-> conf :quiz (get quiz-key))]
                  (when-not quiz-key
                    (let [quizs (->> (-> conf :quiz)
-                                    (sort-by first)
+                                    sort-map-by-digits-in-key
                                     (map (fn [[k v]] (format "- %s (%s)" (name k) (-> v :name)))))]
                      (talk/send-text token id (str (tr :quiz/available-quizzes)
                                                    (str/join "\n" quizs)))
