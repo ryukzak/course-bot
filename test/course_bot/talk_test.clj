@@ -88,7 +88,12 @@
                     _ (doall (map #(handler {:message {:from {:id id} :text %}}) msgs))
                     msg-count-after (count @*chat)
                     new-msgs-count (- msg-count-after msg-count-before)
-                    new-msgs (->> @*chat (take new-msgs-count) reverse)]
+                    new-msgs (->> @*chat
+                                  (take new-msgs-count)
+                                  (map #(if (-> % :msg string?)
+                                          (assoc % :msg (-> % :msg str/trim-newline))
+                                          %))
+                                  reverse)]
                 (cond
                   (and (= id (->> new-msgs first :id))
                        (= 1 (->> new-msgs (map :id) dedupe count)))
