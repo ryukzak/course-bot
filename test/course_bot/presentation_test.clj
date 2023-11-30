@@ -9,12 +9,25 @@
             [course-bot.talk-test :as tt :refer [answers?]]))
 
 (defn register-user [*chat talk id name]
+  ; TODO: migrate to register-user-2 with talk/test-handler
   (testing "register user"
     (talk id "/start")
     (talk id name)
     (talk id "gr1")
     (talk id "/start")
     (tt/match-text *chat id "You are already registered. To change your information, contact the teacher and send /whoami")))
+
+(defn register-user-2 [talk stud-id name pres-group]
+  (testing "register user"
+    (talk stud-id "/start")
+    (talk stud-id name)
+    (is (answers? (talk stud-id "gr1")
+                  (str "Hi " name "!")
+                  (str "Name: " name "; Group: gr1; Telegram ID: " stud-id)
+                  "Send /help for help."))
+    (talk stud-id "/lab1setgroup")
+    (is (answers? (talk stud-id pres-group)
+                  (str "Your Lab 1 presentation group set: " pres-group)))))
 
 (deftest setgroup-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
@@ -756,3 +769,121 @@
                       ["1" "lgr1" "1,33" "4" "1" "1"]
                       ["2" "lgr1" "1,67" "2" "1" "1"]
                       ["3" "lgr1" "" "" "1" "1"])))))
+
+(deftest lost-and-found-talks-test
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
+        {talk :talk
+         *chat :*chat} (tt/test-handler (general/start-talk db conf)
+                                        (pres/lost-and-found-talk db conf "lab1")
+                                        (pres/setgroup-talk db conf "lab1")
+                                        (pres/submit-talk db conf "lab1")
+                                        (pres/drop-talk db conf "lab1" false)
+                                        (pres/check-talk db conf "lab1")
+                                        (pres/schedule-talk db conf "lab1")
+                                        (pres/agenda-talk db conf "lab1")
+                                        (pres/feedback-talk db conf "lab1")
+                                        (report/report-talk db conf
+                                                            "ID" report/stud-id
+                                                            "pres-group" (pres/report-presentation-group "lab1")
+                                                            "feedback-avg" (pres/report-presentation-avg-rank "lab1")
+                                                            "feedback" (pres/report-presentation-score conf "lab1")
+                                                            "classes" (pres/report-presentation-classes "lab1")
+                                                            "lesson-counter" (pres/lesson-count "lab1")))]
+    (tt/with-mocked-morse *chat
+      (register-user-2 talk 1 "Alice" "lgr1")
+      (register-user-2 talk 2 "Bob" "lgr1")
+      (register-user-2 talk 3 "Charly" "lgr1")
+
+      (talk 1 "/lab1submit")
+      (talk 1 "pres 1")
+      (is (answers? (talk 1 "yes")
+                    "Registered, the teacher will check it soon."))
+
+      (talk 2 "/lab1submit")
+      (talk 2 "pres 2")
+      (is (answers? (talk 2 "yes")
+                    "Registered, the teacher will check it soon."))
+
+      (talk 3 "/lab1submit")
+      (talk 3 "pres 3")
+      (is (answers? (talk 3 "yes")
+                    "Registered, the teacher will check it soon."))
+
+      (talk 0 "/lab1check")
+      (is (answers? (talk 0 "yes")
+                    [0 (tt/unlines "OK, student will receive his approve."
+                                   ""
+                                   "/lab1check")]
+                    [1 "'Lab 1 presentation' description was approved."]))
+
+      (is (answers? (talk 1 "/lab1lostandfound")
+                    "That action requires admin rights."))
+
+      (testing "schedule 1 lesson and check for conflict"
+        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:00 +0000"))]
+          (is (answers? (talk 1 "/lab1schedule")
+                        "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
+                        "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
+                        (tt/unlines "Select your option:"
+                                    "- 2022.01.01 12:00 +0000"
+                                    "- 2022.01.02 12:00 +0000")))
+          (is (answers? (talk 1 "2022.01.01 12:00 +0000")
+                        "OK, you can check it by: /lab1agenda"))
+
+          (is (answers? (talk 0 "/lab1lostandfound")
+                        (tt/unlines
+                         "({:pres-group \"lgr1\","
+                         "  :datetime \"2022.01.01 12:00 +0000\","
+                         "  :current-state {:stud-ids (1)},"
+                         "  :collision true,"
+                         "  :lost-state"
+                         "  ({:id 1, :topic \"aaa\", :name \"Alice\", :pres-group \"lgr1\"}"
+                         "   {:id 2, :topic \"bbb\", :name \"Bob\", :pres-group \"lgr1\"}"
+                         "   {:id 3, :topic \"ccc\", :name \"Charly\", :pres-group \"lgr1\"})})")
+                        "missing resource: :pres/lost-and-found-collision"))
+
+          (is (answers? (talk 0 "/lab1drop 1" "yes")
+                        [0 "Name: Alice; Group: gr1; Telegram ID: 1"]
+                        [0 "Drop 'Lab 1 presentation' config for 1?"]
+                        [0 "We drop student: 1"]
+                        [1 "We drop your state for Lab 1 presentation"]))))
+
+      (is (answers? (talk 0 "/lab1lostandfound")
+                    (tt/unlines
+                     "({:pres-group \"lgr1\","
+                     "  :datetime \"2022.01.01 12:00 +0000\","
+                     "  :current-state {:stud-ids ()},"
+                     "  :collision false,"
+                     "  :lost-state"
+                     "  ({:id 1, :topic \"aaa\", :name \"Alice\", :pres-group \"lgr1\"}"
+                     "   {:id 2, :topic \"bbb\", :name \"Bob\", :pres-group \"lgr1\"}"
+                     "   {:id 3, :topic \"ccc\", :name \"Charly\", :pres-group \"lgr1\"})})")
+                    "missing resource: :pres/lost-and-found-restore?"))
+
+      (is (answers? (talk 0 "yes")
+                    "missing resource: :pres/lost-and-found-restored"))
+
+      (is (answers? (talk 1 "/lab1feedback 2022.01.01 12:00 +0000"
+                          "2"
+                          "1"
+                          "0")
+                    "Collect feedback for 'Lab 1 presentation' (lgr1) at 2022.01.01 12:00 +0000"
+                    (tt/unlines "Enter the number of the best presentation in the list:"
+                                "0. Alice (aaa)"
+                                "1. Bob (bbb)"
+                                "2. Charly (ccc)")
+                    (tt/unlines "Enter the number of the best presentation in the list:"
+                                "0. Alice (aaa)"
+                                "1. Bob (bbb)")
+                    (tt/unlines "Enter the number of the best presentation in the list:"
+                                "0. Alice (aaa)")
+                    "Thanks, your feedback saved!"))
+
+      (testing "report"
+        (talk 0 "/report")
+        (tt/match-csv *chat 0
+                      ["ID" "pres-group" "feedback-avg" "feedback" "classes" "lesson-counter"]
+                      ["1" "lgr1" "3,0" "2" "1" "1"]
+                      ["2" "lgr1" "2,0" "4" "1" "1"]
+                      ["3" "lgr1" "1,0" "6" "1" "1"])))))

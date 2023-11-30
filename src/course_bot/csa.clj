@@ -85,6 +85,7 @@
       (pres/drop-talk db conf "lab1" false)
       (pres/drop-talk db conf "lab1" true)
       (pres/all-scheduled-descriptions-dump-talk db conf "lab1")
+      (pres/lost-and-found-talk db conf "lab1")
 
       (talk/when-handlers (:essay1 conf)
                           (essay/submit-talk db conf "essay1" plagiarism-db)

@@ -7,6 +7,12 @@
                   :lessons [{:datetime "2022.01.01 12:00 +0000"}
                             {:datetime "2022.01.02 12:00 +0000"}]}
           "lgr2" {:lessons [{:datetime "2022.02.02 12:00 +0000"}]}}
+
+ :lost-and-found {"lgr1" {:lessons [{:datetime "2022.01.01 12:00 +0000"
+                                     :presentations [{:stud-id 1 :text "aaa"}
+                                                     {:stud-id 2 :text "bbb"}
+                                                     {:stud-id 3 :text "ccc"}]}]}}
+
  :agenda-postfix "| Лаб. | АК-2023 | ПИиКТ | Университет ИТМО"
  :feedback-scores {1 [2]
                    2 [4 2]

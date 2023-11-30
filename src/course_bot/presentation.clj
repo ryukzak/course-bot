@@ -1,5 +1,6 @@
  (ns course-bot.presentation
    (:require [clojure.java.io :as io]
+             [clojure.pprint :as pprint]
              [clojure.string :as str])
    (:require [codax.core :as codax])
    (:require [course-bot.general :as general]
@@ -134,6 +135,24 @@
     :feedback-talk-info "[<datetime>] Отправить отзыв для отчета"
     :drop-talk-2 "Для преподавателя, отбросить '%s' для конкретного ученика (%s)"
     :all-scheduled-descriptions-dump-talk "дамп всех запланированных описаний (только для администратора)"}}})
+
+(defn get-lesson-state [tx pres-key pres-group datetime]
+  (codax/get-at tx [:presentation pres-key pres-group datetime]))
+
+(defn submit-presentation [tx pres-key stud-id text]
+  (-> tx
+      (codax/assoc-at [stud-id :presentation pres-key :on-review?] true)
+      (codax/assoc-at [stud-id :presentation pres-key :description] text)))
+
+(defn approve-presentation [tx pres-key stud-id]
+  (-> tx
+      (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
+      (codax/assoc-at [stud-id :presentation pres-key :approved?] true)))
+
+(defn schedule-lesson [tx pres-key pres-group datetime stud-id]
+  (-> tx
+      (codax/update-at [:presentation pres-key pres-group datetime :stud-ids] #(concat % [stud-id]))
+      (codax/assoc-at [stud-id :presentation pres-key :scheduled?] true)))
 
 (defn send-please-set-group [token id pres-key-name name]
   (talk/send-text token id (format (tr :pres/set-group-help-2) name pres-key-name)))
@@ -735,3 +754,60 @@
           (spit filename text)
           (talk/send-document token id (io/file filename)))
         tx))))
+
+(defn lost-and-found-talk [db {token :token :as conf} pres-key-name]
+  (let [cmd (str pres-key-name "lostandfound")
+        pres-key (keyword pres-key-name)
+        {:keys [lost-and-found]} (-> conf (get pres-key))
+        cmd-help (tr :pres/restore-lost-and-found-cmd-help)]
+    (talk/def-talk db cmd cmd-help
+      :start
+      (fn [tx {{id :id} :from}]
+        (general/assert-admin tx conf id)
+        (let [changes (for [[pres-group {:keys [lessons]}] lost-and-found
+                            {:keys [datetime presentations]} lessons
+                            :let [current-state (get-lesson-state tx pres-key (->> pres-group) datetime)
+                                  lost-state (->> presentations
+                                                  (map (fn [{:keys [stud-id text]}]
+                                                         {:id stud-id
+                                                          :topic (topic text)
+                                                          :name (:name (general/stud-info tx stud-id))
+                                                          :text text
+                                                          :pres-group pres-group})))]]
+                        {:pres-group pres-group
+                         :datetime datetime
+                         :current-state current-state
+                         :collision (not (or (nil? current-state)
+                                             (-> current-state :stud-ids empty?)))
+                         :lost-state lost-state})
+              without-text (map (fn [lesson]
+                                  (assoc lesson :lost-state (map #(dissoc % :text) (:lost-state lesson))))
+                                changes)
+              report (with-out-str (pprint/pprint without-text))]
+          (talk/send-text token id report)
+          (when (some :collision changes)
+            (talk/send-text token id (tr :pres/lost-and-found-collision))
+            (talk/stop-talk tx))
+          (talk/send-text token id (tr :pres/lost-and-found-restore?))
+          (talk/change-branch tx :approve {:changes changes})))
+
+      :approve
+      (fn [tx {{id :id} :from text :text} {:keys [changes]}]
+        (case text
+          "yes" (do (talk/send-text token id (tr :pres/lost-and-found-restored))
+                    (-> (reduce (fn [tx' {:keys [pres-group datetime lost-state]}]
+                                  (reduce (fn [tx'' {stud-id :id :keys [topic]}]
+                                            (-> tx''
+                                                (submit-presentation pres-key stud-id topic)
+                                                (approve-presentation pres-key stud-id)
+                                                (schedule-lesson pres-key pres-group datetime stud-id)))
+                                          tx'
+                                          lost-state))
+                                tx
+                                changes)
+                        talk/stop-talk))
+
+          "no" (do (talk/send-text token id (tr :pres/lost-and-found-canceled))
+                   (-> tx talk/stop-talk))
+
+          (talk/wait tx))))))
