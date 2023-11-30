@@ -18,23 +18,6 @@
                 @*tr-locales
                 resource)))
 
-(defn get-by-lang-and-type [lang type k] 
-  (get-in @*tr-options-dict  [lang type k]))
-
-(defn find-command [text]
-  (some (fn [[_ types]]
-          (some (fn [[_ words]]
-                  (some (fn [[k v]] (when (= v text) k)) words))
-                types))
-        @*tr-options-dict))
-
-(defn normalize-yes-no-text-1 [text] 
-  (if (= (str/lower-case text) (tr :talk/yes))
-    "yes"
-    (if (= (str/lower-case text) (tr :talk/no))
-      "no"
-      text)))
-
 (defn normalize-yes-no-text [text]
   (cond
     (= (str/lower-case text) (tr :talk/yes)) "yes"
