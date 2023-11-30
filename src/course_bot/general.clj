@@ -42,7 +42,7 @@
     :telegram-id-not-found "User with specific telegram id not found."
     :restart-this-student-question "Restart this student?"
     :restart-wrong-input "Wrong input. Expect: /restart 12345"
-    :restarted-and-notified-1 "Restarted and notified: %s"
+    :restarted-and-notified-:id "Restarted and notified: %s"
     :use-start-once-more "You can use /start once more."
     :not-restarted "Not restarted."
     :yes-no-question "Please yes or no?"
@@ -68,7 +68,7 @@
     :telegram-id-not-found "Пользователь с указанным Telegram ID не найден."
     :restart-this-student-question "Перезапустить этого студента?"
     :restart-wrong-input "Неправильный ввод. Ожидается: /restart 12345"
-    :restarted-and-notified-1 "Перезапущено и уведомлено: %s"
+    :restarted-and-notified-:id "Перезапущено и уведомлено: %s"
     :use-start-once-more "Вы можете использовать /start еще раз."
     :not-restarted "Не перезапущено."
     :yes-no-question "Пожалуйста, yes или no?"
@@ -190,7 +190,7 @@
     :approve
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
       (case (str/lower-case text)
-        "yes" (do (talk/send-text token id (format (tr :general/restarted-and-notified-1) stud-id))
+        "yes" (do (talk/send-text token id (format (tr :general/restarted-and-notified-:id) stud-id))
                   (talk/send-text token stud-id (tr :general/use-start-once-more))
                   (-> tx
                       (codax/assoc-at [stud-id :allow-restart] true)

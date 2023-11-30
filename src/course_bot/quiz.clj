@@ -18,7 +18,7 @@
     :quiz-was-stopped-1 "The quiz '%s' was stopped"
     :no-answers "Answers did not received."
     :answer-correct "CORRECT "
-    :quiz-your-result-1 "Your result: %s"
+    :quiz-your-result-:result "Your result: %s"
     :quiz-is-still-in-progress "In a next time. The quiz is still in progress."
     :what-question "What?"
     :quiz-cmd-description "start the quiz if it is running"
@@ -28,7 +28,7 @@
     :quiz-after-run-info "Answer with a number. Your first question:"
     :your-right "Your right."
     :what-question-yes-no "What (yes/no)?"
-    :remember-your-answer-1 "Remember your answer: %s"
+    :remember-your-answer-:answer "Remember your answer: %s"
     :quiz-passed "Thanks, quiz passed. The results will be sent when the quiz is closed."
     :already-stopped "The quiz is already stopped."
     :quiz-answers-:answers-:stud-info-:stat "Quiz answers: %s (%s) - %s"
@@ -46,7 +46,7 @@
     :quiz-was-stopped-1 "Тест '%s' был остановлен."
     :no-answers "Ответы не получены."
     :answer-correct "КОРРЕКТНЫЙ "
-    :quiz-your-result-1 "Ваш результат: %s"
+    :quiz-your-result-:result "Ваш результат: %s"
     :quiz-is-still-in-progress "В следующий раз. Тест еще продолжается."
     :what-question "Что?"
     :quiz-cmd-description "Начать прохождение теста, если он запущен"
@@ -56,7 +56,7 @@
     :quiz-after-run-info "Отвечайте цифрой. Ваш первый вопрос:"
     :your-right "Ваше право."
     :what-question-yes-no "Что (yes/no)?"
-    :remember-your-answer-1 "Запомнил ваш ответ: %s"
+    :remember-your-answer-:answer "Запомнил ваш ответ: %s"
     :quiz-passed "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."
     :already-stopped "Тест уже остановлен."
     :quiz-answers-:answers-:stud-info-:stat "Ответы на тест: %s (%s) - %s"
@@ -228,7 +228,7 @@
                                 doall)
 
                            (doall (map (fn [[stud-id _cur info]]
-                                         (talk/send-text token stud-id (format (tr :quiz/quiz-your-result-1) info)))
+                                         (talk/send-text token stud-id (format (tr :quiz/quiz-your-result-:result) info)))
                                        per-studs))
                            (-> (reduce (fn [tx [_stud-id cur _info]] (codax/assoc-at tx [id :quiz quiz-name] cur))
                                        tx per-studs)
@@ -302,7 +302,7 @@
                    (talk/send-text token id (tr :quiz/incorrect-answer))
                    (talk/wait tx))
 
-                 (talk/send-text token id (format (tr :quiz/remember-your-answer-1) text))
+                 (talk/send-text token id (format (tr :quiz/remember-your-answer-:answer) text))
 
                  (when-let [next-question (question-msg quiz next-question-index)]
                    (talk/send-text token id next-question)

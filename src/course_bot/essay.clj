@@ -46,7 +46,7 @@
     :essays-have-rated "You have rated all the essays. Let's take a look:"
     :correct "Correct?"
     :essay-feedback-saved "Your feedback has been saved and will be available to essay writers."
-    :essay-feedback-1 "Feedback: %s"
+    :essay-feedback-:text "Feedback: %s"
     :feedback-on-your-essay "feedback on your essay "
     :number-of-reviews-1 "Review count: %d."
     :plagirism-report-3 "%s original: %s new: %s"
@@ -92,7 +92,7 @@
     :essays-have-rated "Вы оценили все эссе. Давайте посмотрим:"
     :correct "Корректно?"
     :essay-feedback-saved "Ваш отзыв сохранен и будет доступен авторам эссе."
-    :essay-feedback-1 "Отзыв: %s"
+    :essay-feedback-:text "Отзыв: %s"
     :feedback-on-your-essay "Посмотреть отзывы на ваше эссе "
     :number-of-reviews-1 "Количество отзывов на ваше эссе: %d."
     :plagirism-report-3 "%s оригинал: %s новое: %s"
@@ -318,7 +318,7 @@
 (defn my-reviews [tx essay-code id]
   (->> (codax/get-at tx [id :essays essay-code :received-review])
        (map #(str (format (tr :essay/rank-1) (:rank %))
-                  (when-let [fb (:feedback %)] (format (tr :essay/essay-feedback-1) fb))))))
+                  (when-let [fb (:feedback %)] (format (tr :essay/essay-feedback-:text) fb))))))
 
 (defn myfeedback-talk [db {token :token} essay-code]
   (let [cmd (str essay-code "myfeedback")
