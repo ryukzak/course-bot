@@ -68,7 +68,7 @@
     :agenda-talk "agenda (no args -- your group, with args -- specified)"
     :soon-talk-help "what will happen soon"
     :schedule-talk "select your presentation day"
-    :feedback-talk-info "send feedback for report"
+    :feedback-talk-info "[<datetime>] send feedback for report"
     :drop-talk-2 "for teacher, drop '%s' for specific student (%s)"
     :all-scheduled-descriptions-dump-talk "all-scheduled-descriptions-dump (admin only)"}}
   :ru
@@ -131,7 +131,7 @@
     :agenda-talk "Расписание докладов (опциональный аргумент -- группа)"
     :soon-talk-help "Что произойдет в ближайшее время"
     :schedule-talk "Выбрать день презентации"
-    :feedback-talk-info "Отправить отзыв для отчета"
+    :feedback-talk-info "[<datetime>] Отправить отзыв для отчета"
     :drop-talk-2 "Для преподавателя, отбросить '%s' для конкретного ученика (%s)"
     :all-scheduled-descriptions-dump-talk "дамп всех запланированных описаний (только для администратора)"}}})
 
@@ -560,6 +560,10 @@
                                              (map #(str "- " (:datetime %)))
                                              (str/join "\n"))))
                 (talk/send-text token id (tr :pres/lesson-feedback-not-available))))
+            (talk/stop-talk tx))
+
+          (when (empty? studs)
+            (talk/send-text token id (tr :pres/lesson-feedback-no-presentations))
             (talk/stop-talk tx))
 
           (when (some #(= id %)

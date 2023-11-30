@@ -604,6 +604,9 @@
       (talk 0 "/lab1check")
       (talk 0 "Nothing to check")
 
+      (is (answers? (talk 1 "/lab1feedback 2022.01.02 12:00 +0000")
+                    "missing resource: :pres/lesson-feedback-no-presentations"))
+
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
         (talk 2 "/lab1schedule")
         (talk 2 "2022.01.01 12:00 +0000")
