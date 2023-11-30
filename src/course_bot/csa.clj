@@ -133,8 +133,8 @@
       (plagiarism/restore-forest-talk db conf plagiarism-db)
       (general/warning-on-edited-message conf)
 
-      (handlers/command "help" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/helps)))
-      (handlers/command "description" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/descriptions)))
+      (general/help-talk db conf)
+      (general/description-talk db conf)
       (handlers/message {{id :id} :chat :as message}
                         (let [err (format (tr :csa/unknown-1) message)]
                           (println err)
