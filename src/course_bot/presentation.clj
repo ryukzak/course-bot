@@ -136,8 +136,11 @@
     :drop-talk-2 "Для преподавателя, отбросить '%s' для конкретного ученика (%s)"
     :all-scheduled-descriptions-dump-talk "дамп всех запланированных описаний (только для администратора)"}}})
 
-(defn get-lesson-state [tx pres-key pres-group datetime]
+(defn get-lesson-state "per lesson" [tx pres-key pres-group datetime]
   (codax/get-at tx [:presentation pres-key pres-group datetime]))
+
+(defn get-presentation-state "per user" [tx pres-key stud-id]
+  (codax/get-at tx [stud-id :presentation pres-key]))
 
 (defn submit-presentation [tx pres-key stud-id text]
   (-> tx
@@ -547,16 +550,17 @@
       :start
       (fn [tx {{id :id} :from text :text}]
         (let [now (misc/today)
-              {:keys [group] :as _pres} (codax/get-at tx [id :presentation pres-key])
+              {pres-group :group} (get-presentation-state tx pres-key id)
 
               dt (if-let [current-lesson-dt
-                          (->> (lessons pres-conf group)
+                          (->> (lessons pres-conf pres-group)
                                (filter #(in-min-interval? (:datetime %) now 30 180))
                                first :datetime)]
                    current-lesson-dt
                    (talk/command-text-arg-or-nil text))
 
-              stud-ids (codax/get-at tx [:presentation pres-key group dt :stud-ids])
+              {:keys [stud-ids feedback-from]} (get-lesson-state tx pres-key pres-group dt)
+
               studs (->> stud-ids
                          (map #(let [{:keys [name presentation]} (codax/get-at tx [%])]
                                  {:id %
@@ -566,12 +570,12 @@
                                              :description
                                              topic)})))]
 
-          (when (nil? group)
+          (when (nil? pres-group)
             (talk/send-text token id (format (tr :pres/should-set-group-to-send-feedback-help-2) name pres-key-str))
             (talk/stop-talk tx))
 
           (when (nil? dt)
-            (let [pass-lessons (->> (lessons pres-conf group)
+            (let [pass-lessons (->> (lessons pres-conf pres-group)
                                     (filter #(in-min-interval? (:datetime %) now 0 nil)))]
               (if (not (empty? pass-lessons))
                 (talk/send-text token id
@@ -586,15 +590,14 @@
             (talk/send-text token id (tr :pres/lesson-feedback-no-presentations))
             (talk/stop-talk tx))
 
-          (when (some #(= id %)
-                      (codax/get-at tx [:presentation pres-key group :feedback-from dt]))
+          (when (some #(= id %) feedback-from)
             (talk/send-text token id (tr :pres/already-received))
             (talk/stop-talk tx))
 
           (talk/send-text token id
-                          (format (tr :pres/collect-feedback-3) name group dt))
+                          (format (tr :pres/collect-feedback-3) name pres-group dt))
           (talk/send-text token id (feedback-str studs))
-          (talk/change-branch tx :select {:rank [] :remain studs :group group :dt dt})))
+          (talk/change-branch tx :select {:rank [] :remain studs :group pres-group :dt dt})))
 
       :select
       (fn [tx {{id :id} :from text :text} {rank :rank studs :remain group :group dt :dt :as state}]
