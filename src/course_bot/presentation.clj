@@ -783,12 +783,12 @@
                          :current-state current-state
                          :collision (not (or (nil? current-state)
                                              (-> current-state :stud-ids empty?)))
-                         :lost-state lost-state})
-              without-text (map (fn [lesson]
-                                  (assoc lesson :lost-state (map #(dissoc % :text) (:lost-state lesson))))
-                                changes)
-              report (with-out-str (pprint/pprint without-text))]
-          (talk/send-text token id report)
+                         :lost-state lost-state})]
+
+          (doall (for [lesson changes]
+                   (let [without-text (assoc lesson :lost-state (map #(dissoc % :text) (:lost-state lesson)))]
+                     (talk/send-text token id (with-out-str (pprint/pprint without-text))))))
+
           (when (some :collision changes)
             (talk/send-text token id (tr :pres/lost-and-found-collision))
             (talk/stop-talk tx))

@@ -835,14 +835,14 @@
 
           (is (answers? (talk 0 "/lab1lostandfound")
                         (tt/unlines
-                         "({:pres-group \"lgr1\","
-                         "  :datetime \"2022.01.01 12:00 +0000\","
-                         "  :current-state {:stud-ids (1)},"
-                         "  :collision true,"
-                         "  :lost-state"
-                         "  ({:id 1, :topic \"aaa\", :name \"Alice\", :pres-group \"lgr1\"}"
-                         "   {:id 2, :topic \"bbb\", :name \"Bob\", :pres-group \"lgr1\"}"
-                         "   {:id 3, :topic \"ccc\", :name \"Charly\", :pres-group \"lgr1\"})})")
+                         "{:pres-group \"lgr1\","
+                         " :datetime \"2022.01.01 12:00 +0000\","
+                         " :current-state {:stud-ids (1)},"
+                         " :collision true,"
+                         " :lost-state"
+                         " ({:id 1, :topic \"aaa\", :name \"Alice\", :pres-group \"lgr1\"}"
+                         "  {:id 2, :topic \"bbb\", :name \"Bob\", :pres-group \"lgr1\"}"
+                         "  {:id 3, :topic \"ccc\", :name \"Charly\", :pres-group \"lgr1\"})}")
                         "missing resource: :pres/lost-and-found-collision"))
 
           (is (answers? (talk 0 "/lab1drop 1" "yes")
@@ -853,14 +853,14 @@
 
       (is (answers? (talk 0 "/lab1lostandfound")
                     (tt/unlines
-                     "({:pres-group \"lgr1\","
-                     "  :datetime \"2022.01.01 12:00 +0000\","
-                     "  :current-state {:stud-ids ()},"
-                     "  :collision false,"
-                     "  :lost-state"
-                     "  ({:id 1, :topic \"aaa\", :name \"Alice\", :pres-group \"lgr1\"}"
-                     "   {:id 2, :topic \"bbb\", :name \"Bob\", :pres-group \"lgr1\"}"
-                     "   {:id 3, :topic \"ccc\", :name \"Charly\", :pres-group \"lgr1\"})})")
+                     "{:pres-group \"lgr1\","
+                     " :datetime \"2022.01.01 12:00 +0000\","
+                     " :current-state {:stud-ids ()},"
+                     " :collision false,"
+                     " :lost-state"
+                     " ({:id 1, :topic \"aaa\", :name \"Alice\", :pres-group \"lgr1\"}"
+                     "  {:id 2, :topic \"bbb\", :name \"Bob\", :pres-group \"lgr1\"}"
+                     "  {:id 3, :topic \"ccc\", :name \"Charly\", :pres-group \"lgr1\"})}")
                     "missing resource: :pres/lost-and-found-restore?"))
 
       (is (answers? (talk 0 "yes")
