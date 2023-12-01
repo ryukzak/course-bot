@@ -33,8 +33,7 @@
         (talk 1 "gr1")
         (tt/match-history *chat
                           (tt/text 1 "Hi, Bot Botovich!")
-                          (tt/text 1 "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
-                          (tt/text 1 "Send /help for help."))
+                          (tt/text 1 "Name: Bot Botovich; Group: gr1; Telegram ID: 1; Group for first laboratory work: null") (tt/text 1 "Send /help for help."))
 
         (is (= false (codax/get-at! db [1 :allow-restart])))
         (is (= "gr1" (codax/get-at! db [1 :group])))
@@ -90,8 +89,7 @@
         (talk "Bot Botovich")
         (talk "gr1")
         (talk "/whoami")
-        (tt/match-text *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
-        (talk "/start")
+        (tt/match-text *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1; Group for first laboratory work: null") (talk "/start") (talk "/start")
         (tt/match-text *chat "You are already registered. To change your information, contact the teacher and send /whoami"))
 
       (testing "try but not actually restart"
@@ -128,8 +126,7 @@
         (talk "Bot Botovich")
         (talk "gr1")
         (talk "/whoami")
-        (tt/match-text *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
-        (talk "/start")
+        (tt/match-text *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1; Group for first laboratory work: null") (talk "/start") (talk "/start")
         (tt/match-text *chat "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?")))))
 
 (deftest renameme-talk-test
@@ -147,15 +144,13 @@
       (talk "Bot Botovich")
       (talk "gr1")
       (talk "/whoami")
-      (tt/match-text *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1")
-
+      (tt/match-text *chat "Name: Bot Botovich; Group: gr1; Telegram ID: 1; Group for first laboratory work: null")
       (talk "/renameme")
       (tt/match-text *chat "What is your new name?")
 
       (talk "Buddy")
       (tt/match-history *chat
                         (tt/text 1 "Renamed:")
-                        (tt/text 1 "Name: Buddy; Group: gr1; Telegram ID: 1"))
-
+                        (tt/text 1 "Name: Buddy; Group: gr1; Telegram ID: 1; Group for first laboratory work: null"))
       (talk "/whoami")
-      (tt/match-text *chat "Name: Buddy; Group: gr1; Telegram ID: 1"))))
+      (tt/match-text *chat "Name: Buddy; Group: gr1; Telegram ID: 1; Group for first laboratory work: null"))))
