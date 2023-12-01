@@ -149,7 +149,7 @@
         (talk/send-text token id (tr :essay/text-of-your-essay))
         (talk/send-text token id text)
         (talk/send-text token id ">>>>>>>>>>>>>>>>>>>>")
-        (talk/send-yes-no-kbd token id (str (tr :essay/is-loading-question)))
+        (talk/send-yes-no-kbd token id (tr :essay/is-loading-question))
         (talk/change-branch tx :approve {:essay-text text}))
 
       :approve

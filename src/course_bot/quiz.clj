@@ -213,7 +213,7 @@
                                               (keys results))]
                            (talk/send-text token id (str (format (tr :quiz/quiz-was-stopped-1) quiz-name)))
                            (when (empty? results)
-                             (talk/send-text token id (str (tr :quiz/no-answers)))
+                             (talk/send-text token id (tr :quiz/no-answers))
                              (-> tx stop-quiz! talk/stop-talk))
 
                            (->> (map vector questions (result-stat questions results))
@@ -268,7 +268,7 @@
                    (-> tx talk/stop-talk))
 
                  (when (nil? quiz)
-                   (talk/send-text token id (str (tr :quiz/quiz-not-running)))
+                   (talk/send-text token id (tr :quiz/quiz-not-running))
                    (-> tx talk/stop-talk))
 
                  (talk/send-yes-no-kbd token id (str (format (tr :quiz/student-confirm-run-quiz-2) quiz-name questions-count)))
@@ -283,7 +283,7 @@
                              (talk/send-text token id (question-msg quiz 0))
                              (talk/change-branch tx :quiz-step {:results '()}))
                    "no" (talk/send-stop tx token id (tr :quiz/your-right))
-                   (do (talk/send-yes-no-kbd token id (str (tr :quiz/what-question-yes-no)))
+                   (do (talk/send-yes-no-kbd token id (tr :quiz/what-question-yes-no))
                        (talk/wait tx)))))
 
              :quiz-step

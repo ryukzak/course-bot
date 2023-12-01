@@ -112,7 +112,7 @@
                      (not allow-restart))
             (talk/send-text token id (tr :general/already-registered))
             (talk/stop-talk tx))
-          (talk/send-text token id (str (tr :general/start)))
+          (talk/send-text token id (tr :general/start))
           (talk/change-branch tx :get-name)))
 
       :get-name
@@ -144,7 +144,7 @@
         (when (nil? (:name info))
           (talk/send-text token id (tr :general/unregistered-rename-warn))
           (talk/stop-talk tx))
-        (talk/send-text token id (str (tr :general/what-is-your-new-name)))
+        (talk/send-text token id (tr :general/what-is-your-new-name))
         (talk/change-branch tx :get-name)))
 
     :get-name
@@ -179,7 +179,7 @@
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
       (case (i18n/normalize-yes-no-text text)
         "yes" (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
-                  (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
+                  (talk/send-text token stud-id (tr :general/use-start-once-more))
                   (-> tx
                       (codax/assoc-at [stud-id :allow-restart] true)
                       (talk/stop-talk)))
