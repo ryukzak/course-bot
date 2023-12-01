@@ -733,7 +733,9 @@
           (talk 3 "/lab1feedback")
           (talk 3 "1")
           (talk 3 "0")
-          (tt/match-text *chat 3 "Thanks, your feedback saved!"))
+          (tt/match-text *chat 3 "Thanks, your feedback saved!")
+          (is (answers? (talk 3 "/lab1feedback")
+                        "Already received.")))
 
         (is (= {:feedback (list
                            {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
