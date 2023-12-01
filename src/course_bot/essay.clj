@@ -1,9 +1,9 @@
 (ns course-bot.essay
-  (:require [course-bot.talk :as talk]
+  (:require [course-bot.general :as general]
             [course-bot.internationalization :as i18n :refer [tr]]
-            [course-bot.general :as general]
             [course-bot.misc :as misc]
-            [course-bot.plagiarism :as plagiarism])
+            [course-bot.plagiarism :as plagiarism]
+            [course-bot.talk :as talk])
   (:require [codax.core :as codax])
   (:require [clojure.java.io :as io]
             [clojure.string :as str]))

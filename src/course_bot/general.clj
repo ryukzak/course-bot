@@ -1,9 +1,8 @@
 (ns course-bot.general
   (:require [clojure.string :as str])
   (:require [codax.core :as codax])
-  (:require [course-bot.talk :as talk]
-            [course-bot.internationalization :as i18n :refer [tr]]))
-
+  (:require [course-bot.internationalization :as i18n :refer [tr]]
+            [course-bot.talk :as talk]))
 
 (i18n/add-dict
  {:en

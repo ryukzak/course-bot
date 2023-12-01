@@ -1,8 +1,8 @@
 (ns course-bot.quiz
   (:require [clojure.string :as str])
   (:require [codax.core :as codax])
-  (:require [course-bot.internationalization :as i18n :refer [tr]]
-            [course-bot.general :as general]
+  (:require [course-bot.general :as general]
+            [course-bot.internationalization :as i18n :refer [tr]]
             [course-bot.talk :as talk]))
 
 (i18n/add-dict
