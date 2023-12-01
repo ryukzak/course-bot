@@ -9,6 +9,8 @@
   {:general
    {:who-am-i-3 "Name: %s; Group: %s; Telegram ID: %s"
     :need-admin "That action requires admin rights."
+    :description-info "Descriptions for supported commands"
+    :help-info "Show list of supported commands"
     :who-am-i-info "Send me my registration info"
     :group " group:\n"
     :list-groups-info "Send me group list know by the bot"
@@ -35,6 +37,8 @@
   {:general
    {:who-am-i-3 "Имя: %s; Группа: %s; Telegram ID: %s"
     :need-admin "Это действие требует прав администратора."
+    :description-info "Описание доступных команд"
+    :help-info "Вывести список доступных команд"
     :who-am-i-info "Получить мою информацию о регистрации"
     :group " группа:\n"
     :list-groups-info "Получить список групп, известных боту"
@@ -78,6 +82,18 @@
   (talk/def-command db "whoami" (tr :general/who-am-i-info)
     (fn [tx {{id :id} :from}]
       (send-whoami tx token id)
+      (talk/stop-talk tx))))
+
+(defn help-talk [db {token :token}]
+  (talk/def-command db "help" (tr :general/help-info)
+    (fn [tx {{id :id} :chat}]
+      (talk/send-text token id (talk/helps))
+      (talk/stop-talk tx))))
+
+(defn description-talk [db {token :token}]
+  (talk/def-command db "description" (tr :general/description-info)
+    (fn [tx {{id :id} :chat}]
+      (talk/send-text token id (talk/descriptions))
       (talk/stop-talk tx))))
 
 (defn send-list-groups
