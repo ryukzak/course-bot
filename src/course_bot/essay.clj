@@ -258,11 +258,11 @@
           (when-not (nil? (codax/get-at tx [id :essays essay-code :my-reviews]))
             (talk/send-text token id (tr :essay/you-already-sent-reviews))
             (talk/stop-talk tx))
-          (talk/send-text token id (str (format (tr :essay/essays-submitted-for-review-1) (count assignments))))
+          (talk/send-text token id (format (tr :essay/essays-submitted-for-review-1) (count assignments)))
           (doall (map (fn [index [_auth-id text]]
-                        (talk/send-text token id (str (format (tr :essay/essay-number-begin-1) (+ 1 index))))
+                        (talk/send-text token id (format (tr :essay/essay-number-begin-1) (+ 1 index)))
                         (talk/send-text token id text)
-                        (talk/send-text token id (str (format (tr :essay/essay-number-end-1) (+ 1 index)))))
+                        (talk/send-text token id (format (tr :essay/essay-number-end-1) (+ 1 index))))
                       (range)
                       assignments))
           (talk/send-text token id (or (-> conf (get (keyword essay-code)) :review-msg)
@@ -330,7 +330,7 @@
       (fn [tx {{id :id} :from}]
         (let [reviews (my-reviews tx essay-code id)]
           (doall (map #(talk/send-text token id %) reviews))
-          (talk/send-text token id (str (format (tr :essay/number-of-reviews-1) (count reviews)))))
+          (talk/send-text token id (format (tr :essay/number-of-reviews-1) (count reviews))))
         (talk/stop-talk tx)))))
 
 (defn review-score [conf essay-code]

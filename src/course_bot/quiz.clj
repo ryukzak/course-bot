@@ -115,7 +115,7 @@
                  (when-not quiz
                    (talk/send-text token id (tr :quiz/quiz-not-defined)) (talk/stop-talk tx))
 
-                 (talk/send-yes-no-kbd token id (str (format (tr :quiz/confirm-run-quiz-1) (:name quiz))))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/confirm-run-quiz-1) (:name quiz)))
                  (talk/change-branch tx :approve {:quiz-key quiz-key})))
              :approve
              (fn [tx {{id :id} :from text :text} {quiz-key :quiz-key}]
@@ -196,7 +196,7 @@
                  (when-not quiz-key
                    (talk/send-text token id (tr :quiz/no-running-quizzes))
                    (talk/stop-talk tx))
-                 (talk/send-yes-no-kbd token id (str (format (tr :quiz/confirm-stop-quiz-1) quiz-name)))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/confirm-stop-quiz-1) quiz-name))
                  (talk/change-branch tx :approve)))
              :approve
              (fn [tx {{id :id} :from text :text}]
@@ -211,7 +211,7 @@
                                                       info (str cur "/" max)]
                                                   [stud-id cur info]))
                                               (keys results))]
-                           (talk/send-text token id (str (format (tr :quiz/quiz-was-stopped-1) quiz-name)))
+                           (talk/send-text token id (format (tr :quiz/quiz-was-stopped-1) quiz-name))
                            (when (empty? results)
                              (talk/send-text token id (tr :quiz/no-answers))
                              (-> tx stop-quiz! talk/stop-talk))
@@ -264,14 +264,14 @@
                      results (codax/get-at tx [:quiz :results quiz-key id])]
 
                  (when (some? results)
-                   (talk/send-text token id (str (format (tr :quiz/quiz-already-taking-1) quiz-key)))
+                   (talk/send-text token id (format (tr :quiz/quiz-already-taking-1) quiz-key))
                    (-> tx talk/stop-talk))
 
                  (when (nil? quiz)
                    (talk/send-text token id (tr :quiz/quiz-not-running))
                    (-> tx talk/stop-talk))
 
-                 (talk/send-yes-no-kbd token id (str (format (tr :quiz/student-confirm-run-quiz-2) quiz-name questions-count)))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/student-confirm-run-quiz-2) quiz-name questions-count))
                  (talk/change-branch tx :quiz-approve)))
 
              :quiz-approve
