@@ -207,3 +207,4 @@
     (when (some? edited-message)
       (talk/send-text token id (tr :general/edited-message-not-allowed))
       true)))
+
