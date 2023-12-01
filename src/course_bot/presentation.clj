@@ -41,6 +41,7 @@
     :not-found-allow-only "Not found, allow only:\n"
     :enter-pres-number "Enter the number of the best presentation in the list:\n"
     :lesson-feedback-not-available "Lesson feedback is not available."
+    :lesson-feedback-no-presentations "No presentations."
     :lesson-feedback-what-lesson-:dt-list "You need to specify lesson datetime explicitly:\n%s"
     :already-received "Already received."
     :collect-feedback-3 "Collect feedback for '%s' (%s) at %s"
@@ -104,6 +105,7 @@
     :not-found-allow-only "Не найдено, разрешить только:\n"
     :enter-pres-number "Введите номер лучшей презентации в списке:\n"
     :lesson-feedback-not-available "Отзывы не доступны для этого занятия."
+    :lesson-feedback-no-presentations "Нет презентаций для этого занятия."
     :lesson-feedback-what-lesson-:dt-list "Какое занятие?:\n%s"
     :already-received "Уже получено."
     :collect-feedback-3 "Собрать отзывы для '%s' (%s) в %s"
@@ -759,6 +761,20 @@
           (talk/send-document token id (io/file filename)))
         tx))))
 
+(i18n/add-dict
+ {:en {:pres
+       {:restore-lost-and-found-cmd-help "(admin) Restore lost-and-found lessons."
+        :lost-and-found-collision "Collision between lost-and-found lessons and scheduled lessons. Canceled."
+        :lost-and-found-restore? "Restore lost-and-found lessons?"
+        :lost-and-found-canceled "Lost-and-found lessons restore canceled."
+        :lost-and-found-restored "Lost-and-found lessons restored."}}
+  :ru {:pres
+       {:restore-lost-and-found-cmd-help "(admin) Restore lost-and-found lessons."
+        :lost-and-found-collision "Конфликт между уроками из lost-and-found и запланированными уроками. Отменено."
+        :lost-and-found-restore? "Восстановить уроки из lost-and-found?"
+        :lost-and-found-canceled "Восстановление из lost-and-found отменено."
+        :lost-and-found-restored "Уроки из lost-and-found восстановлены."}}})
+
 (defn lost-and-found-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "lostandfound")
         pres-key (keyword pres-key-name)
@@ -797,7 +813,7 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {:keys [changes]}]
-        (case text
+        (case (i18n/normalize-yes-no-text text)
           "yes" (do (talk/send-text token id (tr :pres/lost-and-found-restored))
                     (-> (reduce (fn [tx' {:keys [pres-group datetime lost-state]}]
                                   (reduce (fn [tx'' {stud-id :id :keys [topic]}]
@@ -811,7 +827,6 @@
                                 changes)
                         talk/stop-talk))
 
-          "no" (do (talk/send-text token id (tr :pres/lost-and-found-canceled))
-                   (-> tx talk/stop-talk))
+          "no" (talk/send-stop tx token id (tr :pres/lost-and-found-canceled))
 
-          (talk/wait tx))))))
+          (talk/clarify-input tx token id))))))

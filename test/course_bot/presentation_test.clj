@@ -618,7 +618,7 @@
       (talk 0 "Nothing to check")
 
       (is (answers? (talk 1 "/lab1feedback 2022.01.02 12:00 +0000")
-                    "missing resource: :pres/lesson-feedback-no-presentations"))
+                    "No presentations."))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
         (talk 2 "/lab1schedule")
@@ -843,7 +843,7 @@
                          " ({:id 1, :topic \"aaa\", :name \"Alice\", :pres-group \"lgr1\"}"
                          "  {:id 2, :topic \"bbb\", :name \"Bob\", :pres-group \"lgr1\"}"
                          "  {:id 3, :topic \"ccc\", :name \"Charly\", :pres-group \"lgr1\"})}")
-                        "missing resource: :pres/lost-and-found-collision"))
+                        "Collision between lost-and-found lessons and scheduled lessons. Canceled."))
 
           (is (answers? (talk 0 "/lab1drop 1" "yes")
                         [0 "Name: Alice; Group: gr1; Telegram ID: 1"]
@@ -861,10 +861,10 @@
                      " ({:id 1, :topic \"aaa\", :name \"Alice\", :pres-group \"lgr1\"}"
                      "  {:id 2, :topic \"bbb\", :name \"Bob\", :pres-group \"lgr1\"}"
                      "  {:id 3, :topic \"ccc\", :name \"Charly\", :pres-group \"lgr1\"})}")
-                    "missing resource: :pres/lost-and-found-restore?"))
+                    "Restore lost-and-found lessons?"))
 
       (is (answers? (talk 0 "yes")
-                    "missing resource: :pres/lost-and-found-restored"))
+                    "Lost-and-found lessons restored."))
 
       (is (answers? (talk 1 "/lab1feedback 2022.01.01 12:00 +0000"
                           "2"
