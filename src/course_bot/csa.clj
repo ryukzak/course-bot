@@ -4,7 +4,8 @@
             [compojure.core :refer [POST defroutes]]
             [compojure.route :as route]
             [course-bot.essay :as essay]
-            [course-bot.general :as general :refer [tr]]
+            [course-bot.general :as general]
+            [course-bot.internationalization :as i18n :refer [tr]]
             [course-bot.misc :as misc]
             [course-bot.plagiarism :as plagiarism]
             [course-bot.presentation :as pres]
@@ -17,8 +18,8 @@
             [ring.adapter.jetty :as jetty]
             [ring.middleware.json :as middleware]))
 
-(general/set-locales [:ru :en])
-(general/add-dict
+(i18n/set-locales [:ru :en])
+(i18n/add-dict
  {:en
   {:csa
    {:start "Bot activated, my Lord!"

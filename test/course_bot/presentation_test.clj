@@ -64,7 +64,7 @@
                         (tt/text 1 "Do you approve it?"))
 
       (talk 1 "noooooooooooooo")
-      (tt/match-text *chat 1 "Please, yes or no?")
+      (tt/match-text *chat 1 "Didn't understand: noooooooooooooo. Yes or no?")
 
       (talk 1 "no")
       (tt/match-text *chat 1 "You can do this later.")
@@ -116,7 +116,7 @@
                           (tt/text 0 "Approve (yes or no)?"))
 
         (talk 0 "nooooooooooooo")
-        (tt/match-text *chat 0 "What (yes or no)?")
+        (tt/match-text *chat 0 "Didn't understand: nooooooooooooo. Yes or no?")
 
         (talk 0 "no")
         (tt/match-text *chat 0 "OK, you need to send your remark for the student:")
@@ -510,7 +510,7 @@
                         (tt/text 0 "Drop 'Lab 1 presentation' config for 1?"))
 
       (talk 0 "noooooooooooooooooooo")
-      (tt/match-text *chat 0 "What (yes or no)?")
+      (tt/match-text *chat 0 "Didn't understand: noooooooooooooooooooo. Yes or no?")
 
       (talk 0 "no")
       (tt/match-text *chat 0 "Cancelled.")

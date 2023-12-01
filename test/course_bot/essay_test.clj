@@ -44,7 +44,7 @@
 
       (testing "cancelation"
         (talk 1 "hmmm")
-        (is (= (tt/history *chat :user-id 1) ["What (yes or no)?"]))
+        (is (= (tt/history *chat :user-id 1) ["Didn't understand: hmmm. Yes or no?"]))
 
         (talk 1 "no")
         (is (= (tt/history *chat :user-id 1) ["Cancelled."]))

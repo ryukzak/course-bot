@@ -3,7 +3,24 @@
   (:require [clj-http.client :as http]
             [codax.core :as codax]
             [morse.api :as morse]
-            [morse.handlers :as handlers]))
+            [morse.handlers :as handlers])
+  (:require [course-bot.internationalization :as i18n :refer [tr]]))
+
+(i18n/add-dict
+ {:en
+  {:talk
+   {:yes "yes"
+    :no "no"
+    :cancelled "Cancelled."
+    :question-yes-no "What (yes or no)?"
+    :clarify-input-tmpl "Didn't understand: %s. Yes or no?"}}
+  :ru
+  {:talk
+   {:yes "да"
+    :no "нет"
+    :cancelled "Отменено."
+    :question-yes-no "Что (да или нет)?"
+    :clarify-input-tmpl "Не разобрал: %s. Да или нет?"}}})
 
 ;; Talk flow
 
@@ -150,21 +167,17 @@
                           {:one_time_keyboard true
                            :resize_keyboard true
                            :keyboard
-                           [[{:text "yes"} {:text "no"}]]}}))
+                           [[{:text (tr :talk/yes)} {:text (tr :talk/no)}]]}}))
 
-(defmacro if-parse-yes-or-no [tx token id text if-yes if-no]
-  `(case (str/lower-case ~text)
-     "yes" (do ~if-yes)
-     "no" (do ~if-no)
-     (do (talk/send-text ~token ~id "What (yes or no)?")
-         (talk/repeat-branch ~tx))))
+(defn send-stop
+  ([tx token id] (send-stop tx token id (tr :talk/cancelled)))
+  ([tx token id msg] (send-text token id msg)
+                     (stop-talk tx)))
 
-(defmacro when-parse-yes-or-no [tx token id text & body]
-  `(if-parse-yes-or-no ~tx ~token ~id ~text
-                       (do ~@body)
-                       (do (talk/send-text ~token ~id "Cancelled.")
-                           (talk/stop-talk ~tx))))
-
+(defn clarify-input
+  ([tx token id] (clarify-input tx token id (tr :talk/question-yes-no)))
+  ([tx token id msg] (send-text token id msg)
+                     (repeat-branch tx)))
 ;; tests
 
 (defn msg
