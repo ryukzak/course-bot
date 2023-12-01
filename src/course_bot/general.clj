@@ -1,30 +1,16 @@
 (ns course-bot.general
   (:require [clojure.string :as str])
-  (:require [codax.core :as codax]
-            [taoensso.tempura :as tempura])
-  (:require [course-bot.talk :as talk]))
+  (:require [codax.core :as codax])
+  (:require [course-bot.internationalization :as i18n :refer [tr]]
+            [course-bot.talk :as talk]))
 
-(def *tr-options-dict (atom {}))
-(defn add-dict [dict]
-  (swap! *tr-options-dict (partial merge-with merge) dict))
-
-(def *tr-locales (atom [:en]))
-(defn set-locales [langs]
-  (compare-and-set! *tr-locales @*tr-locales langs)
-  @*tr-locales)
-
-(defn tr [& in]
-  (let [resource (conj (apply vector in)
-                       (str "missing resource: " (str/join " " in)))]
-    (tempura/tr {:dict @*tr-options-dict}
-                @*tr-locales
-                resource)))
-
-(add-dict
+(i18n/add-dict
  {:en
   {:general
    {:who-am-i-3 "Name: %s; Group: %s; Telegram ID: %s"
     :need-admin "That action requires admin rights."
+    :description-info "Descriptions for supported commands"
+    :help-info "Show list of supported commands"
     :who-am-i-info "Send me my registration info"
     :group " group:\n"
     :list-groups-info "Send me group list know by the bot"
@@ -45,12 +31,14 @@
     :restarted-and-notified-:id "Restarted and notified: %s"
     :use-start-once-more "You can use /start once more."
     :not-restarted "Not restarted."
-    :yes-no-question "Please yes or no?"
+    :yes-no-question "Please, yes or no?"
     :edited-message-not-allowed "Edited message not allowed."}}
   :ru
   {:general
    {:who-am-i-3 "Имя: %s; Группа: %s; Telegram ID: %s"
     :need-admin "Это действие требует прав администратора."
+    :description-info "Описание доступных команд"
+    :help-info "Вывести список доступных команд"
     :who-am-i-info "Получить мою информацию о регистрации"
     :group " группа:\n"
     :list-groups-info "Получить список групп, известных боту"
@@ -80,16 +68,32 @@
      (talk/send-text token id (tr :general/need-admin))
      (talk/stop-talk tx))))
 
+(defn stud-info [tx id]
+  (let [{name :name group :group} (codax/get-at tx [id])]
+    {:name name :group group}))
+
 (defn send-whoami
   ([tx token id] (send-whoami tx token id id))
-  ([tx token id about]
-   (let [{name :name group :group} (codax/get-at tx [about])]
-     (talk/send-text token id (format (tr :general/who-am-i-3) name group about)))))
+  ([tx token id stud-id]
+   (let [{name :name group :group} (stud-info tx stud-id)]
+     (talk/send-text token id (format (tr :general/who-am-i-3) name group stud-id)))))
 
 (defn whoami-talk [db {token :token}]
   (talk/def-command db "whoami" (tr :general/who-am-i-info)
     (fn [tx {{id :id} :from}]
       (send-whoami tx token id)
+      (talk/stop-talk tx))))
+
+(defn help-talk [db {token :token}]
+  (talk/def-command db "help" (tr :general/help-info)
+    (fn [tx {{id :id} :chat}]
+      (talk/send-text token id (talk/helps))
+      (talk/stop-talk tx))))
+
+(defn description-talk [db {token :token}]
+  (talk/def-command db "description" (tr :general/description-info)
+    (fn [tx {{id :id} :chat}]
+      (talk/send-text token id (talk/descriptions))
       (talk/stop-talk tx))))
 
 (defn send-list-groups
@@ -189,20 +193,17 @@
 
     :approve
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
-      (case (str/lower-case text)
+      (case (i18n/normalize-yes-no-text text)
         "yes" (do (talk/send-text token id (format (tr :general/restarted-and-notified-:id) stud-id))
                   (talk/send-text token stud-id (tr :general/use-start-once-more))
                   (-> tx
                       (codax/assoc-at [stud-id :allow-restart] true)
                       (talk/stop-talk)))
-        "no" (do (talk/send-text token id (tr :general/not-restarted))
-                 (talk/stop-talk tx))
-        (do (talk/send-text token id (tr :general/yes-no-question))
-            (talk/repeat-branch tx))))))
+        "no" (talk/send-stop tx token id (tr :general/not-restarted))
+        (talk/clarify-input tx token id (tr :general/yes-no-question))))))
 
 (defn warning-on-edited-message [{token :token}]
   (fn [{{{id :id} :from :as edited-message} :edited_message}]
     (when (some? edited-message)
       (talk/send-text token id (tr :general/edited-message-not-allowed))
       true)))
-

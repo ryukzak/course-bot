@@ -4,7 +4,8 @@
             [compojure.core :refer [POST defroutes]]
             [compojure.route :as route]
             [course-bot.essay :as essay]
-            [course-bot.general :as general :refer [tr]]
+            [course-bot.general :as general]
+            [course-bot.internationalization :as i18n :refer [tr]]
             [course-bot.misc :as misc]
             [course-bot.plagiarism :as plagiarism]
             [course-bot.presentation :as pres]
@@ -17,8 +18,8 @@
             [ring.adapter.jetty :as jetty]
             [ring.middleware.json :as middleware]))
 
-(general/set-locales [:ru :en])
-(general/add-dict
+(i18n/set-locales [:ru :en])
+(i18n/add-dict
  {:en
   {:csa
    {:start "Bot activated, my Lord!"
@@ -84,6 +85,7 @@
       (pres/drop-talk db conf "lab1" false)
       (pres/drop-talk db conf "lab1" true)
       (pres/all-scheduled-descriptions-dump-talk db conf "lab1")
+      (pres/lost-and-found-talk db conf "lab1")
 
       (talk/when-handlers (:essay1 conf)
                           (essay/submit-talk db conf "essay1" plagiarism-db)
@@ -133,8 +135,8 @@
       (plagiarism/restore-forest-talk db conf plagiarism-db)
       (general/warning-on-edited-message conf)
 
-      (handlers/command "help" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/helps)))
-      (handlers/command "description" {{id :id} :chat} (talk/send-text (-> conf :token) id (talk/descriptions)))
+      (general/help-talk db conf)
+      (general/description-talk db conf)
       (handlers/message {{id :id} :chat :as message}
                         (let [err (format (tr :csa/unknown-1) message)]
                           (println err)

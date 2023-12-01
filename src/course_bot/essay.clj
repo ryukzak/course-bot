@@ -1,5 +1,6 @@
 (ns course-bot.essay
-  (:require [course-bot.general :as general :refer [tr]]
+  (:require [course-bot.general :as general]
+            [course-bot.internationalization :as i18n :refer [tr]]
             [course-bot.misc :as misc]
             [course-bot.plagiarism :as plagiarism]
             [course-bot.talk :as talk])
@@ -7,7 +8,7 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]))
 
-(general/add-dict
+(i18n/add-dict
  {:en
   {:essay
    {:submit "Submit "
@@ -64,7 +65,7 @@
     :plagiarised-report-3 "Плагиат: %s\n\nоригинал: %s\n загруженный текст: %s"
     :themes " Тема(-ы):\n\n"
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
-    :is-loading-question "Загружаем (yes/no)?"
+    :is-loading-question "Загружаем (да/нет)?"
     :thank-you-your-essay-submited "Спасибо, текст загружен и скоро попадёт на рецензирование."
     :status " статус"
     :total-essays "Всего эссе: "
@@ -153,13 +154,14 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {essay-text :essay-text}]
-        (talk/when-parse-yes-or-no
-         tx token id text
-         (plagiarism/register-text! plagiarism-db (plagiarism-key essay-code id) essay-text)
-         (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
-         (-> tx
-             (codax/assoc-at [id :essays essay-code :text] essay-text)
-             talk/stop-talk))))))
+        (case (i18n/normalize-yes-no-text text)
+          "yes" (do (plagiarism/register-text! plagiarism-db (plagiarism-key essay-code id) essay-text)
+                    (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
+                    (-> tx
+                        (codax/assoc-at [id :essays essay-code :text] essay-text)
+                        talk/stop-talk))
+          "no" (talk/send-stop tx token id)
+          (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
 
 (defn get-essays [tx essay-code]
   (->> (codax/get-at tx [])
@@ -305,15 +307,16 @@
 
       :approve
       (fn [tx {{id :id} :from text :text} {reviews :reviews}]
-        (talk/when-parse-yes-or-no
-         tx token id text
-         (talk/send-text token id (tr :essay/essay-feedback-saved))
-         (-> (reduce (fn [tx' review]
-                       (codax/update-at tx' [(:essay-author review) :essays essay-code :received-review] conj review))
-                     tx reviews)
-             (codax/assoc-at [id :essays essay-code :my-reviews] reviews)
-             (codax/assoc-at [id :essays essay-code :my-reviews-submitted-at] (misc/str-time (misc/today)))
-             talk/stop-talk))))))
+        (case (i18n/normalize-yes-no-text text)
+          "yes" (do (talk/send-text token id (tr :essay/essay-feedback-saved))
+                    (-> (reduce (fn [tx' review]
+                                  (codax/update-at tx' [(:essay-author review) :essays essay-code :received-review] conj review))
+                                tx reviews)
+                        (codax/assoc-at [id :essays essay-code :my-reviews] reviews)
+                        (codax/assoc-at [id :essays essay-code :my-reviews-submitted-at] (misc/str-time (misc/today)))
+                        talk/stop-talk))
+          "no" (talk/send-stop tx token id)
+          (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
 
 (defn my-reviews [tx essay-code id]
   (->> (codax/get-at tx [id :essays essay-code :received-review])
@@ -346,16 +349,21 @@
 
 (defn essay-score "hardcoded: rank + 1" [essay-code]
   (fn [_tx data id]
-    (let [reviews (-> data (get id) :essays (get essay-code) :received-review)
+    (let [essay-uploaded? (-> data (get id) :essays (get essay-code) :text nil? not)
+          reviews (-> data (get id) :essays (get essay-code) :received-review)
           scores (->> reviews (map :rank))]
-      (if (empty? scores)
-        0
-        (-> (/ (apply + scores) (count scores))
-            float
-            Math/round
-            (#(- 4 %)) ; 3 (max score) = 4 - 1; 1 (min score) = 4 - 3
-            (+ 1) ; + 1 to get actual score
-            )))))
+      (cond (not (empty? scores))
+            (-> (/ (apply + scores) (count scores))
+                float
+                Math/ceil
+                int
+                (#(- 4 %)) ; 3 (max score) = 4 - 1; 1 (min score) = 4 - 3
+                (+ 1) ; + 1 to get actual score
+                )
+
+            essay-uploaded? 1
+
+            :else 0))))
 
 (defn warmup-plagiarism-talk [db {token :token :as conf} essay-code plagiarism-db]
   (let [cmd (str essay-code "warmupplagiarism")
