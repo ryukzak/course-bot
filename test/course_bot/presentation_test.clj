@@ -1,891 +1,209 @@
-(ns course-bot.presentation-test
-  (:require [clojure.string :as str]
-            [clojure.test :refer [deftest testing is]])
+(ns course-bot.general
+  (:require [clojure.string :as str])
   (:require [codax.core :as codax])
-  (:require [course-bot.general :as general]
-            [course-bot.misc :as misc]
-            [course-bot.presentation :as pres]
-            [course-bot.report :as report]
-            [course-bot.talk-test :as tt :refer [answers?]]))
-
-(defn register-user [*chat talk id name]
-  ; TODO: migrate to register-user-2 with talk/test-handler
-  (testing "register user"
-    (talk id "/start")
-    (talk id name)
-    (talk id "gr1")
-    (talk id "/start")
-    (tt/match-text *chat id "You are already registered. To change your information, contact the teacher and send /whoami")))
-
-(defn register-user-2 [talk stud-id name pres-group]
-  (testing "register user"
-    (talk stud-id "/start")
-    (talk stud-id name)
-    (is (answers? (talk stud-id "gr1")
-                  (str "Hi, " name "!")
-                  (str "Name: " name "; Group: gr1; Telegram ID: " stud-id)
-                  "Send /help for help."))
-    (talk stud-id "/lab1setgroup")
-    (is (answers? (talk stud-id pres-group)
-                  (str "Your Lab 1 presentation group set: " pres-group)))))
-
-(deftest setgroup-talk-test
-  (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (pres/setgroup-talk db conf "lab1"))]
-    (tt/with-mocked-morse *chat
-      (register-user *chat talk 1 "Bot Botovich")
-      (talk 1 "/lab1setgroup")
-      (tt/match-text *chat "Please, select your Lab 1 presentation group: lgr1, lgr2")
-
-      (talk 1 "miss")
-      (tt/match-text *chat "I don't know this group. Try again (lgr1, lgr2)")
-
-      (talk 1 "lgr1")
-      (tt/match-text *chat "Your Lab 1 presentation group set: lgr1")
-
-      (talk 1 "/lab1setgroup")
-      (tt/match-text *chat "Your Lab 1 presentation group is already set: lgr1")
-      (is (= {:lab1 {:group "lgr1"}} (codax/get-at! db [1 :presentation]))))))
-
-(deftest submit-talk-test
-  (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (pres/setgroup-talk db conf "lab1")
-                          (pres/submit-talk db conf "lab1"))]
-    (tt/with-mocked-morse *chat
-
-      (register-user *chat talk 1 "Bot Botovich")
-      (talk 1 "/lab1submit")
-      (tt/match-text *chat 1 "Please, set your 'Lab 1 presentation' group by /lab1setgroup")
-
-      (talk 1 "/lab1setgroup")
-      (talk 1 "lgr1")
-      (tt/match-text *chat 1 "Your Lab 1 presentation group set: lgr1")
-
-      (talk 1 "/lab1submit")
-      (tt/match-text *chat 1 "hint")
-
-      (testing "too long description. After fail -- just send smaller text"
-        (talk 1 "bla-bla-bla zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
-        (tt/match-text *chat 1 "Description is too long, max length is 50."))
-
-      (talk 1 "bla-bla-bla the best")
-      (tt/match-history *chat
-                        (tt/text 1 "Your description:")
-                        (tt/text 1 "bla-bla-bla the best")
-                        (tt/text 1 "Do you approve it?"))
-
-      (talk 1 "noooooooooooooo")
-      (tt/match-text *chat 1 "Didn't understand: noooooooooooooo. Yes or no?")
-
-      (talk 1 "no")
-      (tt/match-text *chat 1 "You can do this later.")
-
-      (talk 1 "/lab1submit")
-      (talk 1 "bla-bla-bla the best")
-      (talk 1 "yes")
-      (tt/match-text *chat 1 "Registered, the teacher will check it soon.")
-
-      (is (= {:lab1
-              {:description "bla-bla-bla the best"
-               :group "lgr1"
-               :on-review? true}}
-             (codax/get-at! db [1 :presentation]))))))
-
-(deftest check-and-submissions-talks-test
-  (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (pres/setgroup-talk db conf "lab1")
-                          (pres/submit-talk db conf "lab1")
-                          (pres/check-talk db conf "lab1")
-                          (pres/submissions-talk db conf "lab1"))]
-    (tt/with-mocked-morse *chat
-      (register-user *chat talk 1 "Bot Botovich")
-      (talk 1 "/lab1setgroup")
-      (talk 1 "lgr1")
-      (tt/match-text *chat 1 "Your Lab 1 presentation group set: lgr1")
-
-      (talk 1 "/lab1check")
-      (tt/match-text *chat 1 "That action requires admin rights.")
-
-      (talk 0 "/lab1check")
-      (tt/match-text *chat 0 "Nothing to check.")
-
-      (talk 1 "/lab1submit")
-      (talk 1 "bla-bla-bla the best")
-      (talk 1 "yes")
-      (tt/match-text *chat 1 "Registered, the teacher will check it soon.")
-
-      (testing "check and reject"
-        (talk 0 "/lab1check")
-        (tt/match-history *chat
-                          (tt/text 0 "Wait for review: 1")
-                          (tt/text 0 "Approved presentation in 'lgr1':\n")
-                          (tt/text 0 "We receive from the student (group gr1): \n\nTopic: bla-bla-bla the best")
-                          (tt/text 0 "bla-bla-bla the best")
-                          (tt/text 0 "Approve (yes or no)?"))
-
-        (talk 0 "nooooooooooooo")
-        (tt/match-text *chat 0 "Didn't understand: nooooooooooooo. Yes or no?")
-
-        (talk 0 "no")
-        (tt/match-text *chat 0 "OK, you need to send your remark for the student:")
-
-        (talk 0 "Please, add details!")
-        (tt/match-history *chat
-                          (tt/text 0 "Presentation description was declined. The student was informed about your decision.\n\n/lab1check")
-                          (tt/text 1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details!"))
-
-        (talk 1 "/lab1submissions")
-        (tt/match-history *chat
-                          (tt/text 1 "Submitted presentation in 'lgr1':"
-                                   "- bla-bla-bla the best (Bot Botovich) - REJECTED")))
-
-      (testing "submissions-talk with specific group"
-        (talk 2 "/lab1submissions")
-        (tt/match-text *chat 2 "Please, set your 'Lab 1 presentation' group by /lab1setgroup")
-
-        (talk 2 "/lab1submissions lgr1")
-        (tt/match-text *chat 2 "Submitted presentation in 'lgr1':\n- bla-bla-bla the best (Bot Botovich) - REJECTED")
-
-        (talk 2 "/lab1submissions eeeeeeeeeeeeeeeeeeeeeeeee")
-        (tt/match-text *chat 2 "I don't know 'eeeeeeeeeeeeeeeeeeeeeeeee', you should specify one from: lgr1, lgr2")
-
-        (talk 0 "/lab1submissions")
-        (tt/match-history *chat
-                          (tt/text 0 "Submitted presentation in 'lgr1':\n- bla-bla-bla the best (Bot Botovich) - REJECTED")
-                          (tt/text 0 "Submitted presentation in 'lgr2':\n")))
-
-      (testing "resubmit 2"
-        (talk 1 "/lab1submit")
-        (talk 1 "bla-bla-bla the best (second reject)")
-        (talk 1 "yes")
-        (tt/match-text *chat 1 "Registered, the teacher will check it soon."))
-
-      (testing "check and reject 2"
-        (talk 0 "/lab1check")
-        (tt/match-history *chat
-                          (tt/text 0 "Wait for review: 1")
-                          (tt/text 0 "Approved presentation in 'lgr1':\n")
-                          (tt/text 0 "Remarks:")
-                          (tt/text 0 "Please, add details!")
-                          (tt/text 0 "We receive from the student (group gr1): \n\nTopic: bla-bla-bla the best (second reject)")
-                          (tt/text 0 "bla-bla-bla the best (second reject)")
-                          (tt/text 0 "Approve (yes or no)?"))
-
-        (talk 0 "no")
-        (tt/match-text *chat 0 "OK, you need to send your remark for the student:")
-
-        (talk 0 "Please, add details 2!")
-        (tt/match-history *chat
-                          (tt/text 0 "Presentation description was declined. The student was informed about your decision.\n\n/lab1check")
-                          (tt/text 1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details 2!"))
-
-        (talk 1 "/lab1submissions"))
-
-      (is (= {:lab1
-              {:description "bla-bla-bla the best (second reject)"
-               :group "lgr1"
-               :on-review? false
-               :remarks '("Please, add details 2!"
-                          "Please, add details!")}}
-             (codax/get-at! db [1 :presentation])))
-
-      (talk 1 "/lab1submit")
-      (talk 1 "bla-bla-bla 2\ntext")
-      (talk 1 "yes")
-      (tt/match-text *chat 1 "Registered, the teacher will check it soon.")
-
-      (testing "Try to resubmit:"
-        (talk 1 "/lab1submit")
-        (tt/match-text *chat 1 "On review, you will be informed when it is finished."))
-
-      (talk 0 "/lab1check")
-      (tt/match-history *chat
-                        (tt/text 0 "Wait for review: 1")
-                        (tt/text 0 "Approved presentation in 'lgr1':\n")
-                        (tt/text 0 "Remarks:")
-                        (tt/text 0 "Please, add details!")
-                        (tt/text 0 "Please, add details 2!")
-                        (tt/text 0 "We receive from the student (group gr1): \n\nTopic: bla-bla-bla 2")
-                        (tt/text 0 "bla-bla-bla 2\ntext")
-                        (tt/text 0 "Approve (yes or no)?"))
-
-      (talk 0 "yes")
-      (tt/match-history *chat
-                        (tt/text 0 "OK, student will receive his approve.\n\n/lab1check")
-                        (tt/text 1 "'Lab 1 presentation' description was approved."))
-
-      (is (= {:lab1
-              {:description "bla-bla-bla 2\ntext"
-               :group "lgr1"
-               :approved? true
-               :on-review? false
-               :remarks '("Please, add details 2!"
-                          "Please, add details!")}}
-             (codax/get-at! db [1 :presentation])))
-
-      (talk 0 "/lab1check")
-      (tt/match-text *chat 0 "Nothing to check.")
-
-      (testing "Try to resubmit:"
-        (talk 1 "/lab1submit")
-        (tt/match-text *chat 1 "Already submitted and approved, maybe you need to schedule it? /lab1schedule"))
-
-      (testing "Second student"
-        (register-user *chat talk 2 "Alice")
-        (talk 2 "/lab1submissions")
-        (tt/match-text *chat 2 "Please, set your 'Lab 1 presentation' group by /lab1setgroup")
-
-        (talk 2 "/lab1setgroup")
-        (talk 2 "lgr1")
-
-        (talk 2 "/lab1submissions")
-        (tt/match-history *chat
-                          (tt/text 2 "Submitted presentation in 'lgr1':"
-                                   "- bla-bla-bla 2 (Bot Botovich) - APPROVED"))
-
-        (talk 2 "/lab1submit")
-        (talk 2 "pres 2")
-        (talk 2 "yes")
-        (tt/match-text *chat 2 "Registered, the teacher will check it soon.")
-
-        (talk 2 "/lab1submissions")
-        (tt/match-history *chat
-                          (tt/text 2 "Submitted presentation in 'lgr1':"
-                                   "- bla-bla-bla 2 (Bot Botovich) - APPROVED"
-                                   "- pres 2 (Alice) - ON-REVIEW"))
-
-        (talk 0 "/lab1check")
-        (tt/match-history *chat
-                          (tt/text 0 "Wait for review: 1")
-                          (tt/text 0 "Approved presentation in 'lgr1':"
-                                   "- bla-bla-bla 2 (Bot Botovich)")
-                          (tt/text 0 "We receive from the student (group gr1): \n"
-                                   "Topic: pres 2")
-                          (tt/text 0 "pres 2")
-                          (tt/text 0 "Approve (yes or no)?"))
-        (talk 0 "yes")
-        (tt/match-history *chat
-                          (tt/text 0 "OK, student will receive his approve.\n\n/lab1check")
-                          (tt/text 2 "'Lab 1 presentation' description was approved."))
-
-        (is (= {:lab1
-                {:description "pres 2"
-                 :group "lgr1"
-                 :approved? true
-                 :on-review? false}}
-               (codax/get-at! db [2 :presentation])))
-
-        (talk 2 "/lab1submissions")
-        (tt/match-text *chat 2
-                       (str/join "\n" '("Submitted presentation in 'lgr1':"
-                                        "- bla-bla-bla 2 (Bot Botovich) - APPROVED"
-                                        "- pres 2 (Alice) - APPROVED")))))))
-
-(deftest schedule-agenda-and-drop-talks-test
-  (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (pres/setgroup-talk db conf "lab1")
-                          (pres/submit-talk db conf "lab1")
-                          (pres/check-talk db conf "lab1")
-                          (pres/submissions-talk db conf "lab1")
-                          (pres/schedule-talk db conf "lab1")
-                          (pres/agenda-talk db conf "lab1")
-                          (pres/soon-talk db conf "lab1")
-                          (pres/all-scheduled-descriptions-dump-talk db conf "lab1")
-                          (pres/drop-talk db conf "lab1" false)
-                          (pres/drop-talk db conf "lab1" true))]
-
-    (tt/with-mocked-morse *chat
-
-      (register-user *chat talk 1 "Alice")
-      (talk 1 "/lab1setgroup")
-      (talk 1 "lgr1")
-      (talk 1 "/lab1submit")
-      (talk 1 "pres 1")
-      (talk 1 "yes")
-      (tt/match-text *chat 1 "Registered, the teacher will check it soon.")
-
-      (register-user *chat talk 2 "Bob")
-
-      (testing "not registered for presentation"
-        (talk 2 "/lab1schedule")
-        (tt/match-text *chat 2 "Please, set your 'Lab 1 presentation' group by /lab1setgroup"))
-
-      (talk 2 "/lab1setgroup")
-      (talk 2 "lgr1")
-      (talk 2 "/lab1submit")
-      (talk 2 "pres 2")
-      (talk 2 "yes")
-      (tt/match-text *chat 2 "Registered, the teacher will check it soon.")
-
-      (testing "not checked"
-        (talk 2 "/lab1schedule")
-        (tt/match-text *chat 2 "You should submit and receive approve before scheduling. Use /lab1submit"))
-
-      (talk 0 "/lab1check")
-      (talk 0 "yes")
-      (talk 0 "/lab1check")
-      (talk 0 "yes")
-      (talk 0 "/lab1check")
-      (talk 0 "Nothing to check")
-
-      (talk 2 "/lab1submissions")
-      (tt/match-history *chat
-                        (tt/text 2 "Submitted presentation in 'lgr1':"
-                                 "- pres 1 (Alice) - APPROVED"
-                                 "- pres 2 (Bob) - APPROVED"))
-
-      (testing "29 minutes before all lessons (first should hidden)"
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:31 +0000"))]
-          (talk 2 "/lab1schedule")
-          (tt/match-history *chat
-                            (tt/text 2 "Select your option:"
-                                     "- 2022.01.02 12:00 +0000"))))
-
-      (testing "31 minutes before all lessons"
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
-          (talk 2 "/lab1schedule")
-          (tt/match-history *chat
-                            (tt/text 2 "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:\n")
-                            (tt/text 2 "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:\n")
-                            (tt/text 2 "Select your option:"
-                                     "- 2022.01.01 12:00 +0000"
-                                     "- 2022.01.02 12:00 +0000"))
-          (talk 2 "WRONG DATE")
-          (tt/match-history *chat
-                            (tt/text 2 "Not found, allow only:"
-                                     "- 2022.01.01 12:00 +0000"
-                                     "- 2022.01.02 12:00 +0000"))
-
-          (talk 2 "2022.01.01 12:00 +0000")
-          (tt/match-text *chat 2 "OK, you can check it by: /lab1agenda")
-
-          (talk 2 "/lab1submissions")
-          (tt/match-history *chat
-                            (tt/text 2 "Submitted presentation in 'lgr1':"
-                                     "- pres 1 (Alice) - APPROVED"
-                                     "- pres 2 (Bob) - SCHEDULED"))
-
-          (testing "try-to-schedule-again"
-            (talk 2 "/lab1schedule")
-            (tt/match-text *chat 2 "Already scheduled, check /lab1agenda."))
-
-          (talk 1 "/lab1schedule")
-          (tt/match-history *chat
-                            (tt/text 1 "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
-                                     "1. pres 2 (Bob)")
-                            (tt/text 1 "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:\n")
-                            (tt/text 1 "Select your option:"
-                                     "- 2022.01.01 12:00 +0000"
-                                     "- 2022.01.02 12:00 +0000"))
-
-          (talk 1 "2022.01.02 12:00 +0000")
-          (tt/match-text *chat 1 "OK, you can check it by: /lab1agenda")
-
-          (talk 1 "/lab1agenda")
-          (tt/match-history *chat
-                            (tt/text 1 "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
-                                     "1. pres 2 (Bob)")
-                            (tt/text 1 "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
-                                     "1. pres 1 (Alice)"))))
-
-      (testing "agenda show history for one day more"
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.02 11:30 +0000"))]
-          (talk 1 "/lab1agenda")
-          (tt/match-history *chat
-                            (tt/text 1 "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
-                                     "1. pres 2 (Bob)")
-                            (tt/text 1 "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
-                                     "1. pres 1 (Alice)"))
-
-          (testing "agenda with args"
-            (talk 2 "/lab1agenda lgr1")
-            (tt/match-history *chat
-                              (tt/text 2 "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
-                                       "1. pres 2 (Bob)")
-                              (tt/text 2 "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
-                                       "1. pres 1 (Alice)"))
-
-            (talk 2 "/lab1agenda eeeeeeeeeeeeeeeeeeeeeeeee")
-            (tt/match-text *chat 2 "I don't know 'eeeeeeeeeeeeeeeeeeeeeeeee', you should specify one from: lgr1, lgr2")
-
-            (talk 0 "/lab1agenda")
-            (tt/match-history *chat
-                              (tt/text 0 "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
-                                       "1. pres 2 (Bob)")
-                              (tt/text 0 "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
-                                       "1. pres 1 (Alice)")
-                              (tt/text 0 "Agenda 2022.02.02 12:00 +0000 (lgr2):\n")))))
-
-      (talk 0 "/lab1descriptions")
-      (tt/match-history *chat
-                        (tt/text 0 "File with all scheduled descriptions by groups:")
-                        (tt/text 0
-                                 "# lgr1"
-                                 ""
-                                 "## (Alice -- pres 1)"
-                                 ""
-                                 "pres 1"
-                                 ""
-                                 "## (Bob -- pres 2)"
-                                 ""
-                                 "pres 2"
-                                 ""
-                                 ""
-                                 "# lgr2\n\n"))
-
-      (testing "soon-talk"
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:30 +0000"))]
-          (talk 1 "/lab1soon")
-          (is (= (tt/history *chat :user-id 1 :number 3)
-                 ["We will expect for Lab 1 presentation soon:"
-                  (tt/unlines "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
-                              "1. [Bob | 2022.01.01 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
-                              "    1. pres 2 (Bob)")
-                  (tt/unlines "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
-                              "1. [Alice | 2022.01.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
-                              "    1. pres 1 (Alice)")])))
-
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.02 11:30 +0000"))]
-          (talk 1 "/lab1soon")
-          (is (= (tt/history *chat :user-id 1 :number 3)
-                 ["We will expect for Lab 1 presentation soon:"
-                  (tt/unlines "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
-                              "1. [Bob | 2022.01.01 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
-                              "    1. pres 2 (Bob)")
-                  (tt/unlines "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
-                              "1. [Alice | 2022.01.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
-                              "    1. pres 1 (Alice)")])))
-
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.03 11:30 +0000"))]
-          (talk 1 "/lab1soon")
-          (is (= (tt/history *chat :user-id 1 :number 2)
-                 ["We will expect for Lab 1 presentation soon:"
-                  (tt/unlines "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
-                              "1. [Alice | 2022.01.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()"
-                              "    1. pres 1 (Alice)")])))
-
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.04 11:30 +0000"))]
-          (talk 1 "/lab1soon")
-          (is (= (tt/history *chat :user-id 1)
-                 ["We will expect for Lab 1 presentation soon:"])))
-
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.02.01 00:30 +0000"))]
-          (talk 1 "/lab1soon")
-          (is (= (tt/history *chat :user-id 1 :number 2)
-                 ["We will expect for Lab 1 presentation soon:"
-                  (tt/unlines "Agenda 2022.02.02 12:00 +0000 (lgr2):"
-                              "1. [ | 2022.02.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()")]))))
-
-      (is (= {:lab1 {:approved? true
-                     :description "pres 1"
-                     :group "lgr1"
-                     :on-review? false
-                     :scheduled? true}}
-             (codax/get-at! db [1 :presentation])))
-
-      (is (= {:lab1 {:approved? true
-                     :description "pres 2"
-                     :group "lgr1"
-                     :on-review? false
-                     :scheduled? true}}
-             (codax/get-at! db [2 :presentation])))
-
-      (is (= {:lab1 {"lgr1" {"2022.01.01 12:00 +0000" {:stud-ids '(2)}
-                             "2022.01.02 12:00 +0000" {:stud-ids '(1)}}}}
-             (codax/get-at! db [:presentation])))
-
-      (talk 1 "/lab1drop 1")
-      (tt/match-text *chat 1 "That action requires admin rights.")
-
-      (talk 0 "/lab1drop")
-      (tt/match-text *chat 0 "Wrong input: /lab1drop 12345")
-
-      (talk 0 "/lab1drop asdf")
-      (tt/match-text *chat 0 "Wrong input: /lab1drop 12345")
-
-      (talk 0 "/lab1drop 123")
-      (tt/match-text *chat 0 "Not found.")
-
-      (talk 0 "/lab1dropall asdf")
-      (tt/match-text *chat 0 "Wrong input: /lab1dropall 12345")
-
-      (talk 0 "/lab1drop 1")
-      (tt/match-history *chat
-                        (tt/text 0 "Name: Alice; Group: gr1; Telegram ID: 1")
-                        (tt/text 0 "Drop 'Lab 1 presentation' config for 1?"))
-
-      (talk 0 "noooooooooooooooooooo")
-      (tt/match-text *chat 0 "Didn't understand: noooooooooooooooooooo. Yes or no?")
-
-      (talk 0 "no")
-      (tt/match-text *chat 0 "Cancelled.")
-
-      (talk 0 "/lab1drop 1")
-      (tt/match-history *chat
-                        (tt/text 0 "Name: Alice; Group: gr1; Telegram ID: 1")
-                        (tt/text 0 "Drop 'Lab 1 presentation' config for 1?"))
-
-      (talk 0 "yes")
-      (tt/match-history *chat
-                        (tt/text 0 "We drop student: 1")
-                        (tt/text 1 "We drop your state for Lab 1 presentation"))
-
-      (is (= {:lab1 {:approved? true
-                     :description "pres 1"
-                     :group "lgr1"
-                     :on-review? false
-                     :scheduled? nil}}
-             (codax/get-at! db [1 :presentation])))
-
-      (is (= {"lgr1" {"2022.01.01 12:00 +0000" {:stud-ids '(2)}
-                      "2022.01.02 12:00 +0000" {:stud-ids '()}}}
-             (codax/get-at! db [:presentation :lab1])))
-
-      (talk 0 "/lab1dropall 2")
-      (tt/match-history *chat
-                        (tt/text 0 "Name: Bob; Group: gr1; Telegram ID: 2")
-                        (tt/text 0 "Drop 'Lab 1 presentation' config for 2?"))
-
-      (talk 0 "yes")
-      (tt/match-history *chat
-                        (tt/text 0 "We drop student: 2")
-                        (tt/text 2 "We drop your state for Lab 1 presentation"))
-
-      (is (= {:lab1 nil}
-             (codax/get-at! db [2 :presentation])))
-
-      (is (= {"lgr1" {"2022.01.01 12:00 +0000" {:stud-ids '()}
-                      "2022.01.02 12:00 +0000" {:stud-ids '()}}}
-             (codax/get-at! db [:presentation :lab1]))))))
-
-(deftest feedback-and-rank-talks-test
-  (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database (-> conf :db-path))
-        {talk :talk
-         *chat :*chat} (tt/test-handler (general/start-talk db conf)
-                                        (pres/setgroup-talk db conf "lab1")
-                                        (pres/submit-talk db conf "lab1")
-                                        (pres/check-talk db conf "lab1")
-                                        (pres/schedule-talk db conf "lab1")
-                                        (pres/agenda-talk db conf "lab1")
-                                        (pres/feedback-talk db conf "lab1")
-                                        (report/report-talk db conf
-                                                            "ID" report/stud-id
-                                                            "pres-group" (pres/report-presentation-group "lab1")
-                                                            "feedback-avg" (pres/report-presentation-avg-rank "lab1")
-                                                            "feedback" (pres/report-presentation-score conf "lab1")
-                                                            "classes" (pres/report-presentation-classes "lab1")
-                                                            "lesson-counter" (pres/lesson-count "lab1")))]
-
-    (tt/with-mocked-morse *chat
-      (register-user *chat talk 1 "Alice")
-      (talk 1 "/lab1setgroup")
-      (talk 1 "lgr1")
-      (talk 1 "/lab1submit")
-      (talk 1 "pres 1")
-      (talk 1 "yes")
-      (tt/match-text *chat 1 "Registered, the teacher will check it soon.")
-
-      (register-user *chat talk 2 "Bob")
-      (talk 2 "/lab1setgroup")
-      (talk 2 "lgr1")
-      (talk 2 "/lab1submit")
-      (talk 2 "pres 2")
-      (talk 2 "yes")
-      (tt/match-text *chat 2 "Registered, the teacher will check it soon.")
-
-      (register-user *chat talk 3 "Charly")
-      (talk 3 "/lab1setgroup")
-      (talk 3 "lgr1")
-
-      (talk 0 "/lab1check")
-      (talk 0 "yes")
-      (talk 0 "/lab1check")
-      (talk 0 "yes")
-      (talk 0 "/lab1check")
-      (talk 0 "Nothing to check")
-
-      (is (answers? (talk 1 "/lab1feedback 2022.01.02 12:00 +0000")
-                    "missing resource: :pres/lesson-feedback-no-presentations"))
-
-      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
-        (talk 2 "/lab1schedule")
-        (talk 2 "2022.01.01 12:00 +0000")
-        (tt/match-text *chat 2 "OK, you can check it by: /lab1agenda")
-
-        (talk 1 "/lab1schedule")
-        (talk 1 "2022.01.01 12:00 +0000")
-        (tt/match-text *chat 1 "OK, you can check it by: /lab1agenda")
-
-        (talk 1 "/lab1agenda")
-        (tt/match-history *chat
-                          (tt/text 1 "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
-                                   "1. pres 2 (Bob)"
-                                   "2. pres 1 (Alice)")
-                          (tt/text 1 "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:\n")))
-
-      (is (= {:lab1 {"lgr1" {"2022.01.01 12:00 +0000" {:stud-ids '(2 1)}}}}
-             (codax/get-at! db [:presentation])))
-
-      (testing "report without feedback"
-        (talk 0 "/report")
-        (tt/match-csv *chat 0
-                      ["ID" "pres-group" "feedback-avg" "feedback" "classes" "lesson-counter"]
-                      ["1" "lgr1" "" "4" "1" "1"]
-                      ["2" "lgr1" "" "2" "1" "1"]
-                      ["3" "lgr1" "" "" "1" "1"]))
-
-      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
-        (is (answers? (talk 1 "/lab1feedback")
-                      "Lesson feedback is not available.")))
-
-      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:29 +0000"))]
-        (is (answers? (talk 1 "/lab1feedback")
-                      (tt/unlines
-                       "You need to specify lesson datetime explicitly:"
-                       "- 2022.01.01 12:00 +0000"))))
-
-      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 15:01 +0000"))]
-        (is (answers? (talk 1 "/lab1feedback")
-                      (tt/unlines
-                       "You need to specify lesson datetime explicitly:"
-                       "- 2022.01.01 12:00 +0000"))))
-
-      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.10 12:29 +0000"))]
-        (is (answers? (talk 1 "/lab1feedback")
-                      (tt/unlines
-                       "You need to specify lesson datetime explicitly:"
-                       "- 2022.01.01 12:00 +0000"
-                       "- 2022.01.02 12:00 +0000"))))
-
-      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.10 12:29 +0000"))]
-        (is (answers? (talk 1 "/lab1feedback 2022.01.01 12:00 +0000")
-                      "Collect feedback for 'Lab 1 presentation' (lgr1) at 2022.01.01 12:00 +0000"
-                      (tt/unlines
-                       "Enter the number of the best presentation in the list:"
-                       "0. Bob (pres 2)"
-                       "1. Alice (pres 1)"))))
-
-      (testing "pres group not set"
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
-          (talk 4 "/lab1feedback")
-          (tt/match-text *chat 4 "To send feedback, you should set your group for Lab 1 presentation by /lab1setgroup")))
-
-      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
-        (talk 1 "/lab1feedback")
-        (tt/match-history *chat
-                          (tt/text 1 "Collect feedback for 'Lab 1 presentation' (lgr1) at 2022.01.01 12:00 +0000")
-                          (tt/text 1 "Enter the number of the best presentation in the list:"
-                                   "0. Bob (pres 2)"
-                                   "1. Alice (pres 1)"))
-        (talk 1 "0")
-        (tt/match-history *chat
-                          (tt/text 1 "Enter the number of the best presentation in the list:"
-                                   "0. Alice (pres 1)"))
-
-        (talk 1 "0")
-        (tt/match-text *chat 1 "Thanks, your feedback saved!")
-
-        (talk 2 "/lab1feedback")
-        (talk 2 "1")
-        (talk 2 "0")
-        (tt/match-text *chat 2 "Thanks, your feedback saved!")
-
-        (is (= {:feedback (list
-                           {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
-                            :rank [{:id 1, :name "Alice", :topic "pres 1"}
-                                   {:id 2, :name "Bob", :topic "pres 2"}]}
-                           {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
-                            :rank [{:id 2, :name "Bob", :topic "pres 2"}
-                                   {:id 1, :name "Alice", :topic "pres 1"}]})
-                :feedback-from '(2 1)
-                :stud-ids '(2 1)}
-               (codax/get-at! db [:presentation
-                                  :lab1 "lgr1"
-                                  "2022.01.01 12:00 +0000"])))
-        (declare tx)
-
-        (codax/with-read-transaction [db tx]
-          (is (= 1.5 (pres/avg-rank tx :lab1 1)))
-          (is (= 1.5 (pres/avg-rank tx :lab1 2))))
-
-        (testing "report"
-          (talk 0 "/report")
-          (tt/match-csv *chat 0
-                        ["ID" "pres-group" "feedback-avg" "feedback" "classes" "lesson-counter"]
-                        ["1" "lgr1" "1,5" "2" "1" "1"]
-                        ["2" "lgr1" "1,5" "4" "1" "1"]
-                        ["3" "lgr1" "" "" "1" "1"]))
-
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
-          (talk 3 "/lab1feedback")
-          (talk 3 "1")
-          (talk 3 "0")
-          (tt/match-text *chat 3 "Thanks, your feedback saved!")
-          (is (answers? (talk 3 "/lab1feedback")
-                        "Already received.")))
-
-        (is (= {:feedback (list
-                           {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
-                            :rank [{:id 1, :name "Alice", :topic "pres 1"}
-                                   {:id 2, :name "Bob", :topic "pres 2"}]}
-                           {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
-                            :rank [{:id 1, :name "Alice", :topic "pres 1"}
-                                   {:id 2, :name "Bob", :topic "pres 2"}]}
-                           {:receive-at (misc/normalize-time "2022.01.01 13:30 +0100")
-                            :rank [{:id 2, :name "Bob", :topic "pres 2"}
-                                   {:id 1, :name "Alice", :topic "pres 1"}]})
-                :feedback-from '(3 2 1)
-                :stud-ids '(2 1)}
-               (codax/get-at! db [:presentation
-                                  :lab1 "lgr1"
-                                  "2022.01.01 12:00 +0000"])))
-
-        (codax/with-read-transaction [db tx]
-          (is (= 1.33 (pres/avg-rank tx :lab1 1)))
-          (is (= 1.67 (pres/avg-rank tx :lab1 2)))
-          (is (= nil (pres/avg-rank tx :lab1 3))))
-
-        (codax/with-read-transaction [db tx]
-          (is (= nil (pres/score tx conf :lab1 0)))
-          (is (= 4 (pres/score tx conf :lab1 1)))
-          (is (= 2 (pres/score tx conf :lab1 2)))
-          (is (= nil (pres/score tx conf :lab1 3)))))
-
-      (testing "report"
-        (talk 0 "/report")
-        (tt/match-csv *chat 0
-                      ["ID" "pres-group" "feedback-avg" "feedback" "classes" "lesson-counter"]
-                      ["1" "lgr1" "1,33" "4" "1" "1"]
-                      ["2" "lgr1" "1,67" "2" "1" "1"]
-                      ["3" "lgr1" "" "" "1" "1"])))))
-
-(deftest lost-and-found-talks-test
-  (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database (-> conf :db-path))
-        {talk :talk
-         *chat :*chat} (tt/test-handler (general/start-talk db conf)
-                                        (pres/lost-and-found-talk db conf "lab1")
-                                        (pres/setgroup-talk db conf "lab1")
-                                        (pres/submit-talk db conf "lab1")
-                                        (pres/drop-talk db conf "lab1" false)
-                                        (pres/check-talk db conf "lab1")
-                                        (pres/schedule-talk db conf "lab1")
-                                        (pres/agenda-talk db conf "lab1")
-                                        (pres/feedback-talk db conf "lab1")
-                                        (report/report-talk db conf
-                                                            "ID" report/stud-id
-                                                            "pres-group" (pres/report-presentation-group "lab1")
-                                                            "feedback-avg" (pres/report-presentation-avg-rank "lab1")
-                                                            "feedback" (pres/report-presentation-score conf "lab1")
-                                                            "classes" (pres/report-presentation-classes "lab1")
-                                                            "lesson-counter" (pres/lesson-count "lab1")))]
-    (tt/with-mocked-morse *chat
-      (register-user-2 talk 1 "Alice" "lgr1")
-      (register-user-2 talk 2 "Bob" "lgr1")
-      (register-user-2 talk 3 "Charly" "lgr1")
-
-      (talk 1 "/lab1submit")
-      (talk 1 "pres 1")
-      (is (answers? (talk 1 "yes")
-                    "Registered, the teacher will check it soon."))
-
-      (talk 2 "/lab1submit")
-      (talk 2 "pres 2")
-      (is (answers? (talk 2 "yes")
-                    "Registered, the teacher will check it soon."))
-
-      (talk 3 "/lab1submit")
-      (talk 3 "pres 3")
-      (is (answers? (talk 3 "yes")
-                    "Registered, the teacher will check it soon."))
-
-      (talk 0 "/lab1check")
-      (is (answers? (talk 0 "yes")
-                    [0 (tt/unlines "OK, student will receive his approve."
-                                   ""
-                                   "/lab1check")]
-                    [1 "'Lab 1 presentation' description was approved."]))
-
-      (is (answers? (talk 1 "/lab1lostandfound")
-                    "That action requires admin rights."))
-
-      (testing "schedule 1 lesson and check for conflict"
-        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:00 +0000"))]
-          (is (answers? (talk 1 "/lab1schedule")
-                        "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
-                        "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
-                        (tt/unlines "Select your option:"
-                                    "- 2022.01.01 12:00 +0000"
-                                    "- 2022.01.02 12:00 +0000")))
-          (is (answers? (talk 1 "2022.01.01 12:00 +0000")
-                        "OK, you can check it by: /lab1agenda"))
-
-          (is (answers? (talk 0 "/lab1lostandfound")
-                        (tt/unlines
-                         "({:pres-group \"lgr1\","
-                         "  :datetime \"2022.01.01 12:00 +0000\","
-                         "  :current-state {:stud-ids (1)},"
-                         "  :collision true,"
-                         "  :lost-state"
-                         "  ({:id 1, :topic \"aaa\", :name \"Alice\", :pres-group \"lgr1\"}"
-                         "   {:id 2, :topic \"bbb\", :name \"Bob\", :pres-group \"lgr1\"}"
-                         "   {:id 3, :topic \"ccc\", :name \"Charly\", :pres-group \"lgr1\"})})")
-                        "missing resource: :pres/lost-and-found-collision"))
-
-          (is (answers? (talk 0 "/lab1drop 1" "yes")
-                        [0 "Name: Alice; Group: gr1; Telegram ID: 1"]
-                        [0 "Drop 'Lab 1 presentation' config for 1?"]
-                        [0 "We drop student: 1"]
-                        [1 "We drop your state for Lab 1 presentation"]))))
-
-      (is (answers? (talk 0 "/lab1lostandfound")
-                    (tt/unlines
-                     "({:pres-group \"lgr1\","
-                     "  :datetime \"2022.01.01 12:00 +0000\","
-                     "  :current-state {:stud-ids ()},"
-                     "  :collision false,"
-                     "  :lost-state"
-                     "  ({:id 1, :topic \"aaa\", :name \"Alice\", :pres-group \"lgr1\"}"
-                     "   {:id 2, :topic \"bbb\", :name \"Bob\", :pres-group \"lgr1\"}"
-                     "   {:id 3, :topic \"ccc\", :name \"Charly\", :pres-group \"lgr1\"})})")
-                    "missing resource: :pres/lost-and-found-restore?"))
-
-      (is (answers? (talk 0 "yes")
-                    "missing resource: :pres/lost-and-found-restored"))
-
-      (is (answers? (talk 1 "/lab1feedback 2022.01.01 12:00 +0000"
-                          "2"
-                          "1"
-                          "0")
-                    "Collect feedback for 'Lab 1 presentation' (lgr1) at 2022.01.01 12:00 +0000"
-                    (tt/unlines "Enter the number of the best presentation in the list:"
-                                "0. Alice (aaa)"
-                                "1. Bob (bbb)"
-                                "2. Charly (ccc)")
-                    (tt/unlines "Enter the number of the best presentation in the list:"
-                                "0. Alice (aaa)"
-                                "1. Bob (bbb)")
-                    (tt/unlines "Enter the number of the best presentation in the list:"
-                                "0. Alice (aaa)")
-                    "Thanks, your feedback saved!"))
-
-      (testing "report"
-        (talk 0 "/report")
-        (tt/match-csv *chat 0
-                      ["ID" "pres-group" "feedback-avg" "feedback" "classes" "lesson-counter"]
-                      ["1" "lgr1" "3,0" "2" "1" "1"]
-                      ["2" "lgr1" "2,0" "4" "1" "1"]
-                      ["3" "lgr1" "1,0" "6" "1" "1"])))))
+  (:require [course-bot.internationalization :as i18n :refer [tr]]
+            [course-bot.talk :as talk]))
+
+(i18n/add-dict
+ {:en
+  {:general
+   {:who-am-i-4 "Name: %s; Group: %s; Telegram ID: %s; Group for first laboratory work: %s" :need-admin "That action requires admin rights."
+    :description-info "Descriptions for supported commands"
+    :help-info "Show list of supported commands"
+    :who-am-i-info "Send me my registration info"
+    :group " group:\n"
+    :list-groups-info "Send me group list know by the bot"
+    :register-student-info "register student"
+    :already-registered "You are already registered. To change your information, contact the teacher and send /whoami"
+    :start "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"
+    :what-is-your-group "What is your group ("
+    :group-not-found "I don't know this group. Please, repeat it ("
+    :hi-user-1 "Hi, %s!"
+    :send-help-for-help "Send /help for help."
+    :rename-me-info "Rename me"
+    :unregistered-rename-warn "You should be registered to rename yourself!"
+    :what-is-your-new-name "What is your new name?"
+    :renamed "Renamed:"
+    :telegram-id-not-found "User with specific telegram id not found."
+    :restart-this-student-question "Restart this student?"
+    :restart-wrong-input "Wrong input. Expect: /restart 12345"
+    :restarted-and-notified "Restarted and notified: "
+    :use-start-once-more "You can use /start once more."
+    :not-restarted "Not restarted."
+    :yes-no-question "Please, yes or no?"
+    :edited-message-not-allowed "Edited message not allowed."}}
+  :ru
+  {:general
+   {:who-am-i-4 "Имя: %s; Группа: %s; Telegram ID: %s; Группа на первую лабораторную работу: %s"
+    :need-admin "Это действие требует прав администратора."
+    :description-info "Описание доступных команд"
+    :help-info "Вывести список доступных команд"
+    :who-am-i-info "Получить мою информацию о регистрации"
+    :group " группа:\n"
+    :list-groups-info "Получить список групп, известных боту"
+    :register-student-info "Зарегистрировать студента"
+    :already-registered "Вы уже зарегистрированы. Чтобы изменить свою информацию, свяжитесь с учителем и отправьте /whoami"
+    :start "Привет, я бот вашего курса. Я помогу тебе с твоей работой. Как тебя зовут (как в реестре)?"
+    :what-is-your-group "Какая у тебя группа ("
+    :group-not-found "Я не знаю эту группу. Пожалуйста, попробуй это ("
+    :hi-user-1 "Привет, %s!"
+    :send-help-for-help "Отправь /help для помощь."
+    :rename-me-info "Переименовать меня"
+    :unregistered-rename-warn "Вы должны быть зарегистрированы, чтобы переименовать себя!"
+    :what-is-your-new-name "Какое твое новое имя?"
+    :renamed "Переименовано:"
+    :telegram-id-not-found "Пользователь с указанным Telegram ID не найден."
+    :restart-this-student-question "Перезапустить этого студента?"
+    :restart-wrong-input "Неправильный ввод. Ожидается: /restart 12345"
+    :restarted-and-notified "Перезапущено и уведомлено: "
+    :use-start-once-more "Вы можете использовать /start еще раз."
+    :not-restarted "Не перезапущено."
+    :yes-no-question "Пожалуйста, yes или no?"
+    :edited-message-not-allowed "Редактирование сообщений не поддерживается."}}})
+
+(defn assert-admin
+  ([tx {token :token admin-chat-id :admin-chat-id} id]
+   (when-not (= id admin-chat-id)
+     (talk/send-text token id (tr :general/need-admin))
+     (talk/stop-talk tx))))
+
+(defn stud-info [tx id]
+  (let [{name :name group :group} (codax/get-at tx [id])]
+    {:name name :group group}))
+
+(defn send-whoami
+  ([tx token id] (send-whoami tx token id id))
+  ([tx token id stud-id]
+   (let [{name :name group :group pres :presentation} (stud-info tx stud-id)
+         grouplab1 (-> pres :lab1 :group)]
+     (talk/send-text token id (format (tr :general/who-am-i-4) name group stud-id grouplab1)))))
+
+(defn whoami-talk [db {token :token}]
+  (talk/def-command db "whoami" (tr :general/who-am-i-info)
+    (fn [tx {{id :id} :from}]
+      (send-whoami tx token id)
+      (talk/stop-talk tx))))
+
+(defn help-talk [db {token :token}]
+  (talk/def-command db "help" (tr :general/help-info)
+    (fn [tx {{id :id} :chat}]
+      (talk/send-text token id (talk/helps))
+      (talk/stop-talk tx))))
+
+(defn description-talk [db {token :token}]
+  (talk/def-command db "description" (tr :general/description-info)
+    (fn [tx {{id :id} :chat}]
+      (talk/send-text token id (talk/descriptions))
+      (talk/stop-talk tx))))
+
+(defn send-list-groups
+  ([tx token id]
+   (doall
+    (->> (codax/get-at tx [])
+         (group-by (fn [[_id desc]] (:group desc)))
+         (map (fn [[group records]]
+                (let [studs (->> records
+                                 (map second)
+                                 (filter #(some? (:group %)))
+                                 (sort-by :name)
+                                 (map (fn [i x] (str (+ 1 i) ") " (:name x) " (@" (-> x :chat :username) ", " (-> x :chat :id) ")"))
+                                      (range)))
+                      msg (str group (tr :general/group) (str/join "\n" studs))]
+                  (talk/send-text token id msg))))))))
+
+(defn listgroups-talk [db {token :token :as conf}]
+  (talk/def-command db "listgroups" (tr :general/list-groups-info)
+    (fn [tx {{id :id} :from}]
+      (assert-admin tx conf id)
+      (send-list-groups tx token id) tx)))
+
+(defn start-talk [db {token :token groups-raw :groups allow-restart :allow-restart}]
+  (let [groups (-> groups-raw keys set)]
+    (talk/def-talk db "start" (tr :general/register-student-info)
+      :start
+      (fn [tx {{id :id} :from}]
+        (let [info (codax/get-at tx [id])]
+          (when (and (some? (:name info))
+                     (-> info :allow-restart not)
+                     (not allow-restart))
+            (talk/send-text token id (tr :general/already-registered))
+            (talk/stop-talk tx))
+          (talk/send-text token id (tr :general/start))
+          (talk/change-branch tx :get-name)))
+
+      :get-name
+      (fn [tx {{id :id} :from text :text}]
+        (talk/send-text token id (str (tr :general/what-is-your-group) (str/join ", " (sort groups)) ")?"))
+        (talk/change-branch tx :get-group {:name text}))
+
+      :get-group
+      (fn [tx {{id :id :as chat} :from text :text} {name :name}]
+        (when-not (contains? groups text)
+          (talk/send-text token id (str (tr :general/group-not-found) (str/join ", " (sort groups)) "):"))
+          (talk/repeat-branch tx))
+        (let [tx (-> tx
+                     (codax/assoc-at [id :chat] chat)
+                     (codax/assoc-at [id :name] name)
+                     (codax/assoc-at [id :group] text)
+                     (codax/assoc-at [id :reg-date] (str (new java.util.Date)))
+                     (codax/assoc-at [id :allow-restart] false))]
+          (talk/send-text token id (format (tr :general/hi-user-1) name))
+          (send-whoami tx token id)
+          (talk/send-text token id (tr :general/send-help-for-help))
+          (talk/stop-talk tx))))))
+
+(defn renameme-talk [db {token :token}]
+  (talk/def-talk db "renameme" (tr :general/rename-me-info)
+    :start
+    (fn [tx {{id :id} :from}]
+      (let [info (codax/get-at tx [id])]
+        (when (nil? (:name info))
+          (talk/send-text token id (tr :general/unregistered-rename-warn))
+          (talk/stop-talk tx))
+        (talk/send-text token id (tr :general/what-is-your-new-name))
+        (talk/change-branch tx :get-name)))
+
+    :get-name
+    (fn [tx {{id :id} :from text :text}]
+      (let [tx (-> tx
+                   (codax/assoc-at [id :name] text)
+                   (codax/assoc-at [id :rename-date] (str (new java.util.Date))))]
+        (talk/send-text token id (tr :general/renamed))
+        (send-whoami tx token id)
+        (talk/stop-talk tx)))))
+
+(defn restart-talk [db {token :token :as conf}]
+  (talk/def-talk db "restart"
+    :start
+    (fn [tx {{id :id} :from text :text}]
+      (assert-admin tx conf id)
+      (let [stud-id (talk/command-num-arg text)]
+        (if (some? stud-id)
+          (let [stud (codax/get-at tx [stud-id])]
+            (when (nil? (:name stud))
+              (talk/send-text token id (tr :general/telegram-id-not-found))
+              (talk/stop-talk tx))
+            (send-whoami tx token id stud-id)
+            (talk/send-yes-no-kbd token id (tr :general/restart-this-student-question))
+            (-> tx
+                (talk/change-branch :approve {:restart-stud stud-id})))
+          (do
+            (talk/send-text token id (tr :general/restart-wrong-input))
+            (talk/stop-talk tx)))))
+
+    :approve
+    (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
+      (case (i18n/normalize-yes-no-text text)
+        "yes" (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
+                  (talk/send-text token stud-id (tr :general/use-start-once-more))
+                  (-> tx
+                      (codax/assoc-at [stud-id :allow-restart] true)
+                      (talk/stop-talk)))
+        "no" (talk/send-stop tx token id (tr :general/not-restarted))
+        (talk/clarify-input tx token id (tr :general/yes-no-question))))))
+
+(defn warning-on-edited-message [{token :token}]
+  (fn [{{{id :id} :from :as edited-message} :edited_message}]
+    (when (some? edited-message)
+      (talk/send-text token id (tr :general/edited-message-not-allowed))
+      true)))
