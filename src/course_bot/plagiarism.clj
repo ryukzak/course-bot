@@ -3,11 +3,12 @@
             [clojure.string :as str]
             [course-bot.misc :as misc])
   (:require [consimilo.core :as consimilo])
-  (:require [course-bot.general :as general :refer [tr]]
+  (:require [course-bot.general :as general]
             [course-bot.plagiarism :as plagiarism]
+            [course-bot.internationalization :as i18n :refer [tr]]
             [course-bot.talk :as talk]))
 
-(general/add-dict
+(i18n/add-dict
  {:en
   {:plagiarism
    {:forest-failure "I failed to reach forest file, my Lord!"

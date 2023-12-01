@@ -99,7 +99,7 @@
         (tt/match-text *chat 0 "Restart this student?")
 
         (talk 0 "emm")
-        (tt/match-text *chat 0 "Please yes or no?")
+        (tt/match-text *chat 0 "Please, yes or no?")
 
         (talk 0 "no")
         (tt/match-text *chat 0 "Not restarted."))

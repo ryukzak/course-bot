@@ -1,26 +1,11 @@
 (ns course-bot.general
   (:require [clojure.string :as str])
-  (:require [codax.core :as codax]
-            [taoensso.tempura :as tempura])
-  (:require [course-bot.talk :as talk]))
+  (:require [codax.core :as codax])
+  (:require [course-bot.talk :as talk]
+            [course-bot.internationalization :as i18n :refer [tr]]))
 
-(def *tr-options-dict (atom {}))
-(defn add-dict [dict]
-  (swap! *tr-options-dict (partial merge-with merge) dict))
 
-(def *tr-locales (atom [:en]))
-(defn set-locales [langs]
-  (compare-and-set! *tr-locales @*tr-locales langs)
-  @*tr-locales)
-
-(defn tr [& in]
-  (let [resource (conj (apply vector in)
-                       (str "missing resource: " (str/join " " in)))]
-    (tempura/tr {:dict @*tr-options-dict}
-                @*tr-locales
-                resource)))
-
-(add-dict
+(i18n/add-dict
  {:en
   {:general
    {:who-am-i-3 "Name: %s; Group: %s; Telegram ID: %s"
@@ -45,7 +30,7 @@
     :restarted-and-notified "Restarted and notified: "
     :use-start-once-more "You can use /start once more."
     :not-restarted "Not restarted."
-    :yes-no-question "Please yes or no?"
+    :yes-no-question "Please, yes or no?"
     :edited-message-not-allowed "Edited message not allowed."}}
   :ru
   {:general
@@ -189,20 +174,17 @@
 
     :approve
     (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
-      (case (str/lower-case text)
+      (case (i18n/normalize-yes-no-text text)
         "yes" (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
                   (talk/send-text token stud-id (str (tr :general/use-start-once-more)))
                   (-> tx
                       (codax/assoc-at [stud-id :allow-restart] true)
                       (talk/stop-talk)))
-        "no" (do (talk/send-text token id (tr :general/not-restarted))
-                 (talk/stop-talk tx))
-        (do (talk/send-text token id (tr :general/yes-no-question))
-            (talk/repeat-branch tx))))))
+        "no" (talk/send-stop tx token id (tr :general/not-restarted))
+        (talk/clarify-input tx token id (tr :general/yes-no-question))))))
 
 (defn warning-on-edited-message [{token :token}]
   (fn [{{{id :id} :from :as edited-message} :edited_message}]
     (when (some? edited-message)
       (talk/send-text token id (tr :general/edited-message-not-allowed))
       true)))
-
