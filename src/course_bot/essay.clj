@@ -349,16 +349,21 @@
 
 (defn essay-score "hardcoded: rank + 1" [essay-code]
   (fn [_tx data id]
-    (let [reviews (-> data (get id) :essays (get essay-code) :received-review)
+    (let [essay-uploaded? (-> data (get id) :essays (get essay-code) :text nil? not)
+          reviews (-> data (get id) :essays (get essay-code) :received-review)
           scores (->> reviews (map :rank))]
-      (if (empty? scores)
-        0
-        (-> (/ (apply + scores) (count scores))
-            float
-            Math/round
-            (#(- 4 %)) ; 3 (max score) = 4 - 1; 1 (min score) = 4 - 3
-            (+ 1) ; + 1 to get actual score
-            )))))
+      (cond (not (empty? scores))
+            (-> (/ (apply + scores) (count scores))
+                float
+                Math/ceil
+                int
+                (#(- 4 %)) ; 3 (max score) = 4 - 1; 1 (min score) = 4 - 3
+                (+ 1) ; + 1 to get actual score
+                )
+
+            essay-uploaded? 1
+
+            :else 0))))
 
 (defn warmup-plagiarism-talk [db {token :token :as conf} essay-code plagiarism-db]
   (let [cmd (str essay-code "warmupplagiarism")

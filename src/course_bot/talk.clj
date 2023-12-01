@@ -53,7 +53,14 @@
 
 (defn command-args [text] (filter #(not (empty? %)) (str/split (str/replace-first text #"^/\w+\s*" "") #"\s+")))
 
-(defn command-text-arg [text] (str/replace-first text #"^/\w+\s*" ""))
+(defn command-text-arg [text]
+  (str/replace-first text #"^/\w+\s*" ""))
+
+(defn command-text-arg-or-nil [text]
+  (let [arg (str/replace-first text #"^/\w+\s*" "")]
+    (if (not (empty? arg))
+      arg
+      nil)))
 
 (defn command-num-arg [text]
   (let [args (command-args text)]
