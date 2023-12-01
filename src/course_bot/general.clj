@@ -7,8 +7,7 @@
 (i18n/add-dict
  {:en
   {:general
-   {:who-am-i-3 "Name: %s; Group: %s; Telegram ID: %s"
-    :need-admin "That action requires admin rights."
+   {:who-am-i-4 "Name: %s; Group: %s; Telegram ID: %s; Group for first laboratory work: %s" :need-admin "That action requires admin rights."
     :description-info "Descriptions for supported commands"
     :help-info "Show list of supported commands"
     :who-am-i-info "Send me my registration info"
@@ -35,7 +34,7 @@
     :edited-message-not-allowed "Edited message not allowed."}}
   :ru
   {:general
-   {:who-am-i-3 "Имя: %s; Группа: %s; Telegram ID: %s"
+   {:who-am-i-4 "Имя: %s; Группа: %s; Telegram ID: %s; Группа на первую лабораторную работу: %s"
     :need-admin "Это действие требует прав администратора."
     :description-info "Описание доступных команд"
     :help-info "Вывести список доступных команд"
@@ -75,8 +74,9 @@
 (defn send-whoami
   ([tx token id] (send-whoami tx token id id))
   ([tx token id stud-id]
-   (let [{name :name group :group} (stud-info tx stud-id)]
-     (talk/send-text token id (format (tr :general/who-am-i-3) name group stud-id)))))
+   (let [{name :name group :group pres :presentation} (stud-info tx stud-id)
+         grouplab1 (-> pres :lab1 :group)]
+     (talk/send-text token id (format (tr :general/who-am-i-4) name group stud-id grouplab1)))))
 
 (defn whoami-talk [db {token :token}]
   (talk/def-command db "whoami" (tr :general/who-am-i-info)
