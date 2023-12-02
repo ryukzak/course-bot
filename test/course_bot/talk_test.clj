@@ -28,11 +28,6 @@
               asserts
               (->> @*chat (take (count asserts)) reverse))))
 
-(defn match-text [*chat tid & lines]
-  (if (number? tid)
-    (match-history *chat (apply (partial text tid) lines))
-    (apply (partial match-text *chat 1 tid) lines)))
-
 (defn match-csv [*chat tid & rows]
   (match-history *chat (apply (partial csv tid) rows)))
 
@@ -67,16 +62,6 @@
   (plagiarism/open-path-or-fail path))
 
 (defn atom? [v] (instance? clojure.lang.Atom v))
-
-(defn handlers [& handlers]
-  (fn rec
-    ([msg] (rec nil 1 msg))
-    ([*chat-or-id msg]
-     (if (atom? *chat-or-id)
-       (rec *chat-or-id 1 msg)
-       (rec nil *chat-or-id msg)))
-    ([_*chat id msg] (let [handler (apply handlers/handlers handlers)]
-                       (handler {:message {:from {:id id} :text msg}})))))
 
 (defn test-handler [& handlers]
   (let [*chat (atom (list))]
