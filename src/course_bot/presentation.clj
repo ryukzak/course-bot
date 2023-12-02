@@ -238,13 +238,13 @@
 
       :recieve-description
       (fn [tx {{id :id} :from text :text}]
-        (talk/send-text token id (tr :pres/your-description))
-        (talk/send-text token id text)
-        (talk/send-yes-no-kbd token id (tr :pres/do-you-approve))
         (when-not (or (nil? max-description-length)
                       (<= (count text) max-description-length))
           (talk/send-text token id (format (tr :pres/description-is-too-long-:max) max-description-length))
           (talk/wait tx))
+        (talk/send-text token id (tr :pres/your-description))
+        (talk/send-text token id text)
+        (talk/send-yes-no-kbd token id (tr :pres/do-you-approve))
         (talk/change-branch tx :approve {:desc text}))
 
       :approve
