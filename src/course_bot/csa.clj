@@ -23,18 +23,18 @@
  {:en
   {:csa
    {:start "Bot activated, my Lord!"
-    :webhook-1 "Webhook is set, my Lord: %s"
+    :webhook-:url "Webhook is set, my Lord: %s"
     :dot "."
     :stop "Bot is dead, my Lord!"
-    :unknown-1 "Unknown message: %s"
+    :unknown-:message "Unknown message: %s"
     :db-failure "I failed to reach the database, my Lord!"
     :db-failure-path "Can't find the database path, my Lord!"}}
   :ru
   {:csa
    {:start "Бот активирован, мой господин!"
-    :webhook-1 "Вебхук установлен, мой господин: %s"
+    :webhook-:url "Вебхук установлен, мой господин: %s"
     :stop "Бот погиб, мой господин!"
-    :unknown-1 "Неизвестное сообщение: %s, а вы точно мой господин?"
+    :unknown-:message "Неизвестное сообщение: %s, а вы точно мой господин?"
     :db-failure "Не удалось подключиться к базе данных, мой господин!"
     :db-failure-path "Не удалось найти путь к базе данных, мой господин!"}}})
 
@@ -138,7 +138,7 @@
       (general/help-talk db conf)
       (general/description-talk db conf)
       (handlers/message {{id :id} :chat :as message}
-                        (let [err (format (tr :csa/unknown-1) message)]
+                        (let [err (format (tr :csa/unknown-:message) message)]
                           (println err)
                           (talk/send-text token id err))))
 
@@ -160,7 +160,7 @@
 
     (cond (some? webhook-url)
           (let [url (str webhook-url "-" webhook-secrete)]
-            (println (tr :csa/webhook-1) url)
+            (println (tr :csa/webhook-:url) url)
             (api/set-webhook token url)
             (jetty/run-jetty bot-app {:port webhook-port}))
 

@@ -11,21 +11,21 @@
    {:quiz-already-running "Quiz is already running."
     :available-quizzes "Available quizzes:\n"
     :quiz-not-defined "Quiz is not defined."
-    :confirm-run-quiz-1 "Are you sure to run '%s' quiz?"
+    :confirm-run-quiz-:quiz-name "Are you sure to run '%s' quiz?"
     :quiz-started "The quiz was started."
     :quiz-canceled "In a next time."
     :no-running-quizzes "No running quizzes."
-    :confirm-stop-quiz-1 "Are you sure to stop '%s' quiz?"
-    :quiz-was-stopped-1 "The quiz '%s' was stopped"
+    :confirm-stop-quiz-:quiz-name "Are you sure to stop '%s' quiz?"
+    :quiz-was-stopped-:quiz-name "The quiz '%s' was stopped"
     :no-answers "Answers did not received."
     :answer-correct "CORRECT "
     :quiz-your-result "Your result: "
     :quiz-is-still-in-progress "In a next time. The quiz is still in progress."
     :what-question "What?"
     :quiz-cmd-description "start the quiz if it is running"
-    :quiz-already-taking-1 "You have/are taking this quiz before: %s. \nIf you interrupted it with another command, then it's not fate."
+    :quiz-already-taking-:quiz-key "You have/are taking this quiz before: %s. \nIf you interrupted it with another command, then it's not fate."
     :quiz-not-running "The quiz is not running, wait for the teacher's signal."
-    :student-confirm-run-quiz-2 "Would you like to start quiz '%s' (%d question(s))?"
+    :student-confirm-run-quiz-:quiz-name-:questions-count "Would you like to start quiz '%s' (%d question(s))?"
     :quiz-after-run-info "Answer with a number. Your first question:"
     :your-right "Your right."
     :what-question-yes-no "What (yes/no)?"
@@ -39,21 +39,21 @@
    {:quiz-already-running "Тест уже запущен."
     :available-quizzes "Доступные тесты:\n"
     :quiz-not-defined "Тест не определен."
-    :confirm-run-quiz-1 "Вы действительно хотите запустить '%s' тест?"
+    :confirm-run-quiz-:quiz-name "Вы действительно хотите запустить '%s' тест?"
     :quiz-started "Тест запущен."
     :quiz-canceled "В следующий раз."
     :no-running-quizzes "Нет активных тестов."
-    :confirm-stop-quiz-1 "Вы действительно хотите остановить '%s' тест?"
-    :quiz-was-stopped-1 "Тест '%s' был остановлен."
+    :confirm-stop-quiz-:quiz-name "Вы действительно хотите остановить '%s' тест?"
+    :quiz-was-stopped-:quiz-name "Тест '%s' был остановлен."
     :no-answers "Ответы не получены."
     :answer-correct "КОРРЕКТНЫЙ "
     :quiz-your-result "Ваш результат: "
     :quiz-is-still-in-progress "В следующий раз. Тест еще продолжается."
     :what-question "Что?"
     :quiz-cmd-description "Начать прохождение теста, если он запущен"
-    :quiz-already-taking-1 "Вы уже проходили/проходите этот тест: %s. \nЕсли вы его перебили другой командой -- значит не судьба."
+    :quiz-already-taking-:quiz-key "Вы уже проходили/проходите этот тест: %s. \nЕсли вы его перебили другой командой -- значит не судьба."
     :quiz-not-running "Тест не запущен, дождитесь отмашки преподавателя."
-    :student-confirm-run-quiz-2 "Хотите начать тест '%s' (%d вопроса(-ов))?"
+    :student-confirm-run-quiz-:quiz-name-:questions-count "Хотите начать тест '%s' (%d вопроса(-ов))?"
     :quiz-after-run-info "Отвечайте цифрой. Ваш первый вопрос:"
     :your-right "Ваше право."
     :what-question-yes-no "Что (да/нет)?"
@@ -115,7 +115,7 @@
                  (when-not quiz
                    (talk/send-text token id (tr :quiz/quiz-not-defined)) (talk/stop-talk tx))
 
-                 (talk/send-yes-no-kbd token id (format (tr :quiz/confirm-run-quiz-1) (:name quiz)))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/confirm-run-quiz-:quiz-name) (:name quiz)))
                  (talk/change-branch tx :approve {:quiz-key quiz-key})))
              :approve
              (fn [tx {{id :id} :from text :text} {quiz-key :quiz-key}]
@@ -196,7 +196,7 @@
                  (when-not quiz-key
                    (talk/send-text token id (tr :quiz/no-running-quizzes))
                    (talk/stop-talk tx))
-                 (talk/send-yes-no-kbd token id (format (tr :quiz/confirm-stop-quiz-1) quiz-name))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/confirm-stop-quiz-:quiz-name) quiz-name))
                  (talk/change-branch tx :approve)))
              :approve
              (fn [tx {{id :id} :from text :text}]
@@ -211,7 +211,7 @@
                                                       info (str cur "/" max)]
                                                   [stud-id cur info]))
                                               (keys results))]
-                           (talk/send-text token id (format (tr :quiz/quiz-was-stopped-1) quiz-name))
+                           (talk/send-text token id (format (tr :quiz/quiz-was-stopped-:quiz-name) quiz-name))
                            (when (empty? results)
                              (talk/send-text token id (tr :quiz/no-answers))
                              (-> tx stop-quiz! talk/stop-talk))
@@ -264,14 +264,14 @@
                      results (codax/get-at tx [:quiz :results quiz-key id])]
 
                  (when (some? results)
-                   (talk/send-text token id (format (tr :quiz/quiz-already-taking-1) quiz-key))
+                   (talk/send-text token id (format (tr :quiz/quiz-already-taking-:quiz-key) quiz-key))
                    (-> tx talk/stop-talk))
 
                  (when (nil? quiz)
                    (talk/send-text token id (tr :quiz/quiz-not-running))
                    (-> tx talk/stop-talk))
 
-                 (talk/send-yes-no-kbd token id (format (tr :quiz/student-confirm-run-quiz-2) quiz-name questions-count))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/student-confirm-run-quiz-:quiz-name-:questions-count) quiz-name questions-count))
                  (talk/change-branch tx :quiz-approve)))
 
              :quiz-approve
