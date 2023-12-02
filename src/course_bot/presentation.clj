@@ -123,7 +123,7 @@
     :all-scheduled-description-by-group "Файл со всеми запланированными описаниями по группам:"
     :set-group-help-:task-:key-name "Пожалуйста, установите группу '%s' с помощью /%ssetgroup"
     :already-submitted-and-approved-help-:key-name "Уже отправлено и одобрено, может быть, вам нужно запланировать его? /%sрасписание"
-    :submit-receive-before-schedule-help-1 "Вы должны отправить и получить одобрение до планирования. Используйте /%ssubmit"
+    :submit-receive-before-schedule-help-:key-name "Вы должны отправить и получить одобрение до планирования. Используйте /%ssubmit"
     :already-scheduled-help-:key-name "Уже запланировано, проверьте /%sagenda."
     :ok-check-schedule-help-:key-name "Хорошо, вы можете проверить это: /%sagenda"
     :should-set-group-to-send-feedback-help-:task-:key-name "Чтобы отправить отзыв, вы должны установить свою группу для %s с помощью /%ssetgroup"
@@ -499,7 +499,7 @@
             (talk/stop-talk tx))
 
           (when-not (-> pres :approved?)
-            (talk/send-text token id (format (tr :pres/submit-receive-before-schedule-help-1) pres-key-name))
+            (talk/send-text token id (format (tr :pres/submit-receive-before-schedule-help-:key-name) pres-key-name))
             (talk/stop-talk tx))
 
           (when (-> pres :scheduled?)
