@@ -241,7 +241,7 @@
   (str (tr :essay/first-essay-best)
        (str/join "\n\n---\n\n"
                  (map #(str (format (tr :essay/preview-reviews-:rank-:essay-number-:review) (:rank %) (+ 1 (:index %)) (:feedback %)) (let [essay (-> assignments (nth (:index %)) second)]
-                                                                                                              (subs essay 0 (min (count essay) 40))) "...)")
+                                                                                                                                        (subs essay 0 (min (count essay) 40))) "...)")
                       (sort-by :rank reviews)))
        (tr :essay/the-last-essay-worst)))
 
