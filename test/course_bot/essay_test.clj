@@ -5,7 +5,7 @@
             [course-bot.general :as general]
             [course-bot.misc :as misc]
             [course-bot.report :as report]
-            [course-bot.talk-test :as tt]))
+            [course-bot.talk-test :as tt :refer [answers?]]))
 
 (defn register-user [*chat start-talk id name]
   (testing "register user"
@@ -20,11 +20,12 @@
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
         plagiarism-db (tt/test-plagiarsm-database (-> conf :plagiarism-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (essay/submit-talk db conf "essay1" plagiarism-db)
-                          (essay/submit-talk db conf "essay2" plagiarism-db)
-                          (essay/status-talk db conf "essay1"))]
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+                         (essay/submit-talk db conf "essay1" plagiarism-db)
+                         (essay/submit-talk db conf "essay2" plagiarism-db)
+                         (essay/status-talk db conf "essay1"))]
     (tt/with-mocked-morse *chat
       (register-user *chat talk 1 "u1")
       (register-user *chat talk 2 "u2")
@@ -96,18 +97,19 @@
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
         plagiarism-db (tt/test-plagiarsm-database (-> conf :plagiarism-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (essay/submit-talk db conf "essay1" plagiarism-db)
-                          (essay/submit-talk db conf "essay2" plagiarism-db)
-                          (essay/status-talk db conf "essay1")
-                          (essay/assignreviewers-talk db conf "essay1")
-                          (essay/review-talk db conf "essay1")
-                          (essay/myfeedback-talk db conf "essay1")
-                          (report/report-talk db conf
-                                              "ID" report/stud-id
-                                              "review-score" (essay/review-score conf "essay1")
-                                              "essay-score" (essay/essay-score "essay1")))]
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+                         (essay/submit-talk db conf "essay1" plagiarism-db)
+                         (essay/submit-talk db conf "essay2" plagiarism-db)
+                         (essay/status-talk db conf "essay1")
+                         (essay/assignreviewers-talk db conf "essay1")
+                         (essay/review-talk db conf "essay1")
+                         (essay/myfeedback-talk db conf "essay1")
+                         (report/report-talk db conf
+                                             "ID" report/stud-id
+                                             "review-score" (essay/review-score conf "essay1")
+                                             "essay-score" (essay/essay-score "essay1")))]
 
     (tt/with-mocked-morse *chat
       (testing "prepare users and their essays"
@@ -147,8 +149,8 @@
                                 (let [res (first @*shuffles)]
                                   (swap! *shuffles rest)
                                   res))]
-          (talk 0 "/essay1assignreviewers")
-          (tt/match-text *chat 0 "Assignment count: 4; Examples: (4 3 2)")))
+          (is (answers? (talk 0 "/essay1assignreviewers")
+                        "Assignment count: 4; Examples: (4 3 2)"))))
 
       (is (= (list {:request-review '(4 3 2), :text (str "user1 essay1 text" (hash 1))}
                    {:request-review '(1 4 3), :text (str "user2 essay1 text" (hash 2))}
@@ -305,13 +307,12 @@
                         (talk id "/essay1review")
                         (talk id (str "1 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
                         (is (= (tt/history *chat :user-id id) ["ok"]))
-                        (tt/match-text *chat id "ok")
                         (talk id (str "2 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
                         (is (= (tt/history *chat :user-id id) ["ok"]))
                         (talk id (str "3 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
                         (is (= (tt/history *chat :user-id id) ["Correct?"]))
-                        (talk id "yes")
-                        (tt/match-text *chat id "Your feedback has been saved and will be available to essay writers."))
+                        (is (answers? (talk id "yes")
+                                      "Your feedback has been saved and will be available to essay writers.")))
                       [2 3 4]))))
 
       (talk 1 "/essay1status")
@@ -377,8 +378,8 @@
                                     (swap! *shuffles rest)
                                     res))]
 
-            (talk 0 "/essay1assignreviewers")
-            (tt/match-text *chat 0 "Assignment count: 4; Examples: (8 7 6)")))
+            (is (answers? (talk 0 "/essay1assignreviewers")
+                          "Assignment count: 4; Examples: (8 7 6)"))))
 
         (is (= '({:my-reviews-submitted-at "2022.01.03 11:30 +0000",
                   :request-review (4 3 2),
