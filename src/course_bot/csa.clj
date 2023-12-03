@@ -138,9 +138,10 @@
       (general/help-talk db conf)
       (general/description-talk db conf)
       (handlers/message {{id :id} :chat :as message}
-                        (let [err (format (tr :csa/unknown-1) message)]
+                        (let [err (format (tr :csa/unknown-1) message)
+                              cropped (subs err 0 (min 4096 (count err)))]
                           (println err)
-                          (talk/send-text token id err))))
+                          (talk/send-text token id cropped))))
 
     #_:clj-kondo/ignore
     (defroutes bot-routes
