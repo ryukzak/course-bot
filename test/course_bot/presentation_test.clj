@@ -489,19 +489,32 @@
                     "Not found."))
       (is (answers? (talk 0 "/lab1dropall asdf")
                     "Wrong input: /lab1dropall 12345"))
-      (talk 0 "/lab1drop 1")
-      (tt/match-history *chat
-                        (tt/text 0 "Name: Alice; Group: gr1; Telegram ID: 1")
-                        (tt/text 0 "Drop 'Lab 1 presentation' config for 1?"))
+      (is (answers? (talk 0 "/lab1drop 1")
+                    "Name: Alice; Group: gr1; Telegram ID: 1"
+                    (tt/unlines
+                     "{:approved? true,"
+                     " :group \"lgr1\","
+                     " :on-review? false,"
+                     " :scheduled? true,"
+                     " :topic \"pres 1\"}")
+                    "[\"2022.01.02 12:00 +0000\" {:stud-ids (1)}]"
+                    "Drop 'Lab 1 presentation' config for 1?"))
 
       (is (answers? (talk 0 "noooooooooooooooooooo")
                     "Didn't understand: noooooooooooooooooooo. Yes or no?"))
       (is (answers? (talk 0 "no")
                     "Cancelled."))
-      (talk 0 "/lab1drop 1")
-      (tt/match-history *chat
-                        (tt/text 0 "Name: Alice; Group: gr1; Telegram ID: 1")
-                        (tt/text 0 "Drop 'Lab 1 presentation' config for 1?"))
+
+      (is (answers? (talk 0 "/lab1drop 1")
+                    "Name: Alice; Group: gr1; Telegram ID: 1"
+                    (tt/unlines
+                     "{:approved? true,"
+                     " :group \"lgr1\","
+                     " :on-review? false,"
+                     " :scheduled? true,"
+                     " :topic \"pres 1\"}")
+                    "[\"2022.01.02 12:00 +0000\" {:stud-ids (1)}]"
+                    "Drop 'Lab 1 presentation' config for 1?"))
 
       (talk 0 "yes")
       (tt/match-history *chat
@@ -519,10 +532,16 @@
                       "2022.01.02 12:00 +0000" {:stud-ids '()}}}
              (codax/get-at! db [:presentation :lab1])))
 
-      (talk 0 "/lab1dropall 2")
-      (tt/match-history *chat
-                        (tt/text 0 "Name: Bob; Group: gr1; Telegram ID: 2")
-                        (tt/text 0 "Drop 'Lab 1 presentation' config for 2?"))
+      (is (answers? (talk 0 "/lab1dropall 2")
+                    "Name: Bob; Group: gr1; Telegram ID: 2"
+                    (tt/unlines
+                     "{:approved? true,"
+                     " :group \"lgr1\","
+                     " :on-review? false,"
+                     " :scheduled? true,"
+                     " :topic \"pres 2\"}")
+                    "[\"2022.01.01 12:00 +0000\" {:stud-ids (2)}]"
+                    "Drop 'Lab 1 presentation' config for 2?"))
 
       (talk 0 "yes")
       (tt/match-history *chat
@@ -809,6 +828,14 @@
 
           (is (answers? (talk 0 "/lab1drop 1" "yes")
                         [0 "Name: Alice; Group: gr1; Telegram ID: 1"]
+
+                        [0 (tt/unlines
+                            "{:approved? true,"
+                            " :group \"lgr1\","
+                            " :on-review? false,"
+                            " :scheduled? true,"
+                            " :topic \"pres 1\"}")]
+                        [0 "[\"2022.01.01 12:00 +0000\" {:stud-ids (1)}]"]
                         [0 "Drop 'Lab 1 presentation' config for 1?"]
                         [0 "We drop student: 1"]
                         [1 "We drop your state for Lab 1 presentation"]))))
