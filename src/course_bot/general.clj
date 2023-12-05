@@ -69,8 +69,9 @@
      (talk/stop-talk tx))))
 
 (defn stud-info [tx id]
-  (let [{name :name group :group} (codax/get-at tx [id])]
-    {:name name :group group}))
+  (if-let [{name :name group :group} (codax/get-at tx [id])]
+    {:name name :group group}
+    nil))
 
 (defn send-whoami
   ([tx token id] (send-whoami tx token id id))

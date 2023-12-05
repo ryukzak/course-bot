@@ -144,6 +144,12 @@
 (defn get-presentation-state "per user" [tx pres-key stud-id]
   (codax/get-at tx [stud-id :presentation pres-key]))
 
+(defn find-stud-lesson "return [dt lesson-state]" [tx pres-key stud-id]
+  (let [{:keys [group]} (get-presentation-state tx pres-key stud-id)]
+    (->> (codax/get-at tx [:presentation pres-key group])
+         (filter (fn [[_dt {:keys [stud-ids]}]] (some #(= stud-id %) stud-ids)))
+         first)))
+
 (defn submit-presentation [tx pres-key stud-id text]
   (-> tx
       (codax/assoc-at [stud-id :presentation pres-key :on-review?] true)
@@ -238,13 +244,13 @@
 
       :recieve-description
       (fn [tx {{id :id} :from text :text}]
-        (talk/send-text token id (tr :pres/your-description))
-        (talk/send-text token id text)
-        (talk/send-yes-no-kbd token id (tr :pres/do-you-approve))
         (when-not (or (nil? max-description-length)
                       (<= (count text) max-description-length))
           (talk/send-text token id (format (tr :pres/description-is-too-long-:max) max-description-length))
           (talk/wait tx))
+        (talk/send-text token id (tr :pres/your-description))
+        (talk/send-text token id text)
+        (talk/send-yes-no-kbd token id (tr :pres/do-you-approve))
         (talk/change-branch tx :approve {:desc text}))
 
       :approve
@@ -639,17 +645,27 @@
       (fn [tx {{id :id} :from text :text}]
         (general/assert-admin tx conf id)
         (let [stud-id (talk/command-num-arg text)]
-
           (when (nil? stud-id)
             (talk/send-text token id (format (tr :pres/wrong-input-:command) cmd))
             (talk/stop-talk tx))
 
-          (let [stud (codax/get-at tx [stud-id])]
+          (let [stud (general/stud-info tx stud-id)
+
+                pres-state (-> (get-presentation-state tx pres-key stud-id)
+                               (#(assoc % :topic (-> % :description topic)))
+                               (dissoc :description))
+
+                [dt stud-lesson] (find-stud-lesson tx pres-key stud-id)]
             (when-not stud
               (talk/send-text token id (tr :pres/not-found))
               (talk/stop-talk tx))
 
             (general/send-whoami tx token id stud-id)
+
+            (talk/send-text token id (with-out-str (pprint/pprint pres-state)))
+            (when stud-lesson
+              (talk/send-text token id (with-out-str (pprint/pprint [dt stud-lesson]))))
+
             (talk/send-yes-no-kbd token id (format (tr :pres/drop-config-:config-name-:stud-id) name stud-id))
 
             (talk/change-branch tx :approve {:stud-id stud-id}))))
@@ -657,7 +673,7 @@
       :approve
       (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
         (case (i18n/normalize-yes-no-text text)
-          "yes" (let [group (codax/get-at tx [stud-id :presentation pres-key :group])
+          "yes" (let [{:keys [group]} (get-presentation-state tx pres-key stud-id)
                       lessons (codax/get-at tx [:presentation pres-key group])]
                   (talk/send-text token id (format (tr :pres/drop-student-:stud-id) stud-id))
                   (talk/send-text token stud-id (format (tr :pres/drop-state-:name) name))
