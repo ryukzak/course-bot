@@ -99,8 +99,8 @@
                           (essay/submit-talk db conf "essay2" plagiarism-db)
                           (essay/status-talk db conf "essay2")
                           (essay/assignreviewers-talk db conf "essay2")
-                          ;; (essay/review-talk db conf "essay2")
-                          ;; (essay/myfeedback-talk db conf "essay2")
+                          (essay/review-talk db conf "essay2")
+                          (essay/myfeedback-talk db conf "essay2")
                           (essay/warmup-plagiarism-talk db conf "essay2" plagiarism-db))
 
       (talk/when-handlers (:essay3 conf)
