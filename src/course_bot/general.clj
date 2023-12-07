@@ -19,7 +19,7 @@
     :start "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"
     :what-is-your-group "What is your group ("
     :group-not-found "I don't know this group. Please, repeat it ("
-    :hi-user-:name "Hi, %s!"
+    :hi-:name "Hi, %s!"
     :send-help-for-help "Send /help for help."
     :rename-me-info "Rename me"
     :unregistered-rename-warn "You should be registered to rename yourself!"
@@ -47,7 +47,7 @@
     :start "Привет, я бот вашего курса. Я помогу тебе с твоей работой. Как тебя зовут (как в реестре)?"
     :what-is-your-group "Какая у тебя группа ("
     :group-not-found "Я не знаю эту группу. Пожалуйста, попробуй это ("
-    :hi-user-:name "Привет, %s!"
+    :hi-:name "Привет, %s!"
     :send-help-for-help "Отправь /help для помощь."
     :rename-me-info "Переименовать меня"
     :unregistered-rename-warn "Вы должны быть зарегистрированы, чтобы переименовать себя!"
@@ -148,7 +148,7 @@
                      (codax/assoc-at [id :group] text)
                      (codax/assoc-at [id :reg-date] (str (new java.util.Date)))
                      (codax/assoc-at [id :allow-restart] false))]
-          (talk/send-text token id (format (tr :general/hi-user-:name) name))
+          (talk/send-text token id (format (tr :general/hi-:name) name))
           (send-whoami tx token id)
           (talk/send-text token id (tr :general/send-help-for-help))
           (talk/stop-talk tx))))))

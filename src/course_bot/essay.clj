@@ -12,11 +12,11 @@
  {:en
   {:essay
    {:submit "Submit "
-    :your-essay-already-uploaded-:essay-title "Your essay '%s' already uploaded."
-    :send-essay-text-in-one-message-:essay-title "Submit your essay text '%s' in one message."
+    :your-essay-already-uploaded-:essay-name "Your essay '%s' already uploaded."
+    :send-essay-text-in-one-message-:essay-name "Submit your essay text '%s' in one message."
     :essay-text-too-short-:min-length "Your essay text is too short, it should be at least %d characters long."
     :plagiarised-warning-:similarity "Your essay didn't pass plagiarism check. Your score: %s. Make it more unique!"
-    :plagiarised-report-:similarity-:origin-:uploaded "Plagiarism case: %s\n\norigin text: %s\nuploaded text: %s"
+    :plagiarised-report-:similarity-:origin-key-:uploaded-key "Plagiarism case: %s\n\norigin text: %s\nuploaded text: %s"
     :themes " Theme(s):\n\n"
     :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Uploading (yes/no)?"
@@ -36,7 +36,7 @@
     :write-review-for "write review for "
     :not-assigned-reviews "You have not been assigned any essays. You probably didn't upload your essay on time or rushed to submit your review."
     :you-already-sent-reviews "You already sent reviews."
-    :essays-submitted-for-review-:essay-num "You received: %d essays for your review. Their text will now be sent below by selected messages."
+    :essays-submitted-for-review-:essay-count "You received: %d essays for your review. Their text will now be sent below by selected messages."
     :essay-number-begin-:number "Essay #%d <<<<<<<<<<<<<<<<<<<<"
     :essay-number-end-:number ">>>>>>>>>>>>>>>>>>>> Essay #%d"
     :essay-send-format "Send essay numbers with feedback in separate messages from best to worse (e.g.: `<essay number> <feedback text>`)"
@@ -50,7 +50,7 @@
     :essay-feedback "Feedback: "
     :feedback-on-your-essay "feedback on your essay "
     :number-of-reviews-:count "Review count: %d."
-    :plagirism-report-:similarity-:origin-:new "%s original: %s new: %s"
+    :plagirism-report-:similarity-:origin-key-:new-key "%s original: %s new: %s"
     :warmup-plagiarism-help "Recheck and register existed essays for plagiarism."
     :warmup-no-plagiarsm "No plagiarism found."
     :warmup-processed-:count "Processed %d essays."
@@ -58,11 +58,11 @@
   :ru
   {:essay
    {:submit "Отправить "
-    :your-essay-already-uploaded-:essay-title "Ваше эссе '%s' уже загружено."
-    :send-essay-text-in-one-message-:essay-title "Отправьте текст эссе '%s' одним сообщением."
+    :your-essay-already-uploaded-:essay-name "Ваше эссе '%s' уже загружено."
+    :send-essay-text-in-one-message-:essay-name "Отправьте текст эссе '%s' одним сообщением."
     :essay-text-too-short-:min-length "Ваше эссе слишком короткое, оно должно быть длиной не менее %d символов."
     :plagiarised-warning-:similarity "Ваше эссе не прошло проверку на плагиат. Ваш балл: %s. Сделайте его более уникальным!"
-    :plagiarised-report-:similarity-:origin-:uploaded "Плагиат: %s\n\nоригинал: %s\n загруженный текст: %s"
+    :plagiarised-report-:similarity-:origin-key-:uploaded-key "Плагиат: %s\n\nоригинал: %s\n загруженный текст: %s"
     :themes " Тема(-ы):\n\n"
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Загружаем (да/нет)?"
@@ -82,7 +82,7 @@
     :write-review-for "Написать ревью для "
     :not-assigned-reviews "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё эссе вовремя или поспешили с отправкой ревью."
     :you-already-sent-reviews "Вы уже отправили ревью."
-    :essays-submitted-for-review-:essay-num "Вам на ревью пришло: %d эссе. Их текст сейчас отправлю ниже отдельными сообщениями."
+    :essays-submitted-for-review-:essay-count "Вам на ревью пришло: %d эссе. Их текст сейчас отправлю ниже отдельными сообщениями."
     :essay-number-begin-:number "Эссе #%d <<<<<<<<<<<<<<<<<<<<"
     :essay-number-end-:number ">>>>>>>>>>>>>>>>>>>> Эссе #%d"
     :essay-send-format "Отправляйте номера эссе с отзывами отдельными сообщениями (пример: `<номер_эссе> <текст_отзыва>`)"
@@ -96,7 +96,7 @@
     :essay-feedback "Отзыв: "
     :feedback-on-your-essay "Посмотреть отзывы на ваше эссе "
     :number-of-reviews-:count "Количество отзывов на ваше эссе: %d."
-    :plagirism-report-:similarity-:origin-:new "%s оригинал: %s новое: %s"
+    :plagirism-report-:similarity-:origin-key-:new-key "%s оригинал: %s новое: %s"
     :warmup-plagiarism-help "Перепроверить и зарегистрировать существующие эссе на плагиат."
     :warmup-no-plagiarsm "Плагиат не найден."
     :warmup-processed-:count "Обработано %d эссе."
@@ -117,9 +117,9 @@
       (fn [tx {{id :id} :from}]
         (let [submitted? (codax/get-at tx [id :essays essay-code :text])]
           (when submitted?
-            (talk/send-text token id (format (tr :essay/your-essay-already-uploaded-:essay-title) essay-code))
+            (talk/send-text token id (format (tr :essay/your-essay-already-uploaded-:essay-name) essay-code))
             (talk/stop-talk tx))
-          (talk/send-text token id (str (format (tr :essay/send-essay-text-in-one-message-:essay-title) essay-code)
+          (talk/send-text token id (str (format (tr :essay/send-essay-text-in-one-message-:essay-name) essay-code)
                                         (when topics-msg (str (tr :essay/themes) topics-msg))))
           (talk/change-branch tx :submit)))
 
@@ -143,7 +143,7 @@
                 (io/make-parents bad-filename)
                 (spit bad-filename text)
                 (talk/send-text token admin-chat-id
-                                (format (tr :essay/plagiarised-report-:similarity-:origin-:uploaded) similarity origin-key bad-key)))
+                                (format (tr :essay/plagiarised-report-:similarity-:origin-key-:uploaded-key) similarity origin-key bad-key)))
               (talk/stop-talk tx))))
 
         (talk/send-text token id (tr :essay/text-of-your-essay))
@@ -258,7 +258,7 @@
           (when-not (nil? (codax/get-at tx [id :essays essay-code :my-reviews]))
             (talk/send-text token id (tr :essay/you-already-sent-reviews))
             (talk/stop-talk tx))
-          (talk/send-text token id (format (tr :essay/essays-submitted-for-review-:essay-num) (count assignments)))
+          (talk/send-text token id (format (tr :essay/essays-submitted-for-review-:essay-count) (count assignments)))
           (doall (map (fn [index [_auth-id text]]
                         (talk/send-text token id (format (tr :essay/essay-number-begin-:number) (+ 1 index)))
                         (talk/send-text token id text)
@@ -380,7 +380,7 @@
                                     (cond
                                       (nil? origin) nil
                                       (= key (:key origin)) nil
-                                      :else (format (tr :essay/plagirism-report-:similarity-:origin-:new)
+                                      :else (format (tr :essay/plagirism-report-:similarity-:origin-key-:new-key)
                                                     (misc/round-2 (:similarity origin))
                                                     (:key origin)
                                                     key))))))
