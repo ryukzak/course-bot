@@ -7,7 +7,7 @@
 (i18n/add-dict
  {:en
   {:general
-   {:who-am-i-3 "Name: %s; Group: %s; Telegram ID: %s"
+   {:who-am-i-:name-:group-:tg-id "Name: %s; Group: %s; Telegram ID: %s"
     :need-admin "That action requires admin rights."
     :description-info "Descriptions for supported commands"
     :help-info "Show list of supported commands"
@@ -19,7 +19,7 @@
     :start "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"
     :what-is-your-group "What is your group ("
     :group-not-found "I don't know this group. Please, repeat it ("
-    :hi-user-1 "Hi, %s!"
+    :hi-:name "Hi, %s!"
     :send-help-for-help "Send /help for help."
     :rename-me-info "Rename me"
     :unregistered-rename-warn "You should be registered to rename yourself!"
@@ -35,7 +35,7 @@
     :edited-message-not-allowed "Edited message not allowed."}}
   :ru
   {:general
-   {:who-am-i-3 "Имя: %s; Группа: %s; Telegram ID: %s"
+   {:who-am-i-:name-:group-:tg-id "Имя: %s; Группа: %s; Telegram ID: %s"
     :need-admin "Это действие требует прав администратора."
     :description-info "Описание доступных команд"
     :help-info "Вывести список доступных команд"
@@ -47,7 +47,7 @@
     :start "Привет, я бот вашего курса. Я помогу тебе с твоей работой. Как тебя зовут (как в реестре)?"
     :what-is-your-group "Какая у тебя группа ("
     :group-not-found "Я не знаю эту группу. Пожалуйста, попробуй это ("
-    :hi-user-1 "Привет, %s!"
+    :hi-:name "Привет, %s!"
     :send-help-for-help "Отправь /help для помощь."
     :rename-me-info "Переименовать меня"
     :unregistered-rename-warn "Вы должны быть зарегистрированы, чтобы переименовать себя!"
@@ -77,7 +77,7 @@
   ([tx token id] (send-whoami tx token id id))
   ([tx token id stud-id]
    (let [{name :name group :group} (stud-info tx stud-id)]
-     (talk/send-text token id (format (tr :general/who-am-i-3) name group stud-id)))))
+     (talk/send-text token id (format (tr :general/who-am-i-:name-:group-:tg-id) name group stud-id)))))
 
 (defn whoami-talk [db {token :token}]
   (talk/def-command db "whoami" (tr :general/who-am-i-info)
@@ -148,7 +148,7 @@
                      (codax/assoc-at [id :group] text)
                      (codax/assoc-at [id :reg-date] (str (new java.util.Date)))
                      (codax/assoc-at [id :allow-restart] false))]
-          (talk/send-text token id (format (tr :general/hi-user-1) name))
+          (talk/send-text token id (format (tr :general/hi-:name) name))
           (send-whoami tx token id)
           (talk/send-text token id (tr :general/send-help-for-help))
           (talk/stop-talk tx))))))
