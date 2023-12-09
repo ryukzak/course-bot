@@ -115,6 +115,7 @@
                           (start-handler tx msg)
 
                           (nil? msg) nil
+                          (nil? (-> msg :text)) nil
                           (str/starts-with? (-> msg :text) "/") nil
 
                           (and (= current-talk name) (contains? handlers current-branch))
