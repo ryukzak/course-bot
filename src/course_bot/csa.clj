@@ -68,7 +68,6 @@
 
     (handlers/defhandler bot-api
       (general/start-talk db conf)
-      (general/restart-talk db conf)
       (general/whoami-talk db conf)
       (general/renameme-talk db conf)
 

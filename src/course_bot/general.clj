@@ -142,7 +142,10 @@
         (when-not (contains? groups text)
           (talk/send-text token id (str (tr :general/group-not-found) (str/join ", " (sort groups)) "):"))
           (talk/repeat-branch tx))
-        (let [tx (-> tx
+        (let [{old-name :name old-group :group} (codax/get-at tx [id])
+              tx (-> (if (and (nil? old-name) (nil? old-group))
+                       tx
+                       (codax/update-at tx [id :old-info] conj {:name old-name :group old-group}))
                      (codax/assoc-at [id :chat] chat)
                      (codax/assoc-at [id :name] name)
                      (codax/assoc-at [id :group] text)
@@ -172,36 +175,6 @@
         (talk/send-text token id (tr :general/renamed))
         (send-whoami tx token id)
         (talk/stop-talk tx)))))
-
-(defn restart-talk [db {token :token :as conf}]
-  (talk/def-talk db "restart"
-    :start
-    (fn [tx {{id :id} :from text :text}]
-      (assert-admin tx conf id)
-      (let [stud-id (talk/command-num-arg text)]
-        (if (some? stud-id)
-          (let [stud (codax/get-at tx [stud-id])]
-            (when (nil? (:name stud))
-              (talk/send-text token id (tr :general/telegram-id-not-found))
-              (talk/stop-talk tx))
-            (send-whoami tx token id stud-id)
-            (talk/send-yes-no-kbd token id (tr :general/restart-this-student-question))
-            (-> tx
-                (talk/change-branch :approve {:restart-stud stud-id})))
-          (do
-            (talk/send-text token id (tr :general/restart-wrong-input))
-            (talk/stop-talk tx)))))
-
-    :approve
-    (fn [tx {{id :id} :from text :text} {stud-id :restart-stud}]
-      (case (i18n/normalize-yes-no-text text)
-        "yes" (do (talk/send-text token id (str (tr :general/restarted-and-notified) stud-id))
-                  (talk/send-text token stud-id (tr :general/use-start-once-more))
-                  (-> tx
-                      (codax/assoc-at [stud-id :allow-restart] true)
-                      (talk/stop-talk)))
-        "no" (talk/send-stop tx token id (tr :general/not-restarted))
-        (talk/clarify-input tx token id (tr :general/yes-no-question))))))
 
 (defn warning-on-edited-message [{token :token}]
   (fn [{{{id :id} :from :as edited-message} :edited_message}]
