@@ -92,6 +92,7 @@
                           (essay/assignreviewers-talk db conf "essay1")
                           (essay/review-talk db conf "essay1")
                           (essay/myfeedback-talk db conf "essay1")
+                          (essay/reportabuse-talk db conf "essay1")
                           (essay/warmup-plagiarism-talk db conf "essay1" plagiarism-db))
 
       (talk/when-handlers (:essay2 conf)
@@ -100,6 +101,7 @@
                           (essay/assignreviewers-talk db conf "essay2")
                           (essay/review-talk db conf "essay2")
                           (essay/myfeedback-talk db conf "essay2")
+                          (essay/reportabuse-talk db conf "essay2")
                           (essay/warmup-plagiarism-talk db conf "essay2" plagiarism-db))
 
       (talk/when-handlers (:essay3 conf)
@@ -108,6 +110,7 @@
                           (essay/assignreviewers-talk db conf "essay3")
                           (essay/review-talk db conf "essay3")
                           (essay/myfeedback-talk db conf "essay3")
+                          (essay/reportabuse-talk db conf "essay3")
                           (essay/warmup-plagiarism-talk db conf "essay3" plagiarism-db))
 
       (quiz/startquiz-talk db conf)
