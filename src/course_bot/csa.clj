@@ -132,7 +132,9 @@
                           "essay2" (essay/essay-score "essay2")
                           "essay2-reviews" (essay/review-score conf "essay2")
                           "essay3" (essay/essay-score "essay3")
-                          "essay3-reviews" (essay/review-score conf "essay3"))
+                          "essay3-reviews" (essay/review-score conf "essay3")
+                          "stud-chat" report/stud-chat
+                          "stud-old-info" report/stud-old-info)
 
       (plagiarism/restore-forest-talk db conf plagiarism-db)
       (general/warning-on-edited-message conf)
