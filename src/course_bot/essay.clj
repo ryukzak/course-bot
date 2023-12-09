@@ -102,6 +102,12 @@
     :warmup-processed-:count "Обработано %d эссе."
     :assignreviewers-info "только для администратора"}}})
 
+(defn get-stud-reviews [tx essay-code stud-id]
+  (codax/get-at tx [stud-id :essays essay-code :received-review]))
+
+(defn save-student-report [tx essay-code stud-id text]
+  (codax/update-at tx [stud-id :essays essay-code :abuse-reports] conj text))
+
 (defn plagiarism-key [essay-code stud-id]
   (str stud-id " - " essay-code))
 
@@ -240,8 +246,12 @@
 (defn preview-reviews [assignments reviews]
   (str (tr :essay/first-essay-best)
        (str/join "\n\n---\n\n"
-                 (map #(str (format (tr :essay/preview-reviews-:rank-:essay-number-:review) (:rank %) (+ 1 (:index %)) (:feedback %)) (let [essay (-> assignments (nth (:index %)) second)]
-                                                                                                                                        (subs essay 0 (min (count essay) 40))) "...)")
+                 (map #(str (format (tr :essay/preview-reviews-:rank-:essay-number-:review)
+                                    (:rank %)
+                                    (+ 1 (:index %))
+                                    (:feedback %))
+                            (let [essay (-> assignments (nth (:index %)) second)]
+                              (subs essay 0 (min (count essay) 40))) "...)")
                       (sort-by :rank reviews)))
        (tr :essay/the-last-essay-worst)))
 
@@ -319,7 +329,7 @@
           (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
 
 (defn my-reviews [tx essay-code id]
-  (->> (codax/get-at tx [id :essays essay-code :received-review])
+  (->> (get-stud-reviews tx essay-code id)
        (map #(str (format (tr :essay/rank-:number) (:rank %))
                   (when-let [fb (:feedback %)] (str (tr :essay/essay-feedback) fb))))))
 
@@ -390,3 +400,77 @@
             (doall (map #(talk/send-text token id %) bad-reports)))
           (talk/send-text token id (format (tr :essay/warmup-processed-:count) (count reports)))
           (talk/stop-talk tx))))))
+
+(i18n/add-dict
+ {:en {:essay {:reportabuse-cmd-help "report about abuse in essay or review."
+
+               :no-assignments "no assignments for this essay, how you can report abuse?"
+               :describe-essay-or-review-problem "Describe whats wrong with essay or review on your essay in one text message (with quote of problem place)?"
+               :report-approve? "Your report text + reviewed essays and feedbacks will be send to the teacher. Are you sure?"
+
+               :report-received-review-author "The follwing student submit abuse report:"
+               :report-received-review-text "Report text:"
+               :report-received-feedback "Feedback & author:"
+               :report-received-essay "Essay & author:"
+
+               :report-sent "Your report was sent to the teacher. Thank you!"}}
+
+  :ru {:essay {:reportabuse-cmd-help "пожаловаться на нарушение в эссе или ревью."
+
+               :no-assignments "нет назначений для этого эссе, как вы можете сообщить о нарушении?"
+               :describe-essay-or-review-problem "Опишите, что не так с эссе или ревью на ваше эссе в одном текстовом сообщении (с цитатой места проблемы)?"
+               :report-approve? "Ваш текст + проверенные эссе и отзывы будут отправлены учителю. Вы уверены?"
+
+               :report-received-review-author "Следующий студент отправил жалобу:"
+               :report-received-review-text "Текст жалобы:"
+               :report-received-feedback "Отзыв и автор:"
+               :report-received-essay "Эссе и автор:"
+
+               :report-sent "Ваша жалоба была отправлена учителю. Спасибо!"}}})
+
+(defn reportabuse-talk [db {token :token admin-chat-id :admin-chat-id} essay-code]
+  (let [cmd (str essay-code "reportabuse")
+        help (str (tr :essay/reportabuse-cmd-help) essay-code)]
+    (talk/def-talk db cmd help
+      :start
+      (fn [tx {{id :id} :from}]
+        (let [assignments (stud-review-assignments tx id essay-code)]
+          (when (empty? assignments)
+            (talk/send-text token id (tr :essay/no-assignments))
+            (talk/stop-talk tx))
+          (talk/send-text token id (tr :essay/describe-essay-or-review-problem))
+          (talk/change-branch tx :get-report)))
+
+      :get-report
+      (fn [tx {{id :id} :from text :text}]
+        (talk/send-text token id (tr :essay/report-approve?))
+        (talk/change-branch tx :approve {:report text}))
+
+      :approve
+      (fn [tx {{id :id} :from text :text} {report :report}]
+        (case (i18n/normalize-yes-no-text text)
+          "yes" (let [assignments (stud-review-assignments tx id essay-code)
+                      reviews (get-stud-reviews tx essay-code id)]
+                  (talk/send-text token admin-chat-id (tr :essay/report-received-review-author))
+                  (general/send-whoami tx token admin-chat-id id)
+                  (talk/send-text token admin-chat-id (tr :essay/report-received-review-text))
+                  (talk/send-text token admin-chat-id report)
+                  (->> assignments
+                       (map (fn [[stud-id text]]
+                              (talk/send-text token admin-chat-id (tr :essay/report-received-essay))
+                              (general/send-whoami tx token admin-chat-id stud-id)
+                              (talk/send-text token admin-chat-id text)))
+                       doall)
+                  (->> reviews
+                       (map (fn [{:keys [review-author feedback]}]
+                              (talk/send-text token admin-chat-id (tr :essay/report-received-feedback))
+
+                              (general/send-whoami tx token admin-chat-id review-author)
+                              (talk/send-text token admin-chat-id feedback)))
+                       doall)
+                  (talk/send-text token id (tr :essay/report-sent))
+                  (-> tx
+                      (save-student-report essay-code id report)
+                      talk/stop-talk))
+          "no" (talk/send-stop tx token id)
+          (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))

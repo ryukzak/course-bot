@@ -68,7 +68,6 @@
 
     (handlers/defhandler bot-api
       (general/start-talk db conf)
-      (general/restart-talk db conf)
       (general/whoami-talk db conf)
       (general/renameme-talk db conf)
 
@@ -93,6 +92,7 @@
                           (essay/assignreviewers-talk db conf "essay1")
                           (essay/review-talk db conf "essay1")
                           (essay/myfeedback-talk db conf "essay1")
+                          (essay/reportabuse-talk db conf "essay1")
                           (essay/warmup-plagiarism-talk db conf "essay1" plagiarism-db))
 
       (talk/when-handlers (:essay2 conf)
@@ -101,6 +101,7 @@
                           (essay/assignreviewers-talk db conf "essay2")
                           (essay/review-talk db conf "essay2")
                           (essay/myfeedback-talk db conf "essay2")
+                          (essay/reportabuse-talk db conf "essay2")
                           (essay/warmup-plagiarism-talk db conf "essay2" plagiarism-db))
 
       (talk/when-handlers (:essay3 conf)
@@ -109,6 +110,7 @@
                           (essay/assignreviewers-talk db conf "essay3")
                           (essay/review-talk db conf "essay3")
                           (essay/myfeedback-talk db conf "essay3")
+                          (essay/reportabuse-talk db conf "essay3")
                           (essay/warmup-plagiarism-talk db conf "essay3" plagiarism-db))
 
       (quiz/startquiz-talk db conf)
@@ -130,7 +132,9 @@
                           "essay2" (essay/essay-score "essay2")
                           "essay2-reviews" (essay/review-score conf "essay2")
                           "essay3" (essay/essay-score "essay3")
-                          "essay3-reviews" (essay/review-score conf "essay3"))
+                          "essay3-reviews" (essay/review-score conf "essay3")
+                          "stud-chat" report/stud-chat
+                          "stud-old-info" report/stud-old-info)
 
       (plagiarism/restore-forest-talk db conf plagiarism-db)
       (general/warning-on-edited-message conf)

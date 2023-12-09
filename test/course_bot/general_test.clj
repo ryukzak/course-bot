@@ -57,65 +57,29 @@
         (is (answers? (talk 1 "/start")
                       "You are already registered. To change your information, contact the teacher and send /whoami"))))))
 
-(deftest restart-talk-test
-  (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database (-> conf :db-path))
-
-        {talk :talk, *chat :*chat}
-        (tt/test-handler (general/start-talk db conf)
-                         (general/whoami-talk db conf)
-                         (general/restart-talk db conf))]
-    (tt/with-mocked-morse *chat
-      (testing "wrong requests"
-        (is (answers? (talk 1 "/restart")
-                      "That action requires admin rights."))
-        (is (answers? (talk 0 "/restart")
-                      "Wrong input. Expect: /restart 12345"))
-        (is (answers? (talk 0 "/restart 1")
-                      "User with specific telegram id not found.")))
-
-      (testing "register user for restart"
-        (talk 1 "/start" "Bot Botovich" "gr1")
-        (is (answers? (talk 1 "/whoami")
-                      "Name: Bot Botovich; Group: gr1; Telegram ID: 1"))
-        (is (answers? (talk 1 "/start")
-                      "You are already registered. To change your information, contact the teacher and send /whoami")))
-
-      (testing "try but not actually restart"
-        (is (answers? (talk 0 "/restart 1")
-                      "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
-                      "Restart this student?"))
-        (is (answers? (talk 0 "emm")
-                      "Please, yes or no?"))
-        (is (answers? (talk 0 "no")
-                      "Not restarted.")))
-
-      (testing "restart"
-        (talk 0 "/restart 1")
-        (talk 0 "yes")
-        (tt/match-history *chat
-                          (tt/text 0 "Restarted and notified: 1")
-                          (tt/text 1 "You can use /start once more."))
-
-        (is (answers? (talk 1 "/start")
-                      "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))))))
-
 (deftest restart-permitted-test
   (let [conf (assoc (misc/get-config "conf-example/csa-2023.edn") :allow-restart true)
         db (tt/test-database (-> conf :db-path))
 
         {talk :talk, *chat :*chat}
         (tt/test-handler (general/start-talk db conf)
-                         (general/whoami-talk db conf)
-                         (general/restart-talk db conf))]
+                         (general/whoami-talk db conf))]
     (tt/with-mocked-morse *chat
-
       (testing "register user for restart"
         (talk 1 "/start" "Bot Botovich" "gr1")
         (is (answers? (talk 1 "/whoami")
                       "Name: Bot Botovich; Group: gr1; Telegram ID: 1"))
         (is (answers? (talk 1 "/start")
-                      "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))))))
+                      "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))
+        (is (answers? (talk 1 "Alice")
+                      "What is your group (gr1, gr2)?"))
+        (is (answers? (talk 1 "gr2")
+                      "Hi, Alice!"
+                      "Name: Alice; Group: gr2; Telegram ID: 1"
+                      "Send /help for help."))
+
+        (is (= '({:name "Bot Botovich", :group "gr1"})
+               (codax/get-at! db [1 :old-info])))))))
 
 (deftest renameme-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
