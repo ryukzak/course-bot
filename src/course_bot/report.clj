@@ -9,7 +9,7 @@
 (defn stud-id [_tx _data id] id)
 (defn stud-name [_tx data id] (-> data (get id) :name))
 (defn stud-group [_tx data id] (-> data (get id) :group))
-(defn stud-chat [_tx data id] (-> data (get id) :stud-chat (#(with-out-str (pprint/pprint %)))))
+(defn stud-chat [_tx data id] (-> data (get id) :chat (#(with-out-str (pprint/pprint %)))))
 (defn stud-old-info [_tx data id] (-> data (get id) :old-info (#(with-out-str (pprint/pprint %)))))
 
 (defn send-report [tx token id fields]
