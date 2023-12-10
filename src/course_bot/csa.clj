@@ -23,18 +23,18 @@
  {:en
   {:csa
    {:start "Bot activated, my Lord!"
-    :webhook-1 "Webhook is set, my Lord: %s"
+    :webhook-:url "Webhook is set, my Lord: %s"
     :dot "."
     :stop "Bot is dead, my Lord!"
-    :unknown-1 "Unknown message: %s"
+    :unknown-:message "Unknown message: %s"
     :db-failure "I failed to reach the database, my Lord!"
     :db-failure-path "Can't find the database path, my Lord!"}}
   :ru
   {:csa
    {:start "Бот активирован, мой господин!"
-    :webhook-1 "Вебхук установлен, мой господин: %s"
+    :webhook-:url "Вебхук установлен, мой господин: %s"
     :stop "Бот погиб, мой господин!"
-    :unknown-1 "Неизвестное сообщение: %s, а вы точно мой господин?"
+    :unknown-:message "Неизвестное сообщение: %s, а вы точно мой господин?"
     :db-failure "Не удалось подключиться к базе данных, мой господин!"
     :db-failure-path "Не удалось найти путь к базе данных, мой господин!"}}})
 
@@ -68,7 +68,6 @@
 
     (handlers/defhandler bot-api
       (general/start-talk db conf)
-      (general/restart-talk db conf)
       (general/whoami-talk db conf)
       (general/renameme-talk db conf)
 
@@ -93,6 +92,7 @@
                           (essay/assignreviewers-talk db conf "essay1")
                           (essay/review-talk db conf "essay1")
                           (essay/myfeedback-talk db conf "essay1")
+                          (essay/reportabuse-talk db conf "essay1")
                           (essay/warmup-plagiarism-talk db conf "essay1" plagiarism-db))
 
       (talk/when-handlers (:essay2 conf)
@@ -101,6 +101,7 @@
                           (essay/assignreviewers-talk db conf "essay2")
                           (essay/review-talk db conf "essay2")
                           (essay/myfeedback-talk db conf "essay2")
+                          (essay/reportabuse-talk db conf "essay2")
                           (essay/warmup-plagiarism-talk db conf "essay2" plagiarism-db))
 
       (talk/when-handlers (:essay3 conf)
@@ -109,6 +110,7 @@
                           (essay/assignreviewers-talk db conf "essay3")
                           (essay/review-talk db conf "essay3")
                           (essay/myfeedback-talk db conf "essay3")
+                          (essay/reportabuse-talk db conf "essay3")
                           (essay/warmup-plagiarism-talk db conf "essay3" plagiarism-db))
 
       (quiz/startquiz-talk db conf)
@@ -130,7 +132,9 @@
                           "essay2" (essay/essay-score "essay2")
                           "essay2-reviews" (essay/review-score conf "essay2")
                           "essay3" (essay/essay-score "essay3")
-                          "essay3-reviews" (essay/review-score conf "essay3"))
+                          "essay3-reviews" (essay/review-score conf "essay3")
+                          "stud-chat" report/stud-chat
+                          "stud-old-info" report/stud-old-info)
 
       (plagiarism/restore-forest-talk db conf plagiarism-db)
       (general/warning-on-edited-message conf)
@@ -138,7 +142,7 @@
       (general/help-talk db conf)
       (general/description-talk db conf)
       (handlers/message {{id :id} :chat :as message}
-                        (let [err (format (tr :csa/unknown-1) message)
+                        (let [err (format (tr :csa/unknown-:message) message)
                               cropped (subs err 0 (min 4096 (count err)))]
                           (println err)
                           (talk/send-text token id cropped))))
@@ -161,7 +165,7 @@
 
     (cond (some? webhook-url)
           (let [url (str webhook-url "-" webhook-secrete)]
-            (println (tr :csa/webhook-1) url)
+            (println (tr :csa/webhook-:url) url)
             (api/set-webhook token url)
             (jetty/run-jetty bot-app {:port webhook-port}))
 

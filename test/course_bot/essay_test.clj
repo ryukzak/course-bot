@@ -106,6 +106,7 @@
                          (essay/assignreviewers-talk db conf "essay1")
                          (essay/review-talk db conf "essay1")
                          (essay/myfeedback-talk db conf "essay1")
+                         (essay/reportabuse-talk db conf "essay1")
                          (report/report-talk db conf
                                              "ID" report/stud-id
                                              "review-score" (essay/review-score conf "essay1")
@@ -345,6 +346,44 @@
               "Rank: 1; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 2"
               "Review count: 3."]))
 
+      (testing "report abuse"
+        (is (answers? (talk 1 "/essay1reportabuse")
+                      "Describe whats wrong with essay or review on your essay in one text message (with quote of problem place)?"))
+        (is (answers? (talk 1 "bad-bad-bad essay, please, take a look")
+                      "Your report text + reviewed essays and feedbacks will be send to the teacher. Are you sure?"))
+        (is (answers? (talk 1 "yes")
+                      [0 "The follwing student submit abuse report:"]
+                      [0 "Name: u1; Group: gr1; Telegram ID: 1"]
+                      [0 "Report text:"]
+                      [0 "bad-bad-bad essay, please, take a look"]
+                      [0 "Essay & author:"]
+                      [0 "Name: u4; Group: gr1; Telegram ID: 4"]
+                      [0 "user4 essay1 text-803074778"]
+                      [0 "Essay & author:"]
+                      [0 "Name: u3; Group: gr1; Telegram ID: 3"]
+                      [0 "user3 essay1 text-1556392013"]
+                      [0 "Essay & author:"]
+                      [0 "Name: u2; Group: gr1; Telegram ID: 2"]
+                      [0 "user2 essay1 text-971005196"]
+                      [0 "Feedback & author:"]
+                      [0 "Name: u4; Group: gr1; Telegram ID: 4"]
+                      [0 "bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 4"]
+                      [0 "Feedback & author:"]
+                      [0 "Name: u3; Group: gr1; Telegram ID: 3"]
+                      [0 "bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 3"]
+                      [0 "Feedback & author:"]
+                      [0 "Name: u2; Group: gr1; Telegram ID: 2"]
+                      [0 "bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 2"]
+                      [1 "Your report was sent to the teacher. Thank you!"]))
+
+        (talk 1 "/essay1reportabuse" "my second report" "yes")
+
+        (is (= '(("my second report" "bad-bad-bad essay, please, take a look"))
+               (->> (codax/get-at! db [])
+                    vals
+                    (map #(-> % :essays (get "essay1") :abuse-reports))
+                    (filter some?)))))
+
       (testing "report"
         (is (= "2022.01.03 11:30 +0000"
                (codax/get-at! db [1 :essays "essay1" :my-reviews-submitted-at])))
@@ -400,7 +439,7 @@
                (->> (codax/get-at! db [])
                     vals
                     (map #(-> % :essays (get "essay1")))
-                    (map #(dissoc % :received-review :my-reviews))
+                    (map #(dissoc % :received-review :my-reviews :abuse-reports))
                     (filter some?)))))
 
       (testing "too-small-article"
