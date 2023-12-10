@@ -46,10 +46,10 @@
     :essay-already-rate "You already rate this essay."
     :essays-have-rated "You have rated all the essays. Let's take a look:"
     :correct "Correct?"
-    :essay-feedback-saved "Your feedback has been saved and will be available to essay writers."
+    :essay-feedback-saved-:report-abuse-cmd "Your feedback has been saved and will be available to essay writers. If you want to report abuse, use command `/%s`."
     :essay-feedback "Feedback: "
     :feedback-on-your-essay "feedback on your essay "
-    :number-of-reviews-:count "Review count: %d."
+    :number-of-reviews-:count-:report-abuse-cmd "Review count: %d. If you want to report abuse, use command `/%s` (please don't use it in case of review author mistake."
     :plagirism-report-:similarity-:origin-key-:new-key "%s original: %s new: %s"
     :warmup-plagiarism-help "Recheck and register existed essays for plagiarism."
     :warmup-no-plagiarsm "No plagiarism found."
@@ -92,10 +92,10 @@
     :essay-already-rate "Вы уже оценили это эссе."
     :essays-have-rated "Вы оценили все эссе. Давайте посмотрим:"
     :correct "Корректно?"
-    :essay-feedback-saved "Ваш отзыв сохранен и будет доступен авторам эссе."
+    :essay-feedback-saved-:report-abuse-cmd "Ваш отзыв сохранен и будет доступен авторам эссе. Если вы хотите пожаловаться на нарушение, используйте команду `/%s`."
     :essay-feedback "Отзыв: "
     :feedback-on-your-essay "Посмотреть отзывы на ваше эссе "
-    :number-of-reviews-:count "Количество отзывов на ваше эссе: %d."
+    :number-of-reviews-:count-:report-abuse-cmd "Количество ревью: %d. Если вы хотите пожаловаться на нарушение, используйте команду `/%s` (пожалуйста, не используйте её в случае ошибки автора ревью)."
     :plagirism-report-:similarity-:origin-key-:new-key "%s оригинал: %s новое: %s"
     :warmup-plagiarism-help "Перепроверить и зарегистрировать существующие эссе на плагиат."
     :warmup-no-plagiarsm "Плагиат не найден."
@@ -257,6 +257,7 @@
 
 (defn review-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "review")
+        report-abuse-cmd (str essay-code "reportabuse")
         help (str (tr :essay/write-review-for) essay-code)]
     (talk/def-talk db cmd help
       :start
@@ -318,7 +319,8 @@
       :approve
       (fn [tx {{id :id} :from text :text} {reviews :reviews}]
         (case (i18n/normalize-yes-no-text text)
-          "yes" (do (talk/send-text token id (tr :essay/essay-feedback-saved))
+          "yes" (do (talk/send-text token id (format (tr :essay/essay-feedback-saved-:report-abuse-cmd)
+                                                     report-abuse-cmd))
                     (-> (reduce (fn [tx' review]
                                   (codax/update-at tx' [(:essay-author review) :essays essay-code :received-review] conj review))
                                 tx reviews)
@@ -335,12 +337,15 @@
 
 (defn myfeedback-talk [db {token :token} essay-code]
   (let [cmd (str essay-code "myfeedback")
+        report-abuse-cmd (str essay-code "reportabuse")
         help (str (tr :essay/feedback-on-your-essay) essay-code)]
     (talk/def-command db cmd help
       (fn [tx {{id :id} :from}]
         (let [reviews (my-reviews tx essay-code id)]
           (doall (map #(talk/send-text token id %) reviews))
-          (talk/send-text token id (format (tr :essay/number-of-reviews-:count) (count reviews))))
+          (talk/send-text token id (format (tr :essay/number-of-reviews-:count-:report-abuse-cmd)
+                                           (count reviews)
+                                           report-abuse-cmd)))
         (talk/stop-talk tx)))))
 
 (defn review-score [conf essay-code]
