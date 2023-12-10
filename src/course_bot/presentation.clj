@@ -1,12 +1,12 @@
-(ns course-bot.presentation
-  (:require [clojure.java.io :as io]
-            [clojure.pprint :as pprint]
-            [clojure.string :as str])
-  (:require [codax.core :as codax])
-  (:require [course-bot.general :as general]
-            [course-bot.internationalization :as i18n :refer [tr]]
-            [course-bot.misc :as misc]
-            [course-bot.talk :as talk]))
+ (ns course-bot.presentation
+   (:require [clojure.java.io :as io]
+             [clojure.pprint :as pprint]
+             [clojure.string :as str])
+   (:require [codax.core :as codax])
+   (:require [course-bot.general :as general]
+             [course-bot.internationalization :as i18n :refer [tr]]
+             [course-bot.misc :as misc]
+             [course-bot.talk :as talk]))
 
 (i18n/add-dict
  {:en
