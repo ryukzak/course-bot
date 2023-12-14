@@ -65,14 +65,14 @@
     :should-set-group-to-send-feedback-help-:pres-name-:key-str "To send feedback, you should set your group for %s by /%ssetgroup"
     :setgroup-talk-:pres-name "set your group for '%s'"
     :submit-talk-:pres-name "submit your '%s' description"
-    :check-talk "for teacher, check submitted presentation description"
+    :check-talk "(admin) Check submitted presentation description"
     :submission-talk "list submissions and their status (no args -- your group, with args -- specified)"
     :agenda-talk "agenda (no args -- your group, with args -- specified)"
-    :soon-talk-help "what will happen soon"
+    :soon-talk-help "Presentations that will be coming soon"
     :schedule-talk "select your presentation day"
     :feedback-talk-info "[<datetime>] send feedback for report"
     :drop-talk-:pres-name-:suffix "for teacher, drop '%s' for specific student (%s)"
-    :all-scheduled-descriptions-dump-talk "all-scheduled-descriptions-dump (admin only)"}}
+    :all-scheduled-descriptions-dump-talk "(admin) All-scheduled-descriptions-dump"}}
   :ru
   {:pres
    {:nothing-to-check "Нечего проверять."
@@ -111,13 +111,13 @@
     :collect-feedback-:pres-name-:pres-group-:datetime "Собрать отзывы для '%s' (%s) в %s"
     :best-presentation-error "Неправильный ввод. Введите номер лучшей презентации в списке."
     :thank-feedback-saved "Спасибо, ваш отзыв сохранен!"
-    :drop "уронить"
+    :drop "сбросить"
     :all "все"
     :only-schedule "только расписание"
     :wrong-input-:command "Неверный ввод: /%s 12345"
     :not-found "Не найден."
     :drop-config-:pres-name-:stud-id "Удалить конфигурацию '%s' для %s?"
-    :drop-student-:stud-id "Мы бросаем студента: %s"
+    :drop-student-:stud-id "Мы сбрасываем студента: %s"
     :drop-state-:pres-name "Мы сбрасываем ваше состояние на %s"
     :descriptions "%s описаний"
     :all-scheduled-description-by-group "Файл со всеми запланированными описаниями по группам:"
@@ -129,14 +129,14 @@
     :should-set-group-to-send-feedback-help-:pres-name-:key-str "Чтобы отправить отзыв, вы должны установить свою группу для %s с помощью /%ssetgroup"
     :setgroup-talk-:pres-name "Установить вашу группу для '%s'"
     :submit-talk-:pres-name "Отправить описание '%s'"
-    :check-talk "Для преподавателя, ревью загруженных тем"
+    :check-talk "(admin) Ревью загруженных тем"
     :submission-talk "Статус загруженных эссе (опциональный аргумент -- группа)"
     :agenda-talk "Расписание докладов (опциональный аргумент -- группа)"
-    :soon-talk-help "Что произойдет в ближайшее время"
-    :schedule-talk "Выбрать день презентации"
-    :feedback-talk-info "[<datetime>] Отправить отзыв для отчета"
-    :drop-talk-:pres-name-:suffix "Для преподавателя, отбросить '%s' для конкретного ученика (%s)"
-    :all-scheduled-descriptions-dump-talk "дамп всех запланированных описаний (только для администратора)"}}})
+    :soon-talk-help "Презентации, назначенные на ближайшее время"
+    :schedule-talk "Выбрать день для презентации"
+    :feedback-talk-info "[<datetime>] Отправить отзыв для отчета (без аргумента -- список доступных дат)"
+    :drop-talk-:pres-name-:suffix "(admin) Сбросить '%s' для конкретного ученика (%s)"
+    :all-scheduled-descriptions-dump-talk "(admin) Дамп всех запланированных описаний"}}})
 
 (defn get-lesson-state "per lesson" [tx pres-key pres-group datetime]
   (codax/get-at tx [:presentation pres-key pres-group datetime]))
@@ -785,11 +785,11 @@
         :lost-and-found-canceled "Lost-and-found lessons restore canceled."
         :lost-and-found-restored "Lost-and-found lessons restored."}}
   :ru {:pres
-       {:restore-lost-and-found-cmd-help "(admin) Restore lost-and-found lessons."
-        :lost-and-found-collision "Конфликт между уроками из lost-and-found и запланированными уроками. Отменено."
-        :lost-and-found-restore? "Восстановить уроки из lost-and-found?"
+       {:restore-lost-and-found-cmd-help "(admin) Восстановить lost-and-found занятия."
+        :lost-and-found-collision "Конфликт между занятиями из lost-and-found и запланированными занятиями. Отменено."
+        :lost-and-found-restore? "Восстановить занятия из lost-and-found?"
         :lost-and-found-canceled "Восстановление из lost-and-found отменено."
-        :lost-and-found-restored "Уроки из lost-and-found восстановлены."}}})
+        :lost-and-found-restored "Занятия из lost-and-found восстановлены."}}})
 
 (defn lost-and-found-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "lostandfound")

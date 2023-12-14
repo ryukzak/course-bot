@@ -51,10 +51,10 @@
     :feedback-on-your-essay "feedback on your essay "
     :number-of-reviews-:count "Review count: %d."
     :plagirism-report-:similarity-:origin-key-:new-key "%s original: %s new: %s"
-    :warmup-plagiarism-help "Recheck and register existed essays for plagiarism."
+    :warmup-plagiarism-help "(admin) Recheck and register existed essays for plagiarism "
     :warmup-no-plagiarsm "No plagiarism found."
     :warmup-processed-:count "Processed %d essays."
-    :assignreviewers-info "for admin only"}}
+    :assignreviewers-info "(admin) Assign reviewers for "}}
   :ru
   {:essay
    {:submit "Отправить "
@@ -79,8 +79,8 @@
     :rank-:number "Ранг: %d, "
     :preview-reviews-:rank-:essay-number-:review "Ранг: %d, номер эссе в списке: #%d, ваше ревью: %s \n(несколько слов из эссе: "
     :the-last-essay-worst "\n\nПоследнее эссе -- худшее."
-    :write-review-for "Написать ревью для "
-    :not-assigned-reviews "Вам не назначено ни одно эссе. Вероятно, вы не загрузили своё эссе вовремя или поспешили с отправкой ревью."
+    :write-review-for "Написать ревью на "
+    :not-assigned-reviews "Вам не назначено ни одного эссе. Вероятно, вы не загрузили своё эссе вовремя или поспешили с отправкой ревью."
     :you-already-sent-reviews "Вы уже отправили ревью."
     :essays-submitted-for-review-:essay-count "Вам на ревью пришло: %d эссе. Их текст сейчас отправлю ниже отдельными сообщениями."
     :essay-number-begin-:number "Эссе #%d <<<<<<<<<<<<<<<<<<<<"
@@ -88,7 +88,7 @@
     :essay-send-format "Отправляйте номера эссе с отзывами отдельными сообщениями (пример: `<номер_эссе> <текст_отзыва>`)"
     :essay-need-feedback-error "Увы, но вам надо начать писать отзывы сначала (если вы это сообщение видите в очередной раз -- сообщите)."
     :essay-number-error "Номер эссе несовместим или выходит за допустимые пределы."
-    :essay-feedback-short "Ваш текст отзыва слишком короткий"
+    :essay-feedback-short "Ваш текст отзыва слишком короткий."
     :essay-already-rate "Вы уже оценили это эссе."
     :essays-have-rated "Вы оценили все эссе. Давайте посмотрим:"
     :correct "Корректно?"
@@ -97,10 +97,10 @@
     :feedback-on-your-essay "Посмотреть отзывы на ваше эссе "
     :number-of-reviews-:count "Количество отзывов на ваше эссе: %d."
     :plagirism-report-:similarity-:origin-key-:new-key "%s оригинал: %s новое: %s"
-    :warmup-plagiarism-help "Перепроверить и зарегистрировать существующие эссе на плагиат."
+    :warmup-plagiarism-help "(admin) Перепроверить и зарегистрировать существующие эссе на плагиат "
     :warmup-no-plagiarsm "Плагиат не найден."
     :warmup-processed-:count "Обработано %d эссе."
-    :assignreviewers-info "только для администратора"}}})
+    :assignreviewers-info "(admin) Назначить рецензентов для "}}})
 
 (defn get-stud-reviews [tx essay-code stud-id]
   (codax/get-at tx [stud-id :essays essay-code :received-review]))
@@ -223,7 +223,7 @@
 
 (defn assignreviewers-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "assignreviewers")
-        help (tr :essay/assignreviewers-info)]
+        help (str (tr :essay/assignreviewers-info) essay-code)]
     (talk/def-command db cmd help
       (fn [tx {{id :id} :from}]
         (general/assert-admin tx conf id)
@@ -402,9 +402,9 @@
           (talk/stop-talk tx))))))
 
 (i18n/add-dict
- {:en {:essay {:reportabuse-cmd-help "report about abuse in essay or review."
+ {:en {:essay {:reportabuse-cmd-help "Report about abuse in essay or review in "
 
-               :no-assignments "no assignments for this essay, how you can report abuse?"
+               :no-assignments "No assignments for this essay, how you can report abuse?"
                :describe-essay-or-review-problem "Describe whats wrong with essay or review on your essay in one text message (with quote of problem place)?"
                :report-approve? "Your report text + reviewed essays and feedbacks will be send to the teacher. Are you sure?"
 
@@ -415,9 +415,9 @@
 
                :report-sent "Your report was sent to the teacher. Thank you!"}}
 
-  :ru {:essay {:reportabuse-cmd-help "пожаловаться на нарушение в эссе или ревью."
+  :ru {:essay {:reportabuse-cmd-help "Пожаловаться на нарушение в эссе или ревью в "
 
-               :no-assignments "нет назначений для этого эссе, как вы можете сообщить о нарушении?"
+               :no-assignments "Нет назначений для этого эссе, как вы можете сообщить о нарушении?"
                :describe-essay-or-review-problem "Опишите, что не так с эссе или ревью на ваше эссе в одном текстовом сообщении (с цитатой места проблемы)?"
                :report-approve? "Ваш текст + проверенные эссе и отзывы будут отправлены учителю. Вы уверены?"
 
