@@ -21,7 +21,7 @@
     :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Uploading (yes/no)?"
     :thank-you-your-essay-submited "Thank you, the text has been uploaded and will be submitted for review soon."
-    :status-:essay-name "'%s' status"
+    :status-:essay-name "Status of '%s'"
     :total-essays "Total essays: "
     :number-of-reviewers "Number of people who reviewed: "
     :set-of-reviews "There is a set of reviews for: "
@@ -48,7 +48,7 @@
     :correct "Correct?"
     :essay-feedback-saved "Your feedback has been saved and will be available to essay writers."
     :essay-feedback "Feedback: "
-    :feedback-on-your-essay "feedback on your essay "
+    :feedback-on-your-essay-:essay-name "feedback on your '%s'"
     :number-of-reviews-:count "Review count: %d."
     :plagirism-report-:similarity-:origin-key-:new-key "%s original: %s new: %s"
     :warmup-plagiarism-help-:essay-name "(admin) Recheck and register existed '%s' for plagiarism"
@@ -67,7 +67,7 @@
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Загружаем (да/нет)?"
     :thank-you-your-essay-submited "Спасибо, текст загружен и скоро попадёт на рецензирование."
-    :status-:essay-name "'%s' статус"
+    :status-:essay-name "Статус '%s'"
     :total-essays "Всего эссе: "
     :number-of-reviewers "Количество человек, сделавших ревью: "
     :set-of-reviews "Есть комплект ревью на: "
@@ -94,7 +94,7 @@
     :correct "Корректно?"
     :essay-feedback-saved "Ваш отзыв сохранен и будет доступен авторам эссе."
     :essay-feedback "Отзыв: "
-    :feedback-on-your-essay "Посмотреть отзывы на ваше эссе "
+    :feedback-on-your-essay-:essay-name "Посмотреть отзывы на ваше '%s'"
     :number-of-reviews-:count "Количество отзывов на ваше эссе: %d."
     :plagirism-report-:similarity-:origin-key-:new-key "%s оригинал: %s новое: %s"
     :warmup-plagiarism-help-:essay-name "(admin) Перепроверить и зарегистрировать существующие '%s' на плагиат"
@@ -335,7 +335,7 @@
 
 (defn myfeedback-talk [db {token :token} essay-code]
   (let [cmd (str essay-code "myfeedback")
-        help (str (tr :essay/feedback-on-your-essay) essay-code)]
+        help (format (tr :essay/feedback-on-your-essay-:essay-name) essay-code)]
     (talk/def-command db cmd help
       (fn [tx {{id :id} :from}]
         (let [reviews (my-reviews tx essay-code id)]
