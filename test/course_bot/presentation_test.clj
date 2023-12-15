@@ -636,18 +636,24 @@
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:29 +0000"))]
         (is (answers? (talk 1 "/lab1feedback")
                       (tt/unlines
+                       "Use format: /lab1feedback [<datetime>]"
+                       ""
                        "You need to specify lesson datetime explicitly:"
                        "- 2022.01.01 12:00 +0000"))))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 15:01 +0000"))]
         (is (answers? (talk 1 "/lab1feedback")
                       (tt/unlines
+                       "Use format: /lab1feedback [<datetime>]"
+                       ""
                        "You need to specify lesson datetime explicitly:"
                        "- 2022.01.01 12:00 +0000"))))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.10 12:29 +0000"))]
         (is (answers? (talk 1 "/lab1feedback")
                       (tt/unlines
+                       "Use format: /lab1feedback [<datetime>]"
+                       ""
                        "You need to specify lesson datetime explicitly:"
                        "- 2022.01.01 12:00 +0000"
                        "- 2022.01.02 12:00 +0000"))))
