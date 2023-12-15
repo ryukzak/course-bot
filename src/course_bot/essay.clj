@@ -11,7 +11,7 @@
 (i18n/add-dict
  {:en
   {:essay
-   {:submit "Submit "
+   {:submit-:essay-name "Submit '%s'"
     :your-essay-already-uploaded-:essay-name "Your essay '%s' already uploaded."
     :send-essay-text-in-one-message-:essay-name "Submit your essay text '%s' in one message."
     :essay-text-too-short-:min-length "Your essay text is too short, it should be at least %d characters long."
@@ -21,7 +21,7 @@
     :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Uploading (yes/no)?"
     :thank-you-your-essay-submited "Thank you, the text has been uploaded and will be submitted for review soon."
-    :status " status"
+    :status-:essay-name "'%s' status"
     :total-essays "Total essays: "
     :number-of-reviewers "Number of people who reviewed: "
     :set-of-reviews "There is a set of reviews for: "
@@ -33,7 +33,7 @@
     :rank-:number "Rank: %d; "
     :preview-reviews-:rank-:essay-number-:review "Rank: %d, essay number in the list: #%d, your review: %s \n(few words from the essay: "
     :the-last-essay-worst "\n\nThe last essay -- worst."
-    :write-review-for "write review for "
+    :write-review-for-:essay-name "write review for '%s'"
     :not-assigned-reviews "You have not been assigned any essays. You probably didn't upload your essay on time or rushed to submit your review."
     :you-already-sent-reviews "You already sent reviews."
     :essays-submitted-for-review-:essay-count "You received: %d essays for your review. Their text will now be sent below by selected messages."
@@ -51,13 +51,13 @@
     :feedback-on-your-essay "feedback on your essay "
     :number-of-reviews-:count "Review count: %d."
     :plagirism-report-:similarity-:origin-key-:new-key "%s original: %s new: %s"
-    :warmup-plagiarism-help "(admin) Recheck and register existed essays for plagiarism "
+    :warmup-plagiarism-help-:essay-name "(admin) Recheck and register existed '%s' for plagiarism"
     :warmup-no-plagiarsm "No plagiarism found."
     :warmup-processed-:count "Processed %d essays."
-    :assignreviewers-info "(admin) Assign reviewers for "}}
+    :assignreviewers-info-:essay-name "(admin) Assign reviewers for '%s'"}}
   :ru
   {:essay
-   {:submit "Отправить "
+   {:submit-:essay-name "Отправить '%s'"
     :your-essay-already-uploaded-:essay-name "Ваше эссе '%s' уже загружено."
     :send-essay-text-in-one-message-:essay-name "Отправьте текст эссе '%s' одним сообщением."
     :essay-text-too-short-:min-length "Ваше эссе слишком короткое, оно должно быть длиной не менее %d символов."
@@ -67,7 +67,7 @@
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Загружаем (да/нет)?"
     :thank-you-your-essay-submited "Спасибо, текст загружен и скоро попадёт на рецензирование."
-    :status " статус"
+    :status-:essay-name "'%s' статус"
     :total-essays "Всего эссе: "
     :number-of-reviewers "Количество человек, сделавших ревью: "
     :set-of-reviews "Есть комплект ревью на: "
@@ -79,7 +79,7 @@
     :rank-:number "Ранг: %d, "
     :preview-reviews-:rank-:essay-number-:review "Ранг: %d, номер эссе в списке: #%d, ваше ревью: %s \n(несколько слов из эссе: "
     :the-last-essay-worst "\n\nПоследнее эссе -- худшее."
-    :write-review-for "Написать ревью на "
+    :write-review-for-:essay-name "Написать ревью на '%s'"
     :not-assigned-reviews "Вам не назначено ни одного эссе. Вероятно, вы не загрузили своё эссе вовремя или поспешили с отправкой ревью."
     :you-already-sent-reviews "Вы уже отправили ревью."
     :essays-submitted-for-review-:essay-count "Вам на ревью пришло: %d эссе. Их текст сейчас отправлю ниже отдельными сообщениями."
@@ -97,10 +97,10 @@
     :feedback-on-your-essay "Посмотреть отзывы на ваше эссе "
     :number-of-reviews-:count "Количество отзывов на ваше эссе: %d."
     :plagirism-report-:similarity-:origin-key-:new-key "%s оригинал: %s новое: %s"
-    :warmup-plagiarism-help "(admin) Перепроверить и зарегистрировать существующие эссе на плагиат "
+    :warmup-plagiarism-help-:essay-name "(admin) Перепроверить и зарегистрировать существующие '%s' на плагиат"
     :warmup-no-plagiarsm "Плагиат не найден."
     :warmup-processed-:count "Обработано %d эссе."
-    :assignreviewers-info "(admin) Назначить рецензентов для "}}})
+    :assignreviewers-info-:essay-name "(admin) Назначить рецензентов для '%s'"}}})
 
 (defn get-stud-reviews [tx essay-code stud-id]
   (codax/get-at tx [stud-id :essays essay-code :received-review]))
@@ -117,7 +117,7 @@
                    {bad-texts-path :bad-texts-path :as plagiarism-db}]
   (let [cmd (str essay-code "submit")
         topics-msg (-> conf (get (keyword essay-code)) :topic-msg)
-        help (str (tr :essay/submit) essay-code)]
+        help (format (tr :essay/submit-:essay-name) essay-code)]
     (talk/def-talk db cmd help
       :start
       (fn [tx {{id :id} :from}]
@@ -175,7 +175,7 @@
 
 (defn status-talk [db {token :token} essay-code]
   (talk/def-talk db (str essay-code "status")
-    (str essay-code (tr :essay/status))
+    (format (tr :essay/status-:essay-name) essay-code)
     :start
     (fn [tx {{id :id} :from}]
       (let [essays (get-essays tx essay-code)]
@@ -223,7 +223,7 @@
 
 (defn assignreviewers-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "assignreviewers")
-        help (str (tr :essay/assignreviewers-info) essay-code)]
+        help (format (tr :essay/assignreviewers-info-:essay-name) essay-code)]
     (talk/def-command db cmd help
       (fn [tx {{id :id} :from}]
         (general/assert-admin tx conf id)
@@ -257,7 +257,7 @@
 
 (defn review-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "review")
-        help (str (tr :essay/write-review-for) essay-code)]
+        help (format (tr :essay/write-review-for-:essay-name) essay-code)]
     (talk/def-talk db cmd help
       :start
       (fn [tx {{id :id} :from}]
@@ -377,7 +377,7 @@
 
 (defn warmup-plagiarism-talk [db {token :token :as conf} essay-code plagiarism-db]
   (let [cmd (str essay-code "warmupplagiarism")
-        help (str (tr :essay/warmup-plagiarism-help) essay-code)]
+        help (format (tr :essay/warmup-plagiarism-help-:essay-name) essay-code)]
     (talk/def-command db cmd help
       (fn [tx {{id :id} :from}]
         (general/assert-admin tx conf id)
@@ -402,7 +402,7 @@
           (talk/stop-talk tx))))))
 
 (i18n/add-dict
- {:en {:essay {:reportabuse-cmd-help "Report about abuse in essay or review in "
+ {:en {:essay {:reportabuse-cmd-help-:essay-name "Report about abuse in essay or review in '%s'"
 
                :no-assignments "No assignments for this essay, how you can report abuse?"
                :describe-essay-or-review-problem "Describe whats wrong with essay or review on your essay in one text message (with quote of problem place)?"
@@ -415,7 +415,7 @@
 
                :report-sent "Your report was sent to the teacher. Thank you!"}}
 
-  :ru {:essay {:reportabuse-cmd-help "Пожаловаться на нарушение в эссе или ревью в "
+  :ru {:essay {:reportabuse-cmd-help-:essay-name "Пожаловаться на нарушение в эссе или ревью в '%s'"
 
                :no-assignments "Нет назначений для этого эссе, как вы можете сообщить о нарушении?"
                :describe-essay-or-review-problem "Опишите, что не так с эссе или ревью на ваше эссе в одном текстовом сообщении (с цитатой места проблемы)?"
@@ -430,7 +430,7 @@
 
 (defn reportabuse-talk [db {token :token admin-chat-id :admin-chat-id} essay-code]
   (let [cmd (str essay-code "reportabuse")
-        help (str (tr :essay/reportabuse-cmd-help) essay-code)]
+        help (format (tr :essay/reportabuse-cmd-help-:essay-name) essay-code)]
     (talk/def-talk db cmd help
       :start
       (fn [tx {{id :id} :from}]
