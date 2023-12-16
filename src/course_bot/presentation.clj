@@ -588,7 +588,7 @@
               (if (not (empty? pass-lessons))
                 (talk/send-text token id
                                 (format (tr :pres/lesson-feedback-what-lesson-:key-name-:datetime-list)
-										pres-key-str
+                                        pres-key-str
                                         (->> pass-lessons
                                              (map #(str "- " (:datetime %)))
                                              (str/join "\n"))))

@@ -14,13 +14,13 @@
    {:forest-failure "I failed to reach forest file, my Lord!"
     :processed-:count "Processed %d texts, my Lord!"
     :restore-forest-done "Forest restored, my Lord!"
-	:restore-forest-help "(admin) Restore forest"}}
+    :restore-forest-help "(admin) Restore forest"}}
   :ru
   {:plagiarism
    {:forest-failure "Не удалось подключиться к хэш-лесу, мой господин!"
     :processed-:count "Обработано %d текстов, мой господин!"
     :restore-forest-done "Хэш-лес восстановлен, мой господин!"
-	:restore-forest-help "(admin) Восстановить хеш-лес"}}})
+    :restore-forest-help "(admin) Восстановить хеш-лес"}}})
 
 (def default-conf {:top-k 10
                    :cosine-threshold 30.00
