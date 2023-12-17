@@ -357,20 +357,22 @@
             str
             (str/replace #"\." ","))))))
 
+(defn calculate-essay-score [scores]
+  (-> (/ (apply + scores) (count scores))
+      float
+      Math/floor
+      int
+      (#(- 4 %)) ; 3 (max score) = 4 - 1; 1 (min score) = 4 - 3
+      (+ 1) ; + 1 to get actual score
+      ))
+
 (defn essay-score "hardcoded: rank + 1" [essay-code]
   (fn [_tx data id]
     (let [essay-uploaded? (-> data (get id) :essays (get essay-code) :text nil? not)
           reviews (-> data (get id) :essays (get essay-code) :received-review)
           scores (->> reviews (map :rank))]
       (cond (not (empty? scores))
-            (-> (/ (apply + scores) (count scores))
-                float
-                Math/ceil
-                int
-                (#(- 4 %)) ; 3 (max score) = 4 - 1; 1 (min score) = 4 - 3
-                (+ 1) ; + 1 to get actual score
-                )
-
+            (calculate-essay-score scores)
             essay-uploaded? 1
 
             :else 0))))
