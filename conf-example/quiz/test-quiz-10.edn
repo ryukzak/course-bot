@@ -1,0 +1,9 @@
+{:name "Test quiz 10"
+ :ignore-in-score true
+ :questions
+ [{:ask "Q1"
+   :options [{:text "a1"}
+             {:text "a2" :correct true}]}
+  {:ask "Q2"
+   :options [{:text "a3" :correct true}
+             {:text "a4"}]}]}

@@ -8,13 +8,13 @@
             [course-bot.report :as report]
             [course-bot.talk-test :refer [answers?] :as tt]))
 
-(defn start-user [*chat talk id name]
+(defn start-user [_*chat talk id name]
   (testing "register user"
     (talk id "/start")
     (talk id name)
     (talk id "gr1")
-    (talk id "/start")
-    (tt/match-text *chat id "You are already registered. To change your information, contact the teacher and send /whoami")))
+    (is (answers? (talk id "/start")
+                  "You are already registered. To change your information, contact the teacher and send /whoami"))))
 
 (deftest startquiz-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
@@ -39,7 +39,8 @@
                     (tt/unlines "Available quizzes:"
                                 "- test-quiz (Test quiz)"
                                 "- test-quiz-2 (Test quiz 2)"
-                                "- test-quiz-3 (Test quiz 3)")))
+                                "- test-quiz-3 (Test quiz 3)"
+                                "- test-quiz-10 (Test quiz 10)")))
 
       (is (answers? (talk 0 "/startquiz test-quiz")
                     "Are you sure to run 'Test quiz' quiz?"))
@@ -63,11 +64,12 @@
 (deftest quiz-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
-        {talk :talk
-         *chat :*chat} (tt/test-handler (general/start-talk db conf)
-                                        (quiz/startquiz-talk db conf)
-                                        (quiz/stopquiz-talk db conf)
-                                        (quiz/quiz-talk db conf))]
+
+        {talk :talk *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+                         (quiz/startquiz-talk db conf)
+                         (quiz/stopquiz-talk db conf)
+                         (quiz/quiz-talk db conf))]
 
     (tt/with-mocked-morse *chat
       (start-user *chat talk 1 "Bot Botovich")
@@ -131,19 +133,19 @@
 (deftest stopquiz-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk (tt/handlers
-              (general/start-talk db conf)
-              (quiz/startquiz-talk db conf)
-              (quiz/quiz-talk db conf)
-              (quiz/stopquiz-talk db conf)
-              (report/report-talk db conf
-                                  "ID" report/stud-id
-                                  "fail" (quiz/fail-tests conf)
-                                  "percent" (quiz/success-tests-percent conf)))]
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler
+         (general/start-talk db conf)
+         (quiz/startquiz-talk db conf)
+         (quiz/quiz-talk db conf)
+         (quiz/stopquiz-talk db conf)
+         (report/report-talk db conf
+                             "ID" report/stud-id
+                             "fail" (quiz/fail-tests conf)
+                             "percent" (quiz/success-tests-percent conf)))]
 
     (tt/with-mocked-morse *chat
-
       (start-user *chat talk 1 "Bot Botovich")
       (talk 0 "/startquiz test-quiz")
       (talk 0 "yes")
@@ -208,25 +210,25 @@
 (deftest report-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (quiz/startquiz-talk db conf)
-                          (quiz/quiz-talk db conf)
-                          (quiz/stopquiz-talk db conf)
-                          (report/report-talk db conf
-                                              "ID" report/stud-id
-                                              "fail" (quiz/fail-tests conf)
-                                              "percent" (quiz/success-tests-percent conf)))
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+                         (quiz/startquiz-talk db conf)
+                         (quiz/quiz-talk db conf)
+                         (quiz/stopquiz-talk db conf)
+                         (report/report-talk db conf
+                                             "ID" report/stud-id
+                                             "fail" (quiz/fail-tests conf)
+                                             "percent" (quiz/success-tests-percent conf)))
         format-quiz-answers (fn [new-results quiz-name student-name group id n]
                               (format "Quiz answers: %s (%s, %s, %s, %s) - %s"
                                       (str/join ", " new-results)
                                       quiz-name student-name group id
                                       {:started n :finished n}))
         do-test (fn [quiz-name id n & answers]
-                  (talk id "/quiz")
-                  (tt/match-text *chat id
-                                 (str "Would you like to start quiz '" quiz-name "' ("
-                                      (count answers) " question(s))?"))
+                  (is (answers? (talk id "/quiz")
+                                (str "Would you like to start quiz '" quiz-name "' ("
+                                     (count answers) " question(s))?")))
                   (talk id "yes")
                   (doall (map #(talk id %) answers))
 
@@ -243,16 +245,13 @@
       (start-user *chat talk 4 "Dany")
 
       (talk 0 "/startquiz test-quiz-3")
-      (talk 0 "yes")
-      (tt/match-text *chat 0 "The quiz was started.")
-
+      (is (answers? (talk 0 "yes") "The quiz was started."))
       (do-test "Test quiz 3" 1 1 "1" "2" "2")
       (do-test "Test quiz 3" 2 2 "1" "2" "1")
       (do-test "Test quiz 3" 3 3 "1" "1" "1")
       (do-test "Test quiz 3" 4 4 "2" "1" "1")
 
-      (talk 0 "/stopquiz")
-      (tt/match-text *chat 0 "Are you sure to stop 'Test quiz 3' quiz?")
+      (is (answers? (talk 0 "/stopquiz") "Are you sure to stop 'Test quiz 3' quiz?"))
       (talk 0 "yes")
       (tt/match-history *chat
                         (tt/text 0 "The quiz 'Test quiz 3' was stopped")
@@ -281,14 +280,11 @@
                                    "")))
 
       (talk 0 "/startquiz test-quiz")
-      (talk 0 "yes")
-      (tt/match-text *chat 0 "The quiz was started.")
-
+      (is (answers? (talk 0 "yes") "The quiz was started."))
       (do-test "Test quiz" 1 1 "2" "1")
       (do-test "Test quiz" 4 2 "2" "1")
 
-      (talk 0 "/stopquiz")
-      (tt/match-text *chat 0 "Are you sure to stop 'Test quiz' quiz?")
+      (is (answers? (talk 0 "/stopquiz") "Are you sure to stop 'Test quiz' quiz?"))
       (talk 0 "yes")
 
       (testing "report 1"
@@ -306,24 +302,22 @@
 (deftest stop-quiz-without-answers-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (quiz/startquiz-talk db conf)
-                          (quiz/quiz-talk db conf)
-                          (quiz/stopquiz-talk db conf)
-                          (report/report-talk db conf
-                                              "ID" report/stud-id
-                                              "fail" (quiz/fail-tests conf)
-                                              "percent" (quiz/success-tests-percent conf)))]
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+                         (quiz/startquiz-talk db conf)
+                         (quiz/quiz-talk db conf)
+                         (quiz/stopquiz-talk db conf)
+                         (report/report-talk db conf
+                                             "ID" report/stud-id
+                                             "fail" (quiz/fail-tests conf)
+                                             "percent" (quiz/success-tests-percent conf)))]
     (tt/with-mocked-morse *chat
       (start-user *chat talk 1 "Alice")
 
       (talk 0 "/startquiz test-quiz-3")
-      (talk 0 "yes")
-      (tt/match-text *chat 0 "The quiz was started.")
-
-      (talk 0 "/stopquiz")
-      (tt/match-text *chat 0 "Are you sure to stop 'Test quiz 3' quiz?")
+      (is (answers? (talk 0 "yes") "The quiz was started."))
+      (is (answers? (talk 0 "/stopquiz") "Are you sure to stop 'Test quiz 3' quiz?"))
       (talk 0 "yes")
       (tt/match-history *chat
                         (tt/text 0 "The quiz 'Test quiz 3' was stopped")
@@ -332,27 +326,20 @@
 (deftest quiz-yes-no-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (quiz/startquiz-talk db conf)
-                          (quiz/quiz-talk db conf)
-                          (quiz/stopquiz-talk db conf))]
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+                         (quiz/startquiz-talk db conf)
+                         (quiz/quiz-talk db conf)
+                         (quiz/stopquiz-talk db conf))]
     (tt/with-mocked-morse *chat
       (start-user *chat talk 1 "Alice")
 
       (talk 0 "/startquiz test-quiz")
-      (talk 0 "yeS")
-      (tt/match-text *chat 0 "The quiz was started.")
-
-      (talk 1 "/quiz")
-      (tt/match-text *chat 1 "Would you like to start quiz 'Test quiz' (2 question(s))?")
-
-      (talk 1 "NO")
-      (tt/match-text *chat 1 "Your right.")
-
-      (talk 1 "/quiz")
-      (tt/match-text *chat 1 "Would you like to start quiz 'Test quiz' (2 question(s))?")
-
+      (is (answers? (talk 0 "yeS") "The quiz was started."))
+      (is (answers? (talk 1 "/quiz") "Would you like to start quiz 'Test quiz' (2 question(s))?"))
+      (is (answers? (talk 1 "NO") "Your right."))
+      (is (answers? (talk 1 "/quiz") "Would you like to start quiz 'Test quiz' (2 question(s))?"))
       (talk 1 "YEs")
       (tt/match-history *chat
                         (tt/text 1 "Answer with a number. Your first question:")
@@ -379,11 +366,12 @@
 (defn quiz-performance [n]
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
-        {talk :talk
-         *chat :*chat} (tt/test-handler (general/start-talk db conf)
-                                        (quiz/startquiz-talk db conf)
-                                        (quiz/stopquiz-talk db conf)
-                                        (quiz/quiz-talk db conf))]
+
+        {talk :talk *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+                         (quiz/startquiz-talk db conf)
+                         (quiz/stopquiz-talk db conf)
+                         (quiz/quiz-talk db conf))]
 
     (tt/with-mocked-morse *chat
       (talk 0 "/startquiz test-quiz-3")

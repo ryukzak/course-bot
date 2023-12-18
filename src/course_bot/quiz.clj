@@ -1,30 +1,31 @@
 (ns course-bot.quiz
   (:require [clojure.string :as str])
   (:require [codax.core :as codax])
-  (:require [course-bot.general :as general :refer [tr]]
+  (:require [course-bot.general :as general]
+            [course-bot.internationalization :as i18n :refer [tr]]
             [course-bot.talk :as talk]))
 
-(general/add-dict
+(i18n/add-dict
  {:en
   {:quiz
    {:quiz-already-running "Quiz is already running."
     :available-quizzes "Available quizzes:\n"
     :quiz-not-defined "Quiz is not defined."
-    :confirm-run-quiz-1 "Are you sure to run '%s' quiz?"
+    :confirm-run-quiz-:quiz-name "Are you sure to run '%s' quiz?"
     :quiz-started "The quiz was started."
     :quiz-canceled "In a next time."
     :no-running-quizzes "No running quizzes."
-    :confirm-stop-quiz-1 "Are you sure to stop '%s' quiz?"
-    :quiz-was-stopped-1 "The quiz '%s' was stopped"
+    :confirm-stop-quiz-:quiz-name "Are you sure to stop '%s' quiz?"
+    :quiz-was-stopped-:quiz-name "The quiz '%s' was stopped"
     :no-answers "Answers did not received."
     :answer-correct "CORRECT "
     :quiz-your-result "Your result: "
     :quiz-is-still-in-progress "In a next time. The quiz is still in progress."
     :what-question "What?"
     :quiz-cmd-description "start the quiz if it is running"
-    :quiz-already-taking-1 "You have/are taking this quiz before: %s. \nIf you interrupted it with another command, then it's not fate."
+    :quiz-already-taking-:quiz-key "You have/are taking this quiz before: %s. \nIf you interrupted it with another command, then it's not fate."
     :quiz-not-running "The quiz is not running, wait for the teacher's signal."
-    :student-confirm-run-quiz-2 "Would you like to start quiz '%s' (%d question(s))?"
+    :student-confirm-run-quiz-:quiz-name-:questions-count "Would you like to start quiz '%s' (%d question(s))?"
     :quiz-after-run-info "Answer with a number. Your first question:"
     :your-right "Your right."
     :what-question-yes-no "What (yes/no)?"
@@ -38,24 +39,24 @@
    {:quiz-already-running "Тест уже запущен."
     :available-quizzes "Доступные тесты:\n"
     :quiz-not-defined "Тест не определен."
-    :confirm-run-quiz-1 "Вы действительно хотите запустить '%s' тест?"
+    :confirm-run-quiz-:quiz-name "Вы действительно хотите запустить '%s' тест?"
     :quiz-started "Тест запущен."
     :quiz-canceled "В следующий раз."
     :no-running-quizzes "Нет активных тестов."
-    :confirm-stop-quiz-1 "Вы действительно хотите остановить '%s' тест?"
-    :quiz-was-stopped-1 "Тест '%s' был остановлен."
+    :confirm-stop-quiz-:quiz-name "Вы действительно хотите остановить '%s' тест?"
+    :quiz-was-stopped-:quiz-name "Тест '%s' был остановлен."
     :no-answers "Ответы не получены."
     :answer-correct "КОРРЕКТНЫЙ "
     :quiz-your-result "Ваш результат: "
     :quiz-is-still-in-progress "В следующий раз. Тест еще продолжается."
     :what-question "Что?"
     :quiz-cmd-description "Начать прохождение теста, если он запущен"
-    :quiz-already-taking-1 "Вы уже проходили/проходите этот тест: %s. \nЕсли вы его перебили другой командой -- значит не судьба."
+    :quiz-already-taking-:quiz-key "Вы уже проходили/проходите этот тест: %s. \nЕсли вы его перебили другой командой -- значит не судьба."
     :quiz-not-running "Тест не запущен, дождитесь отмашки преподавателя."
-    :student-confirm-run-quiz-2 "Хотите начать тест '%s' (%d вопроса(-ов))?"
+    :student-confirm-run-quiz-:quiz-name-:questions-count "Хотите начать тест '%s' (%d вопроса(-ов))?"
     :quiz-after-run-info "Отвечайте цифрой. Ваш первый вопрос:"
     :your-right "Ваше право."
-    :what-question-yes-no "Что (yes/no)?"
+    :what-question-yes-no "Что (да/нет)?"
     :remember-your-answer "Запомнил ваш ответ: "
     :quiz-passed "Спасибо, тест пройден. Результаты пришлю, когда тест будет закрыт."
     :already-stopped "Тест уже остановлен."
@@ -82,6 +83,16 @@
 (defn stop-quiz! [tx]
   (codax/assoc-at tx [:quiz :current] nil))
 
+(defn get-longest-digits-seq [string] (apply max 0 (map count (re-seq #"\d+" string))))
+(defn find-longest-digits-seq-in-list [list] (apply max (map get-longest-digits-seq list)))
+
+(defn prepend-leading-zeros [s total-digits-count]
+  (str/replace s #"\d+" #(format (str "%0" total-digits-count "d") (parse-long %))))
+
+(defn sort-map-by-digits-in-key [m]
+  (let [digits (find-longest-digits-seq-in-list (map (fn [[k _]] (name k)) m))]
+    (sort-by (fn [[k _]] (prepend-leading-zeros (name k) digits)) m)))
+
 (defn startquiz-talk [db {token :token :as conf}]
   (talk/talk db "startquiz"
              :start
@@ -95,7 +106,7 @@
                      quiz (-> conf :quiz (get quiz-key))]
                  (when-not quiz-key
                    (let [quizs (->> (-> conf :quiz)
-                                    (sort-by first)
+                                    sort-map-by-digits-in-key
                                     (map (fn [[k v]] (str "- " (name k) " (" (-> v :name) ")"))))]
                      (talk/send-text token id (str (tr :quiz/available-quizzes)
                                                    (str/join "\n" quizs)))
@@ -104,17 +115,17 @@
                  (when-not quiz
                    (talk/send-text token id (tr :quiz/quiz-not-defined)) (talk/stop-talk tx))
 
-                 (talk/send-yes-no-kbd token id (str (format (tr :quiz/confirm-run-quiz-1) (:name quiz))))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/confirm-run-quiz-:quiz-name) (:name quiz)))
                  (talk/change-branch tx :approve {:quiz-key quiz-key})))
              :approve
              (fn [tx {{id :id} :from text :text} {quiz-key :quiz-key}]
-               (case (str/lower-case text)
+               (case (i18n/normalize-yes-no-text text)
                  "yes" (do (talk/send-text token id (tr :quiz/quiz-started))
                            (-> tx
                                (start-quiz! quiz-key)
                                talk/stop-talk))
-                 "no" (do (talk/send-text token id (tr :quiz/quiz-canceled))
-                          (talk/stop-talk tx))))))
+                 "no" (talk/send-stop tx token id (tr :quiz/quiz-canceled))
+                 (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))))
 
 (defn get-test-keys-for-score [conf]
   (->> conf
@@ -185,13 +196,13 @@
                  (when-not quiz-key
                    (talk/send-text token id (tr :quiz/no-running-quizzes))
                    (talk/stop-talk tx))
-                 (talk/send-yes-no-kbd token id (str (format (tr :quiz/confirm-stop-quiz-1) quiz-name)))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/confirm-stop-quiz-:quiz-name) quiz-name))
                  (talk/change-branch tx :approve)))
              :approve
              (fn [tx {{id :id} :from text :text}]
                (let [{quiz-key :key quiz-name :name
                       {:keys [questions]} :quiz} (current-quiz! tx conf)]
-                 (case (str/lower-case text)
+                 (case (i18n/normalize-yes-no-text text)
                    "yes" (let [results (:answers @*quiz-state)
                                per-studs (map (fn [stud-id]
                                                 (let [answers (get results stud-id)
@@ -200,9 +211,9 @@
                                                       info (str cur "/" max)]
                                                   [stud-id cur info]))
                                               (keys results))]
-                           (talk/send-text token id (str (format (tr :quiz/quiz-was-stopped-1) quiz-name)))
+                           (talk/send-text token id (format (tr :quiz/quiz-was-stopped-:quiz-name) quiz-name))
                            (when (empty? results)
-                             (talk/send-text token id (str (tr :quiz/no-answers)))
+                             (talk/send-text token id (tr :quiz/no-answers))
                              (-> tx stop-quiz! talk/stop-talk))
 
                            (->> (map vector questions (result-stat questions results))
@@ -225,10 +236,8 @@
                                (codax/assoc-at [:quiz :results quiz-key] results)
                                stop-quiz!
                                talk/stop-talk))
-                   "no" (do (talk/send-text token id (tr :quiz/quiz-is-still-in-progress))
-                            (talk/stop-talk tx))
-                   (do (talk/send-text token id (tr :quiz/what-question))
-                       (talk/wait tx)))))))
+                   "no" (talk/send-stop tx token id (tr :quiz/quiz-is-still-in-progress))
+                   (do (talk/send-text token id (tr :quiz/what-question)) (talk/wait tx)))))))
 
 (defn question-msg [quiz question-idx]
   (-> quiz
@@ -255,27 +264,26 @@
                      results (codax/get-at tx [:quiz :results quiz-key id])]
 
                  (when (some? results)
-                   (talk/send-text token id (str (format (tr :quiz/quiz-already-taking-1) quiz-key)))
+                   (talk/send-text token id (format (tr :quiz/quiz-already-taking-:quiz-key) quiz-key))
                    (-> tx talk/stop-talk))
 
                  (when (nil? quiz)
-                   (talk/send-text token id (str (tr :quiz/quiz-not-running)))
+                   (talk/send-text token id (tr :quiz/quiz-not-running))
                    (-> tx talk/stop-talk))
 
-                 (talk/send-yes-no-kbd token id (str (format (tr :quiz/student-confirm-run-quiz-2) quiz-name questions-count)))
+                 (talk/send-yes-no-kbd token id (format (tr :quiz/student-confirm-run-quiz-:quiz-name-:questions-count) quiz-name questions-count))
                  (talk/change-branch tx :quiz-approve)))
 
              :quiz-approve
              (fn [tx {{id :id} :from text :text}]
                (let [{quiz :quiz} (current-quiz! tx conf)]
-                 (case (str/lower-case text)
+                 (case (i18n/normalize-yes-no-text text)
                    "yes" (do (quiz-stud-start!)
                              (talk/send-text token id (tr :quiz/quiz-after-run-info))
                              (talk/send-text token id (question-msg quiz 0))
                              (talk/change-branch tx :quiz-step {:results '()}))
-                   "no" (do (talk/send-text token id (tr :quiz/your-right))
-                            (talk/stop-talk tx))
-                   (do (talk/send-yes-no-kbd token id (str (tr :quiz/what-question-yes-no)))
+                   "no" (talk/send-stop tx token id (tr :quiz/your-right))
+                   (do (talk/send-yes-no-kbd token id (tr :quiz/what-question-yes-no))
                        (talk/wait tx)))))
 
              :quiz-step
@@ -301,7 +309,7 @@
                  ; finish quiz
                  (quiz-stud-finish! id new-results)
                  (talk/send-text token id (tr :quiz/quiz-passed))
-                 (let [{student-name :name group :group} (codax/get-at tx [id])]
+                 (let [{student-name :name group :group} (general/stud-info tx id)]
                    (talk/send-text token (-> conf :admin-chat-id)
                                    (format (tr :quiz/quiz-answers-:answers-:stud-info-:stat)
                                            (str/join ", " new-results)

@@ -5,7 +5,7 @@
             [course-bot.general :as general]
             [course-bot.misc :as misc]
             [course-bot.report :as report]
-            [course-bot.talk-test :as tt]))
+            [course-bot.talk-test :as tt :refer [answers?]]))
 
 (defn register-user [*chat start-talk id name]
   (testing "register user"
@@ -20,11 +20,12 @@
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
         plagiarism-db (tt/test-plagiarsm-database (-> conf :plagiarism-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (essay/submit-talk db conf "essay1" plagiarism-db)
-                          (essay/submit-talk db conf "essay2" plagiarism-db)
-                          (essay/status-talk db conf "essay1"))]
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+                         (essay/submit-talk db conf "essay1" plagiarism-db)
+                         (essay/submit-talk db conf "essay2" plagiarism-db)
+                         (essay/status-talk db conf "essay1"))]
     (tt/with-mocked-morse *chat
       (register-user *chat talk 1 "u1")
       (register-user *chat talk 2 "u2")
@@ -44,7 +45,7 @@
 
       (testing "cancelation"
         (talk 1 "hmmm")
-        (is (= (tt/history *chat :user-id 1) ["What (yes or no)?"]))
+        (is (= (tt/history *chat :user-id 1) ["Didn't understand: hmmm. Yes or no?"]))
 
         (talk 1 "no")
         (is (= (tt/history *chat :user-id 1) ["Cancelled."]))
@@ -96,18 +97,20 @@
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
         plagiarism-db (tt/test-plagiarsm-database (-> conf :plagiarism-path))
-        *chat (atom (list))
-        talk (tt/handlers (general/start-talk db conf)
-                          (essay/submit-talk db conf "essay1" plagiarism-db)
-                          (essay/submit-talk db conf "essay2" plagiarism-db)
-                          (essay/status-talk db conf "essay1")
-                          (essay/assignreviewers-talk db conf "essay1")
-                          (essay/review-talk db conf "essay1")
-                          (essay/myfeedback-talk db conf "essay1")
-                          (report/report-talk db conf
-                                              "ID" report/stud-id
-                                              "review-score" (essay/review-score conf "essay1")
-                                              "essay-score" (essay/essay-score "essay1")))]
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+                         (essay/submit-talk db conf "essay1" plagiarism-db)
+                         (essay/submit-talk db conf "essay2" plagiarism-db)
+                         (essay/status-talk db conf "essay1")
+                         (essay/assignreviewers-talk db conf "essay1")
+                         (essay/review-talk db conf "essay1")
+                         (essay/myfeedback-talk db conf "essay1")
+                         (essay/reportabuse-talk db conf "essay1")
+                         (report/report-talk db conf
+                                             "ID" report/stud-id
+                                             "review-score" (essay/review-score conf "essay1")
+                                             "essay-score" (essay/essay-score "essay1")))]
 
     (tt/with-mocked-morse *chat
       (testing "prepare users and their essays"
@@ -147,8 +150,8 @@
                                 (let [res (first @*shuffles)]
                                   (swap! *shuffles rest)
                                   res))]
-          (talk 0 "/essay1assignreviewers")
-          (tt/match-text *chat 0 "Assignment count: 4; Examples: (4 3 2)")))
+          (is (answers? (talk 0 "/essay1assignreviewers")
+                        "Assignment count: 4; Examples: (4 3 2)"))))
 
       (is (= (list {:request-review '(4 3 2), :text (str "user1 essay1 text" (hash 1))}
                    {:request-review '(1 4 3), :text (str "user2 essay1 text" (hash 2))}
@@ -305,13 +308,12 @@
                         (talk id "/essay1review")
                         (talk id (str "1 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
                         (is (= (tt/history *chat :user-id id) ["ok"]))
-                        (tt/match-text *chat id "ok")
                         (talk id (str "2 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
                         (is (= (tt/history *chat :user-id id) ["ok"]))
                         (talk id (str "3 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
                         (is (= (tt/history *chat :user-id id) ["Correct?"]))
-                        (talk id "yes")
-                        (tt/match-text *chat id "Your feedback has been saved and will be available to essay writers."))
+                        (is (answers? (talk id "yes")
+                                      "Your feedback has been saved and will be available to essay writers.")))
                       [2 3 4]))))
 
       (talk 1 "/essay1status")
@@ -343,6 +345,44 @@
               "Rank: 2; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 3"
               "Rank: 1; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 2"
               "Review count: 3."]))
+
+      (testing "report abuse"
+        (is (answers? (talk 1 "/essay1reportabuse")
+                      "Describe whats wrong with essay or review on your essay in one text message (with quote of problem place)?"))
+        (is (answers? (talk 1 "bad-bad-bad essay, please, take a look")
+                      "Your report text + reviewed essays and feedbacks will be send to the teacher. Are you sure?"))
+        (is (answers? (talk 1 "yes")
+                      [0 "The follwing student submit abuse report:"]
+                      [0 "Name: u1; Group: gr1; Telegram ID: 1"]
+                      [0 "Report text:"]
+                      [0 "bad-bad-bad essay, please, take a look"]
+                      [0 "Essay & author:"]
+                      [0 "Name: u4; Group: gr1; Telegram ID: 4"]
+                      [0 "user4 essay1 text-803074778"]
+                      [0 "Essay & author:"]
+                      [0 "Name: u3; Group: gr1; Telegram ID: 3"]
+                      [0 "user3 essay1 text-1556392013"]
+                      [0 "Essay & author:"]
+                      [0 "Name: u2; Group: gr1; Telegram ID: 2"]
+                      [0 "user2 essay1 text-971005196"]
+                      [0 "Feedback & author:"]
+                      [0 "Name: u4; Group: gr1; Telegram ID: 4"]
+                      [0 "bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 4"]
+                      [0 "Feedback & author:"]
+                      [0 "Name: u3; Group: gr1; Telegram ID: 3"]
+                      [0 "bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 3"]
+                      [0 "Feedback & author:"]
+                      [0 "Name: u2; Group: gr1; Telegram ID: 2"]
+                      [0 "bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 2"]
+                      [1 "Your report was sent to the teacher. Thank you!"]))
+
+        (talk 1 "/essay1reportabuse" "my second report" "yes")
+
+        (is (= '(("my second report" "bad-bad-bad essay, please, take a look"))
+               (->> (codax/get-at! db [])
+                    vals
+                    (map #(-> % :essays (get "essay1") :abuse-reports))
+                    (filter some?)))))
 
       (testing "report"
         (is (= "2022.01.03 11:30 +0000"
@@ -377,8 +417,8 @@
                                     (swap! *shuffles rest)
                                     res))]
 
-            (talk 0 "/essay1assignreviewers")
-            (tt/match-text *chat 0 "Assignment count: 4; Examples: (8 7 6)")))
+            (is (answers? (talk 0 "/essay1assignreviewers")
+                          "Assignment count: 4; Examples: (8 7 6)"))))
 
         (is (= '({:my-reviews-submitted-at "2022.01.03 11:30 +0000",
                   :request-review (4 3 2),
@@ -399,7 +439,7 @@
                (->> (codax/get-at! db [])
                     vals
                     (map #(-> % :essays (get "essay1")))
-                    (map #(dissoc % :received-review :my-reviews))
+                    (map #(dissoc % :received-review :my-reviews :abuse-reports))
                     (filter some?)))))
 
       (testing "too-small-article"
