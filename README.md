@@ -38,7 +38,7 @@ Course bot for performing laboratory works for "Computer Architecture" disciplin
 Expect course config in `../edu-csa-internal`.
 
 ``` sh
-make run-clj-csa
+make run
 ```
 
 ### Deploy
