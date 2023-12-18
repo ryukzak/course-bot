@@ -443,7 +443,7 @@
 
       :get-report
       (fn [tx {{id :id} :from text :text}]
-        (talk/send-text token id (tr :essay/report-approve?))
+        (talk/send-yes-no-kbd token id (tr :essay/report-approve?))
         (talk/change-branch tx :approve {:report text}))
 
       :approve
