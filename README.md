@@ -48,7 +48,7 @@ Course bot for performing laboratory works for "Computer Architecture" disciplin
 
     Вы должны отправить свое эссе (`/essay1submit`) до установленного срока.
 
-    После дедлайна сдачи эссе, можно получить свой комплект эссе для выставления оценок (`/essay1review`) и получить ревью на свое эссе(`/essay1myfeedback`).
+    После дедлайна сдачи эссе, можно получить свой комплект эссе для выставления оценок (`/essay1review`) и получить ревью на свое эссе (`/essay1myfeedback`).
 
 ### Run by `clj`
 
