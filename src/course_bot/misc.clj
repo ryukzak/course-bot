@@ -24,6 +24,10 @@
 
 (defn read-time [s] (.getTime (.parse (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm Z") s)))
 (defn str-time [dt] (.format (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm Z") dt))
+(defn str-time-in-utc [dt]
+  (.format (let [f (java.text.SimpleDateFormat. "yyyy.MM.dd HH:mm Z")]
+             (. f setTimeZone (java.util.TimeZone/getTimeZone "UTC"))
+             f) dt))
 
 (defn filename-time [dt] (.format (java.text.SimpleDateFormat. "yyyyMMddHHmm") dt))
 

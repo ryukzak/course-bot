@@ -40,10 +40,11 @@
     :select-option "Select your option:\n"
     :not-found-allow-only "Not found, allow only:\n"
     :enter-pres-number "Enter the number of the best presentation in the list:\n"
-    :lesson-feedback-not-available "Lesson feedback is not available."
+    :lesson-feedback-not-available-:pres-group-:now-:right-times-list "Lesson feedback is not available. Your lab1 group: %s. Now: %s. Expected feedback dates:\n%s"
     :lesson-feedback-no-presentations "No presentations."
     :lesson-feedback-what-lesson-:key-name-:datetime-list "Use format: /%sfeedback [<datetime>]\n\nYou need to specify lesson datetime explicitly:\n%s"
     :already-received "Already received."
+    :too-early "You can't give a feedback to the future lesson."
     :collect-feedback-:pres-name-:pres-group-:datetime "Collect feedback for '%s' (%s) at %s"
     :best-presentation-error "Wrong input. Enter the number of the best presentation in the list."
     :thank-feedback-saved "Thanks, your feedback saved!"
@@ -104,10 +105,11 @@
     :select-option "Выберите свой вариант:\n"
     :not-found-allow-only "Не найдено, разрешить только:\n"
     :enter-pres-number "Введите номер лучшей презентации в списке:\n"
-    :lesson-feedback-not-available "Отзывы не доступны для этого занятия."
+    :lesson-feedback-not-available-:pres-group-:now-:right-times-list "Отзывы не доступны для этого занятия. Ваша группа докладов: %s. Сейчас: %s. Ожидаемые сроки отзывов:\n%s"
     :lesson-feedback-no-presentations "Нет презентаций для этого занятия."
     :lesson-feedback-what-lesson-:key-name-:datetime-list "В формате: /%sfeedback [<datetime>]\n\nКакое занятие?:\n%s"
     :already-received "Уже получено."
+    :too-early "Вы не можете оставить отзыв о будущем уроке."
     :collect-feedback-:pres-name-:pres-group-:datetime "Собрать отзывы для '%s' (%s) в %s"
     :best-presentation-error "Неправильный ввод. Введите номер лучшей презентации в списке."
     :thank-feedback-saved "Спасибо, ваш отзыв сохранен!"
@@ -592,7 +594,17 @@
                                         (->> pass-lessons
                                              (map #(str "- " (:datetime %)))
                                              (str/join "\n"))))
-                (talk/send-text token id (tr :pres/lesson-feedback-not-available))))
+                (let [lessons (->> (lessons pres-conf pres-group))]
+                  (talk/send-text token id
+                                  (format (tr :pres/lesson-feedback-not-available-:pres-group-:now-:right-times-list)
+                                          pres-group
+                                          (misc/str-time now)
+                                          (->> lessons
+                                               (map #(str "- " (misc/str-time (+ (* 30 60 1000)
+                                                                                 (misc/read-time (:datetime %))))
+                                                          " -- " (misc/str-time (+ (* 180 60 1000)
+                                                                                   (misc/read-time (:datetime %))))))
+                                               (str/join "\n")))))))
             (talk/stop-talk tx))
 
           (when (empty? studs)
@@ -601,6 +613,10 @@
 
           (when (some #(= id %) feedback-from)
             (talk/send-text token id (tr :pres/already-received))
+            (talk/stop-talk tx))
+
+          (when (> (misc/read-time dt) now)
+            (talk/send-text token id (tr :pres/too-early))
             (talk/stop-talk tx))
 
           (talk/send-text token id

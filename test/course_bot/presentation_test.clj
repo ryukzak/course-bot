@@ -629,9 +629,12 @@
                       ["2" "lgr1" "" "2" "1" "1"]
                       ["3" "lgr1" "" "" "1" "1"]))
 
-      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))
+                    misc/str-time misc/str-time-in-utc]
         (is (answers? (talk 1 "/lab1feedback")
-                      "Lesson feedback is not available.")))
+                      (tt/unlines "Lesson feedback is not available. Your lab1 group: lgr1. Now: 2022.01.01 11:29 +0000. Expected feedback dates:"
+                                  "- 2022.01.01 12:30 +0000 -- 2022.01.01 15:00 +0000"
+                                  "- 2022.01.02 12:30 +0000 -- 2022.01.02 15:00 +0000"))))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:29 +0000"))]
         (is (answers? (talk 1 "/lab1feedback")
@@ -665,6 +668,11 @@
                        "Enter the number of the best presentation in the list:"
                        "0. Bob (pres 2)"
                        "1. Alice (pres 1)"))))
+
+      (testing "feedback on future presentations"
+        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 09:00 +0000"))]
+          (is (answers? (talk 1 "/lab1feedback 2022.01.01 12:00 +0000")
+                        "You can't give a feedback to the future lesson."))))
 
       (testing "pres group not set"
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]

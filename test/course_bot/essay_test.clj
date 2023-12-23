@@ -239,7 +239,7 @@
         (with-redefs [misc/str-time (fn [_] "2022.01.03 11:30 +0000")]
           (talk 1 "yes"))
         (is (= (tt/history *chat :user-id 1)
-               ["Your feedback has been saved and will be available to essay writers."]))
+               ["Your feedback has been saved and will be available to essay writers. If you want to report abuse, use command `/essay1reportabuse`."]))
 
         (talk 1 "/essay1status")
         (is (= (tt/history *chat :user-id 1)
@@ -290,12 +290,12 @@
 
       (talk 1 "/essay1myfeedback")
       (is (= (tt/history *chat :user-id 1)
-             ["Review count: 0."]))
+             ["Review count: 0. If you want to report abuse, use command `/essay1reportabuse` (please don't use it in case of review author mistake."]))
 
       (talk 2 "/essay1myfeedback")
       (is (= (tt/history *chat :user-id 2 :number 2)
              ["Rank: 3; Feedback: 333bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla"
-              "Review count: 1."]))
+              "Review count: 1. If you want to report abuse, use command `/essay1reportabuse` (please don't use it in case of review author mistake."]))
 
       (testing "send review again"
         (talk 1 "/essay1review")
@@ -313,7 +313,7 @@
                         (talk id (str "3 bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from " id))
                         (is (= (tt/history *chat :user-id id) ["Correct?"]))
                         (is (answers? (talk id "yes")
-                                      "Your feedback has been saved and will be available to essay writers.")))
+                                      "Your feedback has been saved and will be available to essay writers. If you want to report abuse, use command `/essay1reportabuse`.")))
                       [2 3 4]))))
 
       (talk 1 "/essay1status")
@@ -344,7 +344,7 @@
              ["Rank: 3; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 4"
               "Rank: 2; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 3"
               "Rank: 1; Feedback: bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 2"
-              "Review count: 3."]))
+              "Review count: 3. If you want to report abuse, use command `/essay1reportabuse` (please don't use it in case of review author mistake."]))
 
       (testing "report abuse"
         (is (answers? (talk 1 "/essay1reportabuse")
@@ -476,3 +476,11 @@
 
           (is (= ["Uploading (yes/no)?"]
                  (tt/history *chat :user-id 7 :number 1))))))))
+
+(deftest essay-calculate-score-test
+  (testing "calculate a score based on 3 reviews"
+    (is (= 4 (essay/calculate-essay-score [1 1 2])))
+    (is (= 4 (essay/calculate-essay-score [1 2 2])))
+    (is (= 3 (essay/calculate-essay-score [1 2 3])))
+    (is (= 3 (essay/calculate-essay-score [2 3 3])))
+    (is (= 2 (essay/calculate-essay-score [3 3 3])))))
