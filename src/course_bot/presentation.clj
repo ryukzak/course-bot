@@ -594,10 +594,15 @@
                                              (map #(str "- " (:datetime %)))
                                              (str/join "\n"))))
                 (let [lessons (->> (lessons pres-conf pres-group))]
-                  (talk/send-text token id (format (tr :pres/lesson-feedback-not-available-:pres-group-:now-:right-times-list) pres-group (misc/str-time now)
-                                                   (->> lessons
-                                                        (map #(str "- " (misc/str-time (+ (* 30 60 1000) (misc/read-time (:datetime %))))
-                                                                   " -- " (misc/str-time (+ (* 180 60 1000) (misc/read-time (:datetime %))))))
+                  (talk/send-text token id
+                                  (format (tr :pres/lesson-feedback-not-available-:pres-group-:now-:right-times-list)
+                                          pres-group
+                                          (misc/str-time now)
+                                          (->> lessons
+                                               (map #(str "- " (misc/str-time (+ (* 30 60 1000)
+                                                                                 (misc/read-time (:datetime %))))
+                                                          " -- " (misc/str-time (+ (* 180 60 1000)
+                                                                                   (misc/read-time (:datetime %))))))
                                                         (str/join "\n")))))))
             (talk/stop-talk tx))
 
