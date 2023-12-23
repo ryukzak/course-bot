@@ -603,7 +603,7 @@
                                                                                  (misc/read-time (:datetime %))))
                                                           " -- " (misc/str-time (+ (* 180 60 1000)
                                                                                    (misc/read-time (:datetime %))))))
-                                                        (str/join "\n")))))))
+                                               (str/join "\n")))))))
             (talk/stop-talk tx))
 
           (when (empty? studs)
