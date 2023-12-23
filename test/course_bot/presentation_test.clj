@@ -660,6 +660,11 @@
                        "0. Bob (pres 2)"
                        "1. Alice (pres 1)"))))
 
+      (testing "feedback on future presentations"
+        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 09:00 +0000"))]
+          (is (answers? (talk 1 "/lab1feedback 2022.01.01 12:00 +0000")
+                        "You can't give a feedback to the future lesson."))))
+
       (testing "pres group not set"
         (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 12:30 +0000"))]
           (is (answers? (talk 4 "/lab1feedback")

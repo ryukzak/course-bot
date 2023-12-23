@@ -44,6 +44,7 @@
     :lesson-feedback-no-presentations "No presentations."
     :lesson-feedback-what-lesson-:datetime-list "You need to specify lesson datetime explicitly:\n%s"
     :already-received "Already received."
+    :too-early "You can't give a feedback to the future lesson."
     :collect-feedback-:pres-name-:pres-group-:datetime "Collect feedback for '%s' (%s) at %s"
     :best-presentation-error "Wrong input. Enter the number of the best presentation in the list."
     :thank-feedback-saved "Thanks, your feedback saved!"
@@ -108,6 +109,7 @@
     :lesson-feedback-no-presentations "Нет презентаций для этого занятия."
     :lesson-feedback-what-lesson-:datetime-list "Какое занятие?:\n%s"
     :already-received "Уже получено."
+    :too-early "Вы не можете оставить отзыв о будущем уроке."
     :collect-feedback-:pres-name-:pres-group-:datetime "Собрать отзывы для '%s' (%s) в %s"
     :best-presentation-error "Неправильный ввод. Введите номер лучшей презентации в списке."
     :thank-feedback-saved "Спасибо, ваш отзыв сохранен!"
@@ -600,6 +602,10 @@
 
           (when (some #(= id %) feedback-from)
             (talk/send-text token id (tr :pres/already-received))
+            (talk/stop-talk tx))
+
+          (when (> (misc/read-time dt) now)
+            (talk/send-text token id (tr :pres/too-early))
             (talk/stop-talk tx))
 
           (talk/send-text token id
