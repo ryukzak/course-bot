@@ -40,7 +40,7 @@
     :select-option "Select your option:\n"
     :not-found-allow-only "Not found, allow only:\n"
     :enter-pres-number "Enter the number of the best presentation in the list:\n"
-    :lesson-feedback-not-available "Lesson feedback is not available."
+    :lesson-feedback-not-available-:pres-group-:now-:right-times-list "Lesson feedback is not available. Your lab1 group: %s. Now: %s. Expected feedback dates:\n%s"
     :lesson-feedback-no-presentations "No presentations."
     :lesson-feedback-what-lesson-:datetime-list "You need to specify lesson datetime explicitly:\n%s"
     :already-received "Already received."
@@ -105,7 +105,7 @@
     :select-option "Выберите свой вариант:\n"
     :not-found-allow-only "Не найдено, разрешить только:\n"
     :enter-pres-number "Введите номер лучшей презентации в списке:\n"
-    :lesson-feedback-not-available "Отзывы не доступны для этого занятия."
+    :lesson-feedback-not-available-:pres-group-:now-:right-times-list "Отзывы не доступны для этого занятия. Ваша группа докладов: %s. Сейчас: %s. Ожидаемые сроки отзывов:\n%s"
     :lesson-feedback-no-presentations "Нет презентаций для этого занятия."
     :lesson-feedback-what-lesson-:datetime-list "Какое занятие?:\n%s"
     :already-received "Уже получено."
@@ -593,7 +593,12 @@
                                         (->> pass-lessons
                                              (map #(str "- " (:datetime %)))
                                              (str/join "\n"))))
-                (talk/send-text token id (tr :pres/lesson-feedback-not-available))))
+                (let [lessons (->> (lessons pres-conf pres-group))]
+                  (talk/send-text token id (format (tr :pres/lesson-feedback-not-available-:pres-group-:now-:right-times-list) pres-group (misc/str-time now)
+                                                   (->> lessons
+                                                        (map #(str "- " (misc/str-time (+ (* 30 60 1000) (misc/read-time (:datetime %))))
+                                                                   " -- " (misc/str-time (+ (* 180 60 1000) (misc/read-time (:datetime %))))))
+                                                        (str/join "\n")))))))
             (talk/stop-talk tx))
 
           (when (empty? studs)
