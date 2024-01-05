@@ -22,7 +22,7 @@
     :quiz-your-result "Your result: "
     :quiz-is-still-in-progress "In a next time. The quiz is still in progress."
     :what-question "What?"
-    :quiz-cmd-description "start the quiz if it is running"
+    :quiz-cmd-description-info "Start the quiz if it is running"
     :quiz-already-taking-:quiz-key "You have/are taking this quiz before: %s. \nIf you interrupted it with another command, then it's not fate."
     :quiz-not-running "The quiz is not running, wait for the teacher's signal."
     :student-confirm-run-quiz-:quiz-name-:questions-count "Would you like to start quiz '%s' (%d question(s))?"
@@ -50,7 +50,7 @@
     :quiz-your-result "Ваш результат: "
     :quiz-is-still-in-progress "В следующий раз. Тест еще продолжается."
     :what-question "Что?"
-    :quiz-cmd-description "Начать прохождение теста, если он запущен"
+    :quiz-cmd-description-info "Начать прохождение теста, если он запущен"
     :quiz-already-taking-:quiz-key "Вы уже проходили/проходите этот тест: %s. \nЕсли вы его перебили другой командой -- значит не судьба."
     :quiz-not-running "Тест не запущен, дождитесь отмашки преподавателя."
     :student-confirm-run-quiz-:quiz-name-:questions-count "Хотите начать тест '%s' (%d вопроса(-ов))?"
@@ -256,7 +256,7 @@
     (not (empty? (re-seq re text)))))
 
 (defn quiz-talk [db {token :token :as conf}]
-  (talk/talk db "quiz" (tr :quiz/quiz-cmd-description)
+  (talk/talk db "quiz" (tr :quiz/quiz-cmd-description-info)
              :start
              (fn [tx {{id :id} :from}]
                (let [{quiz-key :key quiz :quiz quiz-name :name} (current-quiz! tx conf)

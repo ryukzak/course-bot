@@ -64,16 +64,16 @@
     :already-scheduled-help-:key-name "Already scheduled, check /%sagenda."
     :ok-check-schedule-help-:key-name "OK, you can check it by: /%sagenda"
     :should-set-group-to-send-feedback-help-:pres-name-:key-str "To send feedback, you should set your group for %s by /%ssetgroup"
-    :setgroup-talk-:pres-name "set your group for '%s'"
-    :submit-talk-:pres-name "submit your '%s' description"
-    :check-talk-:pres-name "(admin) Check submitted presentation description for '%s'"
-    :submission-talk "list submissions and their status (no args -- your group, with args -- specified)"
-    :agenda-talk "agenda (no args -- your group, with args -- specified)"
-    :soon-talk-help "Presentations that will be coming soon"
-    :schedule-talk "select your presentation day"
+    :setgroup-talk-info-:pres-name "Set your group for '%s'"
+    :submit-talk-info-:pres-name "Submit your '%s' description"
+    :check-talk-info-:pres-name "(admin) Check submitted presentation description for '%s'"
+    :submission-talk-info "List submissions and their status (no args -- your group, with args -- specified)"
+    :agenda-talk-info "Agenda (no args -- your group, with args -- specified)"
+    :soon-talk-info "Presentations that will be coming soon"
+    :schedule-talk-info "Select your presentation day"
     :feedback-talk-info-:pres-name "Send feedback for '%s' (no args -- list of available dates, optional arg -- [<datetime>])"
-    :drop-talk-:pres-name-:suffix "for teacher, drop '%s' for specific student (%s)"
-    :all-scheduled-descriptions-dump-talk "(admin) All-scheduled-descriptions-dump"}}
+    :drop-talk-info-:pres-name-:suffix "(admin) Drop '%s' for specific student (%s)"
+    :all-scheduled-descriptions-dump-talk-info "(admin) All-scheduled-descriptions-dump"}}
   :ru
   {:pres
    {:nothing-to-check "Нечего проверять."
@@ -129,16 +129,16 @@
     :already-scheduled-help-:key-name "Уже запланировано, проверьте /%sagenda."
     :ok-check-schedule-help-:key-name "Хорошо, вы можете проверить это: /%sagenda"
     :should-set-group-to-send-feedback-help-:pres-name-:key-str "Чтобы отправить отзыв, вы должны установить свою группу для %s с помощью /%ssetgroup"
-    :setgroup-talk-:pres-name "Установить вашу группу для '%s'"
-    :submit-talk-:pres-name "Отправить описание '%s'"
-    :check-talk-:pres-name "(admin) Ревью загруженных тем для '%s'"
-    :submission-talk "Статус загруженных эссе (опциональный аргумент -- группа)"
-    :agenda-talk "Расписание докладов (опциональный аргумент -- группа)"
-    :soon-talk-help "Презентации, назначенные на ближайшее время"
-    :schedule-talk "Выбрать день для презентации"
+    :setgroup-talk-info-:pres-name "Установить вашу группу для '%s'"
+    :submit-talk-info-:pres-name "Отправить описание '%s'"
+    :check-talk-info-:pres-name "(admin) Ревью загруженных тем для '%s'"
+    :submission-talk-info "Статус загруженных эссе (опциональный аргумент -- группа)"
+    :agenda-talk-info "Расписание докладов (опциональный аргумент -- группа)"
+    :soon-talk-info "Презентации, назначенные на ближайшее время"
+    :schedule-talk-info "Выбрать день для презентации"
     :feedback-talk-info-:pres-name "Отправить отзыв для '%s' (без аргумента -- список доступных дат, опциональный аргумент -- [<datetime>])"
-    :drop-talk-:pres-name-:suffix "(admin) Сбросить '%s' для конкретного ученика (%s)"
-    :all-scheduled-descriptions-dump-talk "(admin) Дамп всех запланированных описаний"}}})
+    :drop-talk-info-:pres-name-:suffix "(admin) Сбросить '%s' для конкретного ученика (%s)"
+    :all-scheduled-descriptions-dump-talk-info "(admin) Дамп всех запланированных описаний"}}})
 
 (defn get-lesson-state "per lesson" [tx pres-key pres-group datetime]
   (codax/get-at tx [:presentation pres-key pres-group datetime]))
@@ -180,7 +180,7 @@
         groups (-> conf (get pres-key) :groups)
         groups-text (->> groups keys sort (str/join ", "))]
     (talk/def-talk db cmd
-      (format (tr :pres/setgroup-talk-:pres-name) name)
+      (format (tr :pres/setgroup-talk-info-:pres-name) name)
 
       :start
       (fn [tx {{id :id} :from}]
@@ -221,7 +221,7 @@
         {:keys [max-description-length submition-hint name]} (-> conf (get pres-key))]
 
     (talk/def-talk db cmd
-      (format (tr :pres/submit-talk-:pres-name) name)
+      (format (tr :pres/submit-talk-info-:pres-name) name)
 
       :start
       (fn [tx {{id :id} :from}]
@@ -307,7 +307,7 @@
         pres-key (keyword pres-key-name)
         name (-> conf (get pres-key) :name)]
     (talk/def-talk db cmd
-      (format (tr :pres/check-talk-:pres-name) name)
+      (format (tr :pres/check-talk-info-:pres-name) name)
       :start
       (fn [tx {{id :id} :from}]
         (general/assert-admin tx conf id)
@@ -361,7 +361,7 @@
         groups-text (->> groups keys sort (str/join ", "))]
 
     (talk/def-command db cmd
-      (tr :pres/submission-talk)
+      (tr :pres/submission-talk-info)
       (fn [tx {{id :id} :from text :text}]
         (let [arg (talk/command-text-arg text)]
           (cond
@@ -451,7 +451,7 @@
         {:keys [name groups] :as pres-conf} (-> conf (get pres-key))
         groups-text (->> groups keys sort (str/join ", "))]
 
-    (talk/def-command db cmd (tr :pres/agenda-talk)
+    (talk/def-command db cmd (tr :pres/agenda-talk-info)
       (fn [tx {{id :id} :from text :text}]
         (let [arg (talk/command-text-arg text)]
           (cond
@@ -483,7 +483,7 @@
         name (-> conf (get pres-key) :name)
         groups (-> conf (get pres-key) :groups)]
     (talk/def-command db cmd
-      (tr :pres/soon-talk-help)
+      (tr :pres/soon-talk-info)
       (fn [tx {{id :id} :from}]
         (talk/send-text token id (format (tr :pres/expect-soon-:pres-name) name))
         (doall (->> groups keys sort
@@ -497,7 +497,7 @@
         pres-key (keyword pres-key-name)
         {:keys [name] :as pres-conf} (-> conf (get pres-key))]
     (talk/def-talk db cmd
-      (tr :pres/schedule-talk)
+      (tr :pres/schedule-talk-info)
       :start
       (fn [tx {{id :id} :from}]
         (let [pres (codax/get-at tx [id :presentation pres-key])
@@ -654,7 +654,7 @@
   (let [cmd (str pres-key-name "drop" (when drop-all "all"))
         pres-key (keyword pres-key-name)
         name (-> conf (get pres-key) :name)
-        help (format (tr :pres/drop-talk-:pres-name-:suffix) name
+        help (format (tr :pres/drop-talk-info-:pres-name-:suffix) name
                      (if drop-all (tr :pres/all) (tr :pres/drop)))]
     (talk/def-talk db cmd help
 
@@ -777,7 +777,7 @@
   (let [pres-key (keyword pres-id)
         cmd (str pres-id "descriptions")]
     (talk/def-command db cmd
-      (tr :pres/all-scheduled-descriptions-dump-talk)
+      (tr :pres/all-scheduled-descriptions-dump-talk-info)
       (fn [tx {{id :id} :from}]
         (general/assert-admin tx conf id)
 
@@ -796,13 +796,13 @@
 
 (i18n/add-dict
  {:en {:pres
-       {:restore-lost-and-found-cmd-help "(admin) Restore lost-and-found lessons."
+       {:restore-lost-and-found-cmd-info "(admin) Restore lost-and-found lessons."
         :lost-and-found-collision "Collision between lost-and-found lessons and scheduled lessons. Canceled."
         :lost-and-found-restore? "Restore lost-and-found lessons?"
         :lost-and-found-canceled "Lost-and-found lessons restore canceled."
         :lost-and-found-restored "Lost-and-found lessons restored."}}
   :ru {:pres
-       {:restore-lost-and-found-cmd-help "(admin) Восстановить lost-and-found занятия."
+       {:restore-lost-and-found-cmd-info "(admin) Восстановить lost-and-found занятия."
         :lost-and-found-collision "Конфликт между занятиями из lost-and-found и запланированными занятиями. Отменено."
         :lost-and-found-restore? "Восстановить занятия из lost-and-found?"
         :lost-and-found-canceled "Восстановление из lost-and-found отменено."
@@ -812,7 +812,7 @@
   (let [cmd (str pres-key-name "lostandfound")
         pres-key (keyword pres-key-name)
         {:keys [lost-and-found]} (-> conf (get pres-key))
-        cmd-help (tr :pres/restore-lost-and-found-cmd-help)]
+        cmd-help (tr :pres/restore-lost-and-found-cmd-info)]
     (talk/def-talk db cmd cmd-help
       :start
       (fn [tx {{id :id} :from}]
