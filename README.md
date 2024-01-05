@@ -1,52 +1,28 @@
 # course-bot
 
-Course bot for performing laboratory works for "Computer Architecture" discipline.
+A course bot for lab work in the "Computer Architecture" discipline.
 
-## CSA course bot
-### Команды общего характера:
-- `/help` -- посмотреть справку по командам.
-- `/listgroups` -- посмотреть списки групп с зарегистрированными студентами.
-- `/quiz` -- начать тест; подтверждаете действие (yes/no), отвечаете цифрами на вопросы; по закрытию теста придёт информация о результатах.
-- `/renameme` -- изменить своё имя в реестре.
-- `/start` -- зарегистрироваться, укажите своё имя как в ведомости и свою группу.
-- `/whoami` -- посмотреть информацию в реестре о себе (имя, группа, ID).
+An up-to-date link to the bot instance for your course can be found in the course repository or in the organizational chat.
 
-Первым делом вы должны запустить команду `/start` и ввести свои данные. Бот выведет `/whoami` для проверки. В случае ошибки в имени вы можете изменить его с помощью `/renameme` (эквивалента для группы пока нет).
+You can get a list of commands from the bot via the `/help` command. It may change throughout the year, so don't miss course news.
 
-Команда `/quiz` используется для тестов в начале лекций.
+## Features
 
-### Лабораторная работа №1:
-#### Ссылки
-[Описание](https://gitlab.se.ifmo.ru/computer-systems/csa-rolling/-/blob/master/README.md#%D0%BB%D0%B0%D0%B1%D0%BE%D1%80%D0%B0%D1%82%D0%BE%D1%80%D0%BD%D0%B0%D1%8F-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0-1-%D1%80%D0%B0%D0%B7%D0%B1%D0%BE%D1%80-%D0%BF%D0%BE%D0%BB%D0%B5%D1%82%D0%BE%D0%B2) и [FAQ](https://gitlab.se.ifmo.ru/computer-systems/csa-rolling/-/blob/master/lab1faq.md) для лабораторной работы.
-#### Команды
-  - `/lab1agenda` -- расписание выступлений групп для лабораторной работы №1.
-  - `/lab1schedule` -- выбрать день своего выступления.
-  - `/lab1setgroup` -- укажите свою группу для лабораторной работы №1. Помните про виртуальную группу, сами её сменить вы не сможете.
-  - `/lab1soon` -- список выступлений на ближайшее лабораторное занятие.
-  - `/lab1submissions` -- список согласованных докладов.
-  - `/lab1submit` -- загрузка описания вашего доклада.
-  - `/lab1feedback` -- составление рейтинга докладов.
+1. `course-bot.presentation` -- automation of seminar scheduling, including:
+    - asynchronous anonymous review of seminar topics by the instructor with feedback mechanics,
+    - registration for a particular seminar by the students themselves,
+    - generation of class schedules,
+    - collecting student feedback on the seminar in the form of a performance rating.
+2. `course-bot.essay` -- automation of collection and double-blind cross-review of student essays on specific topics with plagiarism control and reporting system.
+3. `course-bot.quiz` -- small and quick quiz for current control of students' knowledge.
+4. report generation.
+5. Support for Ru and En languages.
 
-  Вы должны указать свою группу (`/lab1setgroup`) и загрузить описание доклада (`/lab1submit`). После проверки (не менее суток) вам придут результаты.
-
-  Если пришёл отзыв -- улучшаете описание и загружаете повторно. Если подтверждение, то регистрируетесь на один из дней (`/lab1schedule`). Будьте внимательны, регистрация закрывается автоматически где-то за полчаса до занятия.
-
-  Сразу после занятия требуется составить свой рейтинг докладов одногруппников (`/lab1feedback`). Приём закрывается автоматически.
-
-### Run by `clj`
+## Usage
 
 Expect course config in `../edu-csa-internal`.
 
-``` sh
-make run-clj-csa
-```
-
-### Deploy
-
-``` sh
-docker build -t csa-bot .
-docker run --name csa-bot --restart=always -d -v $PWD/../edu-csa-internal:/edu-csa-internal -v $PWD/../csa-db:/csa-db csa-bot
-```
+Use [Makefile](Makefile) targets: `backup`, `update`, `run`, `docker-build`, `docker-run`
 
 ## License
 
