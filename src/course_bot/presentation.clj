@@ -42,7 +42,7 @@
     :enter-pres-number "Enter the number of the best presentation in the list:\n"
     :lesson-feedback-not-available-:pres-group-:now-:right-times-list "Lesson feedback is not available. Your lab1 group: %s. Now: %s. Expected feedback dates:\n%s"
     :lesson-feedback-no-presentations "No presentations."
-    :lesson-feedback-what-lesson-:key-name-:datetime-list "Use format: /%sfeedback [<datetime>]\n\nYou need to specify lesson datetime explicitly:\n%s"
+    :lesson-feedback-what-lesson-:key-str-:datetime-list "Use format: /%sfeedback [<datetime>]\n\nYou need to specify lesson datetime explicitly:\n%s"
     :already-received "Already received."
     :too-early "You can't give a feedback to the future lesson."
     :collect-feedback-:pres-name-:pres-group-:datetime "Collect feedback for '%s' (%s) at %s"
@@ -63,7 +63,7 @@
     :submit-receive-before-schedule-help-:key-name "You should submit and receive approve before scheduling. Use /%ssubmit"
     :already-scheduled-help-:key-name "Already scheduled, check /%sagenda."
     :ok-check-schedule-help-:key-name "OK, you can check it by: /%sagenda"
-    :should-set-group-to-send-feedback-help-:pres-name-:key-name "To send feedback, you should set your group for %s by /%ssetgroup"
+    :should-set-group-to-send-feedback-help-:pres-name-:key-str "To send feedback, you should set your group for %s by /%ssetgroup"
     :setgroup-talk-:pres-name "set your group for '%s'"
     :submit-talk-:pres-name "submit your '%s' description"
     :check-talk-:pres-name "(admin) Check submitted presentation description for '%s'"
@@ -107,7 +107,7 @@
     :enter-pres-number "Введите номер лучшей презентации в списке:\n"
     :lesson-feedback-not-available-:pres-group-:now-:right-times-list "Отзывы не доступны для этого занятия. Ваша группа докладов: %s. Сейчас: %s. Ожидаемые сроки отзывов:\n%s"
     :lesson-feedback-no-presentations "Нет презентаций для этого занятия."
-    :lesson-feedback-what-lesson-:key-name-:datetime-list "В формате: /%sfeedback [<datetime>]\n\nКакое занятие?:\n%s"
+    :lesson-feedback-what-lesson-:key-str-:datetime-list "В формате: /%sfeedback [<datetime>]\n\nКакое занятие?:\n%s"
     :already-received "Уже получено."
     :too-early "Вы не можете оставить отзыв о будущем уроке."
     :collect-feedback-:pres-name-:pres-group-:datetime "Собрать отзывы для '%s' (%s) в %s"
@@ -128,7 +128,7 @@
     :submit-receive-before-schedule-help-:key-name "Вы должны отправить и получить одобрение до планирования. Используйте /%ssubmit"
     :already-scheduled-help-:key-name "Уже запланировано, проверьте /%sagenda."
     :ok-check-schedule-help-:key-name "Хорошо, вы можете проверить это: /%sagenda"
-    :should-set-group-to-send-feedback-help-:pres-name-:key-name "Чтобы отправить отзыв, вы должны установить свою группу для %s с помощью /%ssetgroup"
+    :should-set-group-to-send-feedback-help-:pres-name-:key-str "Чтобы отправить отзыв, вы должны установить свою группу для %s с помощью /%ssetgroup"
     :setgroup-talk-:pres-name "Установить вашу группу для '%s'"
     :submit-talk-:pres-name "Отправить описание '%s'"
     :check-talk-:pres-name "(admin) Ревью загруженных тем для '%s'"
@@ -581,7 +581,7 @@
                                              topic)})))]
 
           (when (nil? pres-group)
-            (talk/send-text token id (format (tr :pres/should-set-group-to-send-feedback-help-:pres-name-:key-name) name pres-key-str))
+            (talk/send-text token id (format (tr :pres/should-set-group-to-send-feedback-help-:pres-name-:key-str) name pres-key-str))
             (talk/stop-talk tx))
 
           (when (nil? dt)
@@ -589,7 +589,7 @@
                                     (filter #(in-min-interval? (:datetime %) now 0 nil)))]
               (if (not (empty? pass-lessons))
                 (talk/send-text token id
-                                (format (tr :pres/lesson-feedback-what-lesson-:key-name-:datetime-list)
+                                (format (tr :pres/lesson-feedback-what-lesson-:key-str-:datetime-list)
                                         pres-key-str
                                         (->> pass-lessons
                                              (map #(str "- " (:datetime %)))
