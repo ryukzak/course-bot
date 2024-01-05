@@ -48,7 +48,7 @@
     :what-is-your-group "Какая у тебя группа ("
     :group-not-found "Я не знаю эту группу. Пожалуйста, попробуй это ("
     :hi-:name "Привет, %s!"
-    :send-help-for-help "Отправь /help для получения справочной информации."
+    :send-help-for-help "Отправь /help для получения списка команд."
     :rename-me-info "Переименовать меня"
     :unregistered-rename-warn "Вы должны быть зарегистрированы, чтобы переименовать себя!"
     :what-is-your-new-name "Какое твое новое имя?"
