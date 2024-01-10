@@ -21,11 +21,6 @@
     :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Uploading (yes/no)?"
     :thank-you-your-essay-submited "Thank you, the text has been uploaded and will be submitted for review soon."
-    :status-info-:essay-name "Status of '%s'"
-    :total-essays "Total essays: "
-    :number-of-reviewers "Number of people who reviewed: "
-    :set-of-reviews "There is a set of reviews for: "
-    :essays " essays."
     :assignment-error "ERROR: can't find assignment for some reason!"
     :assignment-count "Assignment count: "
     :assignment-examples "Examples: "
@@ -67,11 +62,6 @@
     :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
     :is-loading-question "Загружаем (да/нет)?"
     :thank-you-your-essay-submited "Спасибо, текст загружен и скоро попадёт на рецензирование."
-    :status-info-:essay-name "Статус '%s'"
-    :total-essays "Всего эссе: "
-    :number-of-reviewers "Количество человек, сделавших ревью: "
-    :set-of-reviews "Есть комплект ревью на: "
-    :essays " эссе."
     :assignment-error "ОШИБКА: почему-то не удается найти задание!"
     :assignment-count "Количество заданий: "
     :assignment-examples "Примеры: "
@@ -173,25 +163,38 @@
   (->> (codax/get-at tx [])
        (filter (fn [[_k v]] (-> v :essays (get essay-code) :text)))))
 
+(i18n/add-dict
+ {:en
+  {:essay
+   {:status-help " status"
+    :status-:total-:reviewers-:review-set-:not-assigned
+    "Total essay: %s\nNumber of people who reviewed: %s\nThere is a set of reviews for: %s\nNot assigned essays: %s"}}
+  :ru
+  {:essay
+   {:status-help " статус"
+    :status-:total-:reviewers-:review-set-:not-assigned
+    "Всего эссе: %s\nКоличество человек, сделавших ревью: %s\nЕсть комплект ревью на: %s\nНе назначено эссе: %s"}}})
+
 (defn status-talk [db {token :token} essay-code]
   (talk/def-talk db (str essay-code "status")
-    (format (tr :essay/status-info-:essay-name) essay-code)
+    (str essay-code (tr :essay/status-help))
     :start
     (fn [tx {{id :id} :from}]
       (let [essays (get-essays tx essay-code)]
         (talk/send-text token id
-                        (str
-                         (tr :essay/total-essays) (count essays) "\n"
-                         (tr :essay/number-of-reviewers)
-                         (->> essays
-                              (filter #(-> % second :essays (get essay-code) :my-reviews count (> 0)))
-                              count) "\n"
-                         (tr :essay/set-of-reviews)
-                         (->> essays
-                              vals
-                              (map #(-> % :essays (get essay-code) :received-review))
-                              (filter #(= 3 (count %)))
-                              count) (tr :essay/essays))))
+                        (format (tr :essay/status-:total-:reviewers-:review-set-:not-assigned)
+                                (count essays)
+                                (->> essays
+                                     (filter #(-> % second :essays (get essay-code) :my-reviews count (> 0)))
+                                     count)
+                                (->> essays
+                                     vals
+                                     (map #(-> % :essays (get essay-code) :received-review))
+                                     (filter #(= 3 (count %)))
+                                     count)
+                                (->> essays
+                                     (filter #(-> % second :essays (get essay-code) :request-review empty?))
+                                     count))))
 
       (talk/stop-talk tx))))
 

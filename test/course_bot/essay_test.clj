@@ -53,9 +53,10 @@
 
         (talk 1 "/essay1status")
         (is (= (tt/history *chat :user-id 1)
-               [(tt/unlines "Total essays: 0"
+               [(tt/unlines "Total essay: 0"
                             "Number of people who reviewed: 0"
-                            "There is a set of reviews for: 0 essays.")])))
+                            "There is a set of reviews for: 0"
+                            "Not assigned essays: 0")])))
 
       (testing "submit"
         (talk 1 "/essay1submit")
@@ -67,9 +68,10 @@
 
         (talk 1 "/essay1status")
         (is (= (tt/history *chat :user-id 1)
-               [(tt/unlines "Total essays: 1"
+               [(tt/unlines "Total essay: 1"
                             "Number of people who reviewed: 0"
-                            "There is a set of reviews for: 0 essays.")]))
+                            "There is a set of reviews for: 0"
+                            "Not assigned essays: 1")]))
 
         (is (= {:text "u1 essay1 text"}
                (codax/get-at! db [1 :essays "essay1"]))))
@@ -123,9 +125,10 @@
 
         (talk 1 "/essay1status")
         (is (= (tt/history *chat :user-id 1)
-               [(tt/unlines "Total essays: 4"
+               [(tt/unlines "Total essay: 4"
                             "Number of people who reviewed: 0"
-                            "There is a set of reviews for: 0 essays.")])))
+                            "There is a set of reviews for: 0"
+                            "Not assigned essays: 4")])))
 
       (testing "non-admin"
         (talk 1 "/essay1assignreviewers")
@@ -243,9 +246,10 @@
 
         (talk 1 "/essay1status")
         (is (= (tt/history *chat :user-id 1)
-               [(tt/unlines "Total essays: 4"
+               [(tt/unlines "Total essay: 4"
                             "Number of people who reviewed: 1"
-                            "There is a set of reviews for: 0 essays.")]))
+                            "There is a set of reviews for: 0"
+                            "Not assigned essays: 0")]))
 
         (is (= '({:rank 3
                   :index 2
@@ -318,9 +322,10 @@
 
       (talk 1 "/essay1status")
       (is (= (tt/history *chat :user-id 1)
-             [(tt/unlines "Total essays: 4"
+             [(tt/unlines "Total essay: 4"
                           "Number of people who reviewed: 4"
-                          "There is a set of reviews for: 4 essays.")]))
+                          "There is a set of reviews for: 4"
+                          "Not assigned essays: 0")]))
 
       (is (= '({:rank 3
                 :index 2
