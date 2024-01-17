@@ -400,9 +400,9 @@
         (tt/match-csv *chat 0
                       ["ID" "review-score" "essay-score"]
                       ["1" "3" "3"]
-                      ["2" "1,5" "3"]
-                      ["3" "1,5" "3"]
-                      ["4" "1,5" "3"]))
+                      ["2" "1.5" "3"]
+                      ["3" "1.5" "3"]
+                      ["4" "1.5" "3"]))
 
       (testing "additional essays from new users"
         (doall (map #(register-user *chat talk %1 %2)

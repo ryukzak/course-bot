@@ -363,7 +363,8 @@
                                :else 1)]
         (-> (* n score-per-review)
             str
-            (str/replace #"\." ","))))))
+            ;; (str/replace #"\." ",")
+            )))))
 
 (defn calculate-essay-score [scores]
   (-> (/ (apply + scores) (count scores))
