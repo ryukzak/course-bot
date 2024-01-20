@@ -25,6 +25,7 @@
         (tt/test-handler (general/start-talk db conf)
                          (essay/submit-talk db conf "essay1" plagiarism-db)
                          (essay/submit-talk db conf "essay2" plagiarism-db)
+                         (essay/not-assigned-talk db conf "essay1")
                          (essay/status-talk db conf "essay1"))]
     (tt/with-mocked-morse *chat
       (register-user *chat talk 1 "u1")
@@ -72,6 +73,13 @@
                             "Number of people who reviewed: 0"
                             "There is a set of reviews for: 0"
                             "Not assigned essays: 1")]))
+
+        (is (answers? (talk 0 "/essay1notassigned")
+                      "Name: u1; Group: gr1; Telegram ID: 1"
+                      "u1 essay1 text"))
+
+        (is (answers? (talk 1 "/essay1notassigned")
+                      "That action requires admin rights."))
 
         (is (= {:text "u1 essay1 text"}
                (codax/get-at! db [1 :essays "essay1"]))))

@@ -163,6 +163,9 @@
   (->> (codax/get-at tx [])
        (filter (fn [[_k v]] (-> v :essays (get essay-code) :text)))))
 
+(defn filter-not-assigned [essay-code essays]
+  (filter #(-> % second :essays (get essay-code) :request-review empty?) essays))
+
 (i18n/add-dict
  {:en
   {:essay
@@ -192,11 +195,30 @@
                                      (map #(-> % :essays (get essay-code) :received-review))
                                      (filter #(= 3 (count %)))
                                      count)
-                                (->> essays
-                                     (filter #(-> % second :essays (get essay-code) :request-review empty?))
-                                     count))))
+                                (->> essays (filter-not-assigned essay-code) count))))
 
       (talk/stop-talk tx))))
+
+(i18n/add-dict
+ {:en
+  {:essay
+   {:not-assigned-help " (admin only) send not assigned essays."}}})
+
+(defn not-assigned-talk [db {token :token admin-chat-id :admin-chat-id :as conf} essay-code]
+  (talk/def-talk db (str essay-code "notassigned")
+    (str essay-code (tr :essay/not-assigned-help))
+    :start
+    (fn [tx {{id :id} :from}]
+      (general/assert-admin tx conf id)
+      (let [essays (get-essays tx essay-code)]
+        (->> essays
+             (filter-not-assigned essay-code)
+             (map (fn [[stud-id info]]
+                    (general/send-whoami tx token admin-chat-id stud-id)
+                    (talk/send-text token admin-chat-id
+                                    (-> info :essays (get essay-code) :text))))
+             doall)
+        (talk/stop-talk tx)))))
 
 (defn review-collision [essay-code id info]
   (let [reviewers (-> info :essays (get essay-code) :request-review)]
