@@ -1,6 +1,5 @@
  (ns course-bot.presentation
    (:require [clojure.java.io :as io]
-             [clojure.pprint :as pprint]
              [clojure.string :as str])
    (:require [codax.core :as codax])
    (:require [course-bot.general :as general]
@@ -679,9 +678,9 @@
 
             (general/send-whoami tx token id stud-id)
 
-            (talk/send-text token id (with-out-str (pprint/pprint pres-state)))
+            (talk/send-text token id (misc/pp-str pres-state))
             (when stud-lesson
-              (talk/send-text token id (with-out-str (pprint/pprint [dt stud-lesson]))))
+              (talk/send-text token id (misc/pp-str [dt stud-lesson])))
 
             (talk/send-yes-no-kbd token id (format (tr :pres/drop-config-:pres-name-:stud-id) name stud-id))
 
@@ -836,7 +835,7 @@
 
           (doall (for [lesson changes]
                    (let [without-text (assoc lesson :lost-state (map #(dissoc % :text) (:lost-state lesson)))]
-                     (talk/send-text token id (with-out-str (pprint/pprint without-text))))))
+                     (talk/send-text token id (misc/pp-str without-text)))))
 
           (when (some :collision changes)
             (talk/send-text token id (tr :pres/lost-and-found-collision))

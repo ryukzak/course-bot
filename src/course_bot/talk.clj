@@ -1,6 +1,5 @@
 (ns course-bot.talk
   (:require [clojure.java.io :as io]
-            [clojure.pprint :as pprint]
             [clojure.string :as str])
   (:require [clj-http.client :as http]
             [codax.core :as codax]
@@ -163,7 +162,7 @@
   (let [dt (.format (java.text.SimpleDateFormat. "yyyy-MM-dd-HH-mm-Z") (misc/today))
         filename (str "tmp/" dt "-" filename)]
     (io/make-parents filename)
-    (spit filename (with-out-str (pprint/pprint content)))
+    (spit filename (misc/pp-str content))
     (send-document token id (io/file filename))))
 
 ;; Morse helpers

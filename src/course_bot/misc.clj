@@ -1,6 +1,10 @@
 (ns course-bot.misc
   (:require [clojure.java.io :as io]
+            [clojure.pprint :as pprint]
             [codax.core :as codax]))
+
+(defn pp-str [content]
+  (with-out-str (pprint/pprint content)))
 
 (defn inline? [v] (when (and (vector? v) (= :inline (first v)))
                     (second v)))
