@@ -1,10 +1,13 @@
 (ns course-bot.talk
-  (:require [clojure.string :as str])
+  (:require [clojure.java.io :as io]
+            [clojure.pprint :as pprint]
+            [clojure.string :as str])
   (:require [clj-http.client :as http]
             [codax.core :as codax]
             [morse.api :as morse]
             [morse.handlers :as handlers])
-  (:require [course-bot.internationalization :as i18n :refer [tr]]))
+  (:require [course-bot.internationalization :as i18n :refer [tr]]
+            [course-bot.misc :as misc]))
 
 (i18n/add-dict
  {:en
@@ -155,6 +158,13 @@
 
 (defn send-text [& args] (apply morse/send-text args))
 (defn send-document [& args] (apply morse/send-document args))
+
+(defn send-as-document [token id filename content]
+  (let [dt (.format (java.text.SimpleDateFormat. "yyyy-MM-dd-HH-mm-Z") (misc/today))
+        filename (str "tmp/" dt "-" filename)]
+    (io/make-parents filename)
+    (spit filename (with-out-str (pprint/pprint content)))
+    (send-document token id (io/file filename))))
 
 ;; Morse helpers
 

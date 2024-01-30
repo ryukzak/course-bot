@@ -73,6 +73,10 @@
     {:name name :group group}
     nil))
 
+(defn whoami [tx stud-id]
+  (let [{name :name group :group} (stud-info tx stud-id)]
+    (format (tr :general/who-am-i-:name-:group-:tg-id) name group stud-id)))
+
 (defn send-whoami
   ([tx token id] (send-whoami tx token id id))
   ([tx token id stud-id]

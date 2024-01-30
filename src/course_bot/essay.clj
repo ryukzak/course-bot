@@ -436,29 +436,16 @@
 
 (i18n/add-dict
  {:en {:essay {:reportabuse-cmd-info-:essay-name "Report about abuse in essay or review in '%s'"
-
                :no-assignments "No assignments for this essay, how you can report abuse?"
                :describe-essay-or-review-problem "Describe whats wrong with essay or review on your essay in one text message (with quote of problem place)?"
                :report-approve? "Your report text + reviewed essays and feedbacks will be send to the teacher. Are you sure?"
-
-               :report-received-review-author "The follwing student submit abuse report:"
-               :report-received-review-text "Report text:"
-               :report-received-feedback "Feedback & author:"
-               :report-received-essay "Essay & author:"
-
+               :abusereport-received "Abuse report received:"
                :report-sent "Your report was sent to the teacher. Thank you!"}}
-
   :ru {:essay {:reportabuse-cmd-info-:essay-name "Пожаловаться на нарушение в эссе или ревью в '%s'"
-
                :no-assignments "Нет назначений для этого эссе, как вы можете сообщить о нарушении?"
                :describe-essay-or-review-problem "Опишите, что не так с эссе или ревью на ваше эссе в одном текстовом сообщении (с цитатой места проблемы)?"
                :report-approve? "Ваш текст + проверенные эссе и отзывы будут отправлены учителю. Вы уверены?"
-
-               :report-received-review-author "Следующий студент отправил жалобу:"
-               :report-received-review-text "Текст жалобы:"
-               :report-received-feedback "Отзыв и автор:"
-               :report-received-essay "Эссе и автор:"
-
+               :abusereport-received "Получено сообщение о нарушении:"
                :report-sent "Ваша жалоба была отправлена учителю. Спасибо!"}}})
 
 (defn reportabuse-talk [db {token :token admin-chat-id :admin-chat-id} essay-code]
@@ -483,24 +470,22 @@
       (fn [tx {{id :id} :from text :text} {report :report}]
         (case (i18n/normalize-yes-no-text text)
           "yes" (let [assignments (stud-review-assignments tx id essay-code)
-                      reviews (get-stud-reviews tx essay-code id)]
-                  (talk/send-text token admin-chat-id (tr :essay/report-received-review-author))
-                  (general/send-whoami tx token admin-chat-id id)
-                  (talk/send-text token admin-chat-id (tr :essay/report-received-review-text))
-                  (talk/send-text token admin-chat-id report)
-                  (->> assignments
-                       (map (fn [[stud-id text]]
-                              (talk/send-text token admin-chat-id (tr :essay/report-received-essay))
-                              (general/send-whoami tx token admin-chat-id stud-id)
-                              (talk/send-text token admin-chat-id text)))
-                       doall)
-                  (->> reviews
-                       (map (fn [{:keys [review-author feedback]}]
-                              (talk/send-text token admin-chat-id (tr :essay/report-received-feedback))
+                      reviews (get-stud-reviews tx essay-code id)
+                      full-report {:essay-code essay-code
+                                   :report-author (general/whoami tx id)
+                                   :report report
+                                   :essays (->> assignments
+                                                (map (fn [[stud-id text]]
+                                                       {:author (general/whoami tx stud-id)
+                                                        :text text})))
 
-                              (general/send-whoami tx token admin-chat-id review-author)
-                              (talk/send-text token admin-chat-id feedback)))
-                       doall)
+                                   :reviews (->> reviews
+                                                 (map (fn [{:keys [review-author feedback]}]
+                                                        {:author (general/whoami tx review-author)
+                                                         :text feedback})))}]
+
+                  (talk/send-text token admin-chat-id (tr :essay/abusereport-received))
+                  (talk/send-as-document token admin-chat-id (str id "abuse-report.edn") full-report)
                   (talk/send-text token id (tr :essay/report-sent))
                   (-> tx
                       (save-student-report essay-code id report)
