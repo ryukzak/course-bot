@@ -33,6 +33,8 @@
              (. f setTimeZone (java.util.TimeZone/getTimeZone "UTC"))
              f) dt))
 
+(defn today-str-utc [] (str-time-in-utc (today)))
+
 (defn filename-time [dt] (.format (java.text.SimpleDateFormat. "yyyyMMddHHmm") dt))
 
 (defn normalize-time [dt]

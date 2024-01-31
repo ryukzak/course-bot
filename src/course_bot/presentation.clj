@@ -25,7 +25,7 @@
     :yes-or-no "Please, yes or no?"
     :wait-for-review-:submissions-count "Wait for review: %s"
     :remarks "Remarks:"
-    :receive-from-stud-topic-:group-:topic "We receive from the student (group %s): \n\nTopic: %s"
+    :receive-from-stud-topic-:group-:topic "We receive from the student (group %s):\n\nTopic: %s"
     :ok-stud-will-receive-approve-:command "OK, student will receive his approve.\n\n/%s"
     :approved-description-:pres-name "'%s' description was approved."
     :ok-need-send-remark-for-student "OK, you need to send your remark for the student:"
@@ -90,7 +90,7 @@
     :yes-or-no "Пожалуйста, да или нет?"
     :wait-for-review-:submissions-count "Дождитесь проверки: %s"
     :remarks "Примечания:"
-    :receive-from-stud-topic-:group-:topic "Получаем от студента (группа %s): \n\nТема: %s"
+    :receive-from-stud-topic-:group-:topic "Получаем от студента (группа %s):\n\nТема: %s"
     :ok-stud-will-receive-approve-:command "Хорошо, учащийся получит одобрение.\n\n/%s"
     :approved-description-:pres-name "Описание '%s' одобрено."
     :ok-need-send-remark-for-student "Хорошо, вам нужно отправить свое замечание для студента:"
@@ -154,12 +154,37 @@
 (defn submit-presentation [tx pres-key stud-id text]
   (-> tx
       (codax/assoc-at [stud-id :presentation pres-key :on-review?] true)
+      (codax/update-at [stud-id :presentation pres-key :history]
+                       #(conj % {:date (misc/today-str-utc)
+                                 :action :submit}))
       (codax/assoc-at [stud-id :presentation pres-key :description] text)))
 
 (defn approve-presentation [tx pres-key stud-id]
   (-> tx
       (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
+      (codax/update-at [stud-id :presentation pres-key :history]
+                       #(conj % {:date (misc/today-str-utc)
+                                 :action :approve}))
       (codax/assoc-at [stud-id :presentation pres-key :approved?] true)))
+
+(defn reject-presentation [tx pres-key stud-id remark]
+  (-> tx
+      (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
+      (codax/update-at [stud-id :presentation pres-key :remarks] conj remark)
+      (codax/update-at [stud-id :presentation pres-key :history]
+                       #(conj % {:date (misc/today-str-utc)
+                                 :action :reject}))))
+
+(defn drop-presentation [tx pres-key stud-id]
+  (-> tx
+      (codax/dissoc-at [stud-id :presentation pres-key :on-review?])
+      (codax/dissoc-at [stud-id :presentation pres-key :approved?])
+      (codax/dissoc-at [stud-id :presentation pres-key :scheduled?])
+      (codax/dissoc-at [stud-id :presentation pres-key :group])
+      (codax/dissoc-at [stud-id :presentation pres-key :description])
+      (codax/update-at [stud-id :presentation pres-key :history]
+                       #(conj % {:date (misc/today-str-utc)
+                                 :action :drop}))))
 
 (defn schedule-lesson [tx pres-key pres-group datetime stud-id]
   (-> tx
@@ -348,8 +373,7 @@
         (talk/send-text token id (format (tr :pres/declined-description-:command) cmd))
         (talk/send-text token stud-id (format (tr :pres/rejected-description-:pres-name-:remark) name remark))
         (-> tx
-            (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
-            (codax/update-at [stud-id :presentation pres-key :remarks] conj remark)
+            (reject-presentation pres-key stud-id remark)
             talk/stop-talk)))))
 
 (defn submissions-talk [db {token :token admin-chat-id :admin-chat-id :as conf} pres-key-name]
@@ -694,7 +718,7 @@
                   (talk/send-text token id (format (tr :pres/drop-student-:stud-id) stud-id))
                   (talk/send-text token stud-id (format (tr :pres/drop-state-:pres-name) name))
                   (-> (if drop-all
-                        (codax/assoc-at tx [stud-id :presentation pres-key] nil)
+                        (drop-presentation tx pres-key stud-id)
                         (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
                       (codax/assoc-at [:presentation pres-key group]
                                       (->> lessons

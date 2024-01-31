@@ -19,8 +19,9 @@
 
 (defn register-user-2 [talk stud-id name pres-group]
   (testing "register user"
-    (talk stud-id "/start")
-    (talk stud-id name)
+    (is (answers? (talk stud-id "/start" name)
+                  "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"
+                  "What is your group (gr1, gr2)?"))
     (is (answers? (talk stud-id "gr1")
                   (str "Hi, " name "!")
                   (str "Name: " name "; Group: gr1; Telegram ID: " stud-id)
@@ -80,15 +81,18 @@
                     "Didn't understand: noooooooooooooo. Yes or no?"))
       (is (answers? (talk 1 "no")
                     "You can do this later."))
-      (talk 1 "/lab1submit")
-      (talk 1 "bla-bla-bla the best")
-      (is (answers? (talk 1 "yes")
-                    "Registered, the teacher will check it soon."))
-      (is (= {:lab1
-              {:description "bla-bla-bla the best"
-               :group "lgr1"
-               :on-review? true}}
-             (codax/get-at! db [1 :presentation]))))))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:34 +0000"))]
+        (talk 1 "/lab1submit")
+        (talk 1 "bla-bla-bla the best")
+        (is (answers? (talk 1 "yes")
+                      "Registered, the teacher will check it soon."))
+        (is (= {:lab1
+                {:description "bla-bla-bla the best"
+                 :group "lgr1"
+                 :history '({:date "2022.01.01 11:34 +0000", :action :submit})
+                 :on-review? true}}
+               (codax/get-at! db [1 :presentation])))))))
 
 (deftest check-and-submissions-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
@@ -109,32 +113,36 @@
                     "That action requires admin rights."))
       (is (answers? (talk 0 "/lab1check")
                     "Nothing to check."))
-      (talk 1 "/lab1submit")
-      (talk 1 "bla-bla-bla the best")
-      (is (answers? (talk 1 "yes")
-                    "Registered, the teacher will check it soon."))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:30 +0000"))]
+        (talk 1 "/lab1submit")
+        (talk 1 "bla-bla-bla the best")
+        (is (answers? (talk 1 "yes")
+                      "Registered, the teacher will check it soon.")))
+
       (testing "check and reject"
-        (talk 0 "/lab1check")
-        (tt/match-history *chat
-                          (tt/text 0 "Wait for review: 1")
-                          (tt/text 0 "Approved presentation in 'lgr1':\n")
-                          (tt/text 0 "We receive from the student (group gr1): \n\nTopic: bla-bla-bla the best")
-                          (tt/text 0 "bla-bla-bla the best")
-                          (tt/text 0 "Approve (yes or no)?"))
+        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:31 +0000"))]
+          (talk 0 "/lab1check")
+          (tt/match-history *chat
+                            (tt/text 0 "Wait for review: 1")
+                            (tt/text 0 "Approved presentation in 'lgr1':\n")
+                            (tt/text 0 "We receive from the student (group gr1):\n\nTopic: bla-bla-bla the best")
+                            (tt/text 0 "bla-bla-bla the best")
+                            (tt/text 0 "Approve (yes or no)?"))
 
-        (is (answers? (talk 0 "nooooooooooooo")
-                      "Didn't understand: nooooooooooooo. Yes or no?"))
-        (is (answers? (talk 0 "no")
-                      "OK, you need to send your remark for the student:"))
-        (talk 0 "Please, add details!")
-        (tt/match-history *chat
-                          (tt/text 0 "Presentation description was declined. The student was informed about your decision.\n\n/lab1check")
-                          (tt/text 1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details!"))
+          (is (answers? (talk 0 "nooooooooooooo")
+                        "Didn't understand: nooooooooooooo. Yes or no?"))
+          (is (answers? (talk 0 "no")
+                        "OK, you need to send your remark for the student:"))
+          (talk 0 "Please, add details!")
+          (tt/match-history *chat
+                            (tt/text 0 "Presentation description was declined. The student was informed about your decision.\n\n/lab1check")
+                            (tt/text 1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details!"))
 
-        (talk 1 "/lab1submissions")
-        (tt/match-history *chat
-                          (tt/text 1 "Submitted presentation in 'lgr1':"
-                                   "- bla-bla-bla the best (Bot Botovich) - REJECTED")))
+          (talk 1 "/lab1submissions")
+          (tt/match-history *chat
+                            (tt/text 1 "Submitted presentation in 'lgr1':"
+                                     "- bla-bla-bla the best (Bot Botovich) - REJECTED"))))
 
       (testing "submissions-talk with specific group"
         (is (answers? (talk 2 "/lab1submissions")
@@ -149,66 +157,80 @@
                           (tt/text 0 "Submitted presentation in 'lgr2':\n")))
 
       (testing "resubmit 2"
-        (talk 1 "/lab1submit")
-        (talk 1 "bla-bla-bla the best (second reject)")
-        (is (answers? (talk 1 "yes")
-                      "Registered, the teacher will check it soon.")))
+        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:32 +0000"))]
+          (talk 1 "/lab1submit")
+          (talk 1 "bla-bla-bla the best (second reject)")
+          (is (answers? (talk 1 "yes")
+                        "Registered, the teacher will check it soon."))))
 
       (testing "check and reject 2"
+        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:33 +0000"))]
+          (is (answers? (talk 0 "/lab1check")
+                        "Wait for review: 1"
+                        "Approved presentation in 'lgr1':"
+                        "Remarks:"
+                        "Please, add details!"
+                        "We receive from the student (group gr1):\n\nTopic: bla-bla-bla the best (second reject)"
+                        "bla-bla-bla the best (second reject)"
+                        "Approve (yes or no)?"))
+
+          (is (answers? (talk 0 "no")
+                        "OK, you need to send your remark for the student:"))
+          (talk 0 "Please, add details 2!")
+          (tt/match-history *chat
+                            (tt/text 0 "Presentation description was declined. The student was informed about your decision.\n\n/lab1check")
+                            (tt/text 1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details 2!"))
+
+          (talk 1 "/lab1submissions")))
+
+      (is (= {:lab1
+              {:description "bla-bla-bla the best (second reject)"
+               :group "lgr1"
+               :history
+               '({:date "2022.01.01 11:33 +0000", :action :reject}
+                 {:date "2022.01.01 11:32 +0000", :action :submit}
+                 {:date "2022.01.01 11:31 +0000", :action :reject}
+                 {:date "2022.01.01 11:30 +0000", :action :submit})
+               :on-review? false
+               :remarks '("Please, add details 2!"
+                          "Please, add details!")}}
+             (codax/get-at! db [1 :presentation])))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:34 +0000"))]
+        (talk 1 "/lab1submit")
+        (talk 1 "bla-bla-bla 2\ntext")
+        (is (answers? (talk 1 "yes")
+                      "Registered, the teacher will check it soon."))
+        (testing "Try to resubmit:"
+          (is (answers? (talk 1 "/lab1submit")
+                        "On review, you will be informed when it is finished.")))
+
         (talk 0 "/lab1check")
         (tt/match-history *chat
                           (tt/text 0 "Wait for review: 1")
                           (tt/text 0 "Approved presentation in 'lgr1':\n")
                           (tt/text 0 "Remarks:")
                           (tt/text 0 "Please, add details!")
-                          (tt/text 0 "We receive from the student (group gr1): \n\nTopic: bla-bla-bla the best (second reject)")
-                          (tt/text 0 "bla-bla-bla the best (second reject)")
+                          (tt/text 0 "Please, add details 2!")
+                          (tt/text 0 "We receive from the student (group gr1):\n\nTopic: bla-bla-bla 2")
+                          (tt/text 0 "bla-bla-bla 2\ntext")
                           (tt/text 0 "Approve (yes or no)?"))
 
-        (is (answers? (talk 0 "no")
-                      "OK, you need to send your remark for the student:"))
-        (talk 0 "Please, add details 2!")
+        (talk 0 "yes")
         (tt/match-history *chat
-                          (tt/text 0 "Presentation description was declined. The student was informed about your decision.\n\n/lab1check")
-                          (tt/text 1 "'Lab 1 presentation' description was rejected. Remark:\n\nPlease, add details 2!"))
-
-        (talk 1 "/lab1submissions"))
-
-      (is (= {:lab1
-              {:description "bla-bla-bla the best (second reject)"
-               :group "lgr1"
-               :on-review? false
-               :remarks '("Please, add details 2!"
-                          "Please, add details!")}}
-             (codax/get-at! db [1 :presentation])))
-
-      (talk 1 "/lab1submit")
-      (talk 1 "bla-bla-bla 2\ntext")
-      (is (answers? (talk 1 "yes")
-                    "Registered, the teacher will check it soon."))
-      (testing "Try to resubmit:"
-        (is (answers? (talk 1 "/lab1submit")
-                      "On review, you will be informed when it is finished.")))
-
-      (talk 0 "/lab1check")
-      (tt/match-history *chat
-                        (tt/text 0 "Wait for review: 1")
-                        (tt/text 0 "Approved presentation in 'lgr1':\n")
-                        (tt/text 0 "Remarks:")
-                        (tt/text 0 "Please, add details!")
-                        (tt/text 0 "Please, add details 2!")
-                        (tt/text 0 "We receive from the student (group gr1): \n\nTopic: bla-bla-bla 2")
-                        (tt/text 0 "bla-bla-bla 2\ntext")
-                        (tt/text 0 "Approve (yes or no)?"))
-
-      (talk 0 "yes")
-      (tt/match-history *chat
-                        (tt/text 0 "OK, student will receive his approve.\n\n/lab1check")
-                        (tt/text 1 "'Lab 1 presentation' description was approved."))
+                          (tt/text 0 "OK, student will receive his approve.\n\n/lab1check")
+                          (tt/text 1 "'Lab 1 presentation' description was approved.")))
 
       (is (= {:lab1
               {:description "bla-bla-bla 2\ntext"
                :group "lgr1"
+               :history
+               '({:date "2022.01.01 11:34 +0000", :action :approve}
+                 {:date "2022.01.01 11:34 +0000", :action :submit}
+                 {:date "2022.01.01 11:33 +0000", :action :reject}
+                 {:date "2022.01.01 11:32 +0000", :action :submit}
+                 {:date "2022.01.01 11:31 +0000", :action :reject}
+                 {:date "2022.01.01 11:30 +0000", :action :submit})
                :approved? true
                :on-review? false
                :remarks '("Please, add details 2!"
@@ -222,50 +244,54 @@
                       "Already submitted and approved, maybe you need to schedule it? /lab1schedule")))
 
       (testing "Second student"
-        (register-user *chat talk 2 "Alice")
-        (is (answers? (talk 2 "/lab1submissions")
-                      "Please, set your 'Lab 1 presentation' group by /lab1setgroup"))
-        (talk 2 "/lab1setgroup")
-        (talk 2 "lgr1")
+        (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:35 +0000"))]
+          (register-user *chat talk 2 "Alice")
+          (is (answers? (talk 2 "/lab1submissions")
+                        "Please, set your 'Lab 1 presentation' group by /lab1setgroup"))
+          (talk 2 "/lab1setgroup")
+          (talk 2 "lgr1")
 
-        (talk 2 "/lab1submissions")
-        (tt/match-history *chat
-                          (tt/text 2 "Submitted presentation in 'lgr1':"
-                                   "- bla-bla-bla 2 (Bot Botovich) - APPROVED"))
+          (talk 2 "/lab1submissions")
+          (tt/match-history *chat
+                            (tt/text 2 "Submitted presentation in 'lgr1':"
+                                     "- bla-bla-bla 2 (Bot Botovich) - APPROVED"))
 
-        (talk 2 "/lab1submit")
-        (talk 2 "pres 2")
-        (is (answers? (talk 2 "yes")
-                      "Registered, the teacher will check it soon."))
-        (talk 2 "/lab1submissions")
-        (tt/match-history *chat
-                          (tt/text 2 "Submitted presentation in 'lgr1':"
-                                   "- bla-bla-bla 2 (Bot Botovich) - APPROVED"
-                                   "- pres 2 (Alice) - ON-REVIEW"))
+          (talk 2 "/lab1submit")
+          (talk 2 "pres 2")
+          (is (answers? (talk 2 "yes")
+                        "Registered, the teacher will check it soon."))
+          (talk 2 "/lab1submissions")
+          (tt/match-history *chat
+                            (tt/text 2 "Submitted presentation in 'lgr1':"
+                                     "- bla-bla-bla 2 (Bot Botovich) - APPROVED"
+                                     "- pres 2 (Alice) - ON-REVIEW"))
 
-        (talk 0 "/lab1check")
-        (tt/match-history *chat
-                          (tt/text 0 "Wait for review: 1")
-                          (tt/text 0 "Approved presentation in 'lgr1':"
-                                   "- bla-bla-bla 2 (Bot Botovich)")
-                          (tt/text 0 "We receive from the student (group gr1): \n"
-                                   "Topic: pres 2")
-                          (tt/text 0 "pres 2")
-                          (tt/text 0 "Approve (yes or no)?"))
-        (talk 0 "yes")
-        (tt/match-history *chat
-                          (tt/text 0 "OK, student will receive his approve.\n\n/lab1check")
-                          (tt/text 2 "'Lab 1 presentation' description was approved."))
+          (talk 0 "/lab1check")
+          (tt/match-history *chat
+                            (tt/text 0 "Wait for review: 1")
+                            (tt/text 0 "Approved presentation in 'lgr1':"
+                                     "- bla-bla-bla 2 (Bot Botovich)")
+                            (tt/text 0 "We receive from the student (group gr1):\n"
+                                     "Topic: pres 2")
+                            (tt/text 0 "pres 2")
+                            (tt/text 0 "Approve (yes or no)?"))
+          (talk 0 "yes")
+          (tt/match-history *chat
+                            (tt/text 0 "OK, student will receive his approve.\n\n/lab1check")
+                            (tt/text 2 "'Lab 1 presentation' description was approved."))
 
-        (is (= {:lab1
-                {:description "pres 2"
-                 :group "lgr1"
-                 :approved? true
-                 :on-review? false}}
-               (codax/get-at! db [2 :presentation])))
+          (is (= {:lab1
+                  {:description "pres 2"
+                   :group "lgr1"
+                   :history
+                   '({:date "2022.01.01 11:35 +0000", :action :approve}
+                     {:date "2022.01.01 11:35 +0000", :action :submit})
+                   :approved? true
+                   :on-review? false}}
+                 (codax/get-at! db [2 :presentation])))
 
-        (is (answers? (talk 2 "/lab1submissions")
-                      (str/join "\n" (quote ("Submitted presentation in 'lgr1':" "- bla-bla-bla 2 (Bot Botovich) - APPROVED" "- pres 2 (Alice) - APPROVED")))))))))
+          (is (answers? (talk 2 "/lab1submissions")
+                        (str/join "\n" (quote ("Submitted presentation in 'lgr1':" "- bla-bla-bla 2 (Bot Botovich) - APPROVED" "- pres 2 (Alice) - APPROVED"))))))))))
 
 (deftest schedule-agenda-and-drop-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
@@ -285,36 +311,38 @@
                          (pres/drop-talk db conf "lab1" true))]
 
     (tt/with-mocked-morse *chat
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:30 +0000"))]
+        (register-user *chat talk 1 "Alice")
+        (talk 1 "/lab1setgroup"
+              "lgr1"
+              "/lab1submit"
+              "pres 1")
+        (is (answers? (talk 1 "yes")
+                      "Registered, the teacher will check it soon."))
+        (register-user *chat talk 2 "Bob")
 
-      (register-user *chat talk 1 "Alice")
-      (talk 1 "/lab1setgroup")
-      (talk 1 "lgr1")
-      (talk 1 "/lab1submit")
-      (talk 1 "pres 1")
-      (is (answers? (talk 1 "yes")
-                    "Registered, the teacher will check it soon."))
-      (register-user *chat talk 2 "Bob")
+        (testing "not registered for presentation"
+          (is (answers? (talk 2 "/lab1schedule")
+                        "Please, set your 'Lab 1 presentation' group by /lab1setgroup")))
 
-      (testing "not registered for presentation"
-        (is (answers? (talk 2 "/lab1schedule")
-                      "Please, set your 'Lab 1 presentation' group by /lab1setgroup")))
+        (talk 2 "/lab1setgroup"
+              "lgr1"
+              "/lab1submit"
+              "pres 2")
+        (is (answers? (talk 2 "yes")
+                      "Registered, the teacher will check it soon."))
+        (testing "not checked"
+          (is (answers? (talk 2 "/lab1schedule")
+                        "You should submit and receive approve before scheduling. Use /lab1submit"))))
 
-      (talk 2 "/lab1setgroup")
-      (talk 2 "lgr1")
-      (talk 2 "/lab1submit")
-      (talk 2 "pres 2")
-      (is (answers? (talk 2 "yes")
-                    "Registered, the teacher will check it soon."))
-      (testing "not checked"
-        (is (answers? (talk 2 "/lab1schedule")
-                      "You should submit and receive approve before scheduling. Use /lab1submit")))
-
-      (talk 0 "/lab1check")
-      (talk 0 "yes")
-      (talk 0 "/lab1check")
-      (talk 0 "yes")
-      (talk 0 "/lab1check")
-      (talk 0 "Nothing to check")
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.02 11:30 +0000"))]
+        (talk 0 "/lab1check")
+        (talk 0 "yes")
+        (talk 0 "/lab1check")
+        (talk 0 "yes")
+        (is (answers?
+             (talk 0 "/lab1check")
+             "Nothing to check.")))
 
       (talk 2 "/lab1submissions")
       (tt/match-history *chat
@@ -464,6 +492,9 @@
       (is (= {:lab1 {:approved? true
                      :description "pres 1"
                      :group "lgr1"
+                     :history
+                     '({:date "2022.01.02 11:30 +0000", :action :approve}
+                       {:date "2022.01.01 11:30 +0000", :action :submit})
                      :on-review? false
                      :scheduled? true}}
              (codax/get-at! db [1 :presentation])))
@@ -471,6 +502,9 @@
       (is (= {:lab1 {:approved? true
                      :description "pres 2"
                      :group "lgr1"
+                     :history
+                     '({:date "2022.01.02 11:30 +0000", :action :approve}
+                       {:date "2022.01.01 11:30 +0000", :action :submit})
                      :on-review? false
                      :scheduled? true}}
              (codax/get-at! db [2 :presentation])))
@@ -494,6 +528,11 @@
                     (tt/unlines
                      "{:approved? true,"
                      " :group \"lgr1\","
+
+                     " :history"
+                     " ({:date \"2022.01.02 11:30 +0000\", :action :approve}"
+                     "  {:date \"2022.01.01 11:30 +0000\", :action :submit}),"
+
                      " :on-review? false,"
                      " :scheduled? true,"
                      " :topic \"pres 1\"}")
@@ -510,6 +549,11 @@
                     (tt/unlines
                      "{:approved? true,"
                      " :group \"lgr1\","
+
+                     " :history"
+                     " ({:date \"2022.01.02 11:30 +0000\", :action :approve}"
+                     "  {:date \"2022.01.01 11:30 +0000\", :action :submit}),"
+
                      " :on-review? false,"
                      " :scheduled? true,"
                      " :topic \"pres 1\"}")
@@ -524,6 +568,9 @@
       (is (= {:lab1 {:approved? true
                      :description "pres 1"
                      :group "lgr1"
+                     :history
+                     '({:date "2022.01.02 11:30 +0000", :action :approve}
+                       {:date "2022.01.01 11:30 +0000", :action :submit})
                      :on-review? false
                      :scheduled? nil}}
              (codax/get-at! db [1 :presentation])))
@@ -532,23 +579,32 @@
                       "2022.01.02 12:00 +0000" {:stud-ids '()}}}
              (codax/get-at! db [:presentation :lab1])))
 
-      (is (answers? (talk 0 "/lab1dropall 2")
-                    "Name: Bob; Group: gr1; Telegram ID: 2"
-                    (tt/unlines
-                     "{:approved? true,"
-                     " :group \"lgr1\","
-                     " :on-review? false,"
-                     " :scheduled? true,"
-                     " :topic \"pres 2\"}")
-                    "[\"2022.01.01 12:00 +0000\" {:stud-ids (2)}]"
-                    "Drop 'Lab 1 presentation' config for 2?"))
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:39 +0000"))]
+        (is (answers? (talk 0 "/lab1dropall 2")
+                      "Name: Bob; Group: gr1; Telegram ID: 2"
+                      (tt/unlines
+                       "{:approved? true,"
+                       " :group \"lgr1\","
 
-      (talk 0 "yes")
-      (tt/match-history *chat
-                        (tt/text 0 "We drop student: 2")
-                        (tt/text 2 "We drop your state for Lab 1 presentation"))
+                       " :history"
+                       " ({:date \"2022.01.02 11:30 +0000\", :action :approve}"
+                       "  {:date \"2022.01.01 11:30 +0000\", :action :submit}),"
 
-      (is (= {:lab1 nil}
+                       " :on-review? false,"
+                       " :scheduled? true,"
+                       " :topic \"pres 2\"}")
+                      "[\"2022.01.01 12:00 +0000\" {:stud-ids (2)}]"
+                      "Drop 'Lab 1 presentation' config for 2?"))
+
+        (talk 0 "yes")
+        (tt/match-history *chat
+                          (tt/text 0 "We drop student: 2")
+                          (tt/text 2 "We drop your state for Lab 1 presentation")))
+
+      (is (= {:lab1 {:history
+                     '({:date "2022.01.01 11:39 +0000", :action :drop}
+                       {:date "2022.01.02 11:30 +0000", :action :approve}
+                       {:date "2022.01.01 11:30 +0000", :action :submit})}}
              (codax/get-at! db [2 :presentation])))
 
       (is (= {"lgr1" {"2022.01.01 12:00 +0000" {:stud-ids '()}
@@ -792,27 +848,28 @@
       (register-user-2 talk 2 "Bob" "lgr1")
       (register-user-2 talk 3 "Charly" "lgr1")
 
-      (talk 1 "/lab1submit")
-      (talk 1 "pres 1")
-      (is (answers? (talk 1 "yes")
-                    "Registered, the teacher will check it soon."))
+      (with-redefs [misc/today (fn [] (misc/read-time "2021.01.01 10:00 +0000"))]
+        (talk 1 "/lab1submit")
+        (talk 1 "pres 1")
+        (is (answers? (talk 1 "yes")
+                      "Registered, the teacher will check it soon."))
 
-      (talk 2 "/lab1submit")
-      (talk 2 "pres 2")
-      (is (answers? (talk 2 "yes")
-                    "Registered, the teacher will check it soon."))
+        (talk 2 "/lab1submit")
+        (talk 2 "pres 2")
+        (is (answers? (talk 2 "yes")
+                      "Registered, the teacher will check it soon."))
 
-      (talk 3 "/lab1submit")
-      (talk 3 "pres 3")
-      (is (answers? (talk 3 "yes")
-                    "Registered, the teacher will check it soon."))
+        (talk 3 "/lab1submit")
+        (talk 3 "pres 3")
+        (is (answers? (talk 3 "yes")
+                      "Registered, the teacher will check it soon."))
 
-      (talk 0 "/lab1check")
-      (is (answers? (talk 0 "yes")
-                    [0 (tt/unlines "OK, student will receive his approve."
-                                   ""
-                                   "/lab1check")]
-                    [1 "'Lab 1 presentation' description was approved."]))
+        (talk 0 "/lab1check")
+        (is (answers? (talk 0 "yes")
+                      [0 (tt/unlines "OK, student will receive his approve."
+                                     ""
+                                     "/lab1check")]
+                      [1 "'Lab 1 presentation' description was approved."])))
 
       (is (answers? (talk 1 "/lab1lostandfound")
                     "That action requires admin rights."))
@@ -842,10 +899,14 @@
 
           (is (answers? (talk 0 "/lab1drop 1" "yes")
                         [0 "Name: Alice; Group: gr1; Telegram ID: 1"]
-
                         [0 (tt/unlines
                             "{:approved? true,"
                             " :group \"lgr1\","
+
+                            " :history"
+                            " ({:date \"2021.01.01 10:00 +0000\", :action :approve}"
+                            "  {:date \"2021.01.01 10:00 +0000\", :action :submit}),"
+
                             " :on-review? false,"
                             " :scheduled? true,"
                             " :topic \"pres 1\"}")]
