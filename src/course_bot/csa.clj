@@ -71,18 +71,20 @@
     (handlers/defhandler bot-api
       (general/start-talk db conf)
       (general/whoami-talk db conf)
-      (general/renameme-talk db conf)
 
       (general/listgroups-talk db conf)
-      (pres/setgroup-talk db conf "lab1")
 
-      (pres/submit-talk db conf "lab1")
+      (pres/setgroup-talk db conf "lab1")
       (pres/submissions-talk db conf "lab1")
-      (pres/check-talk db conf "lab1")
+      (pres/submit-talk db conf "lab1")
       (pres/schedule-talk db conf "lab1")
-      (pres/agenda-talk db conf "lab1")
       (pres/soon-talk db conf "lab1")
       (pres/feedback-talk db conf "lab1")
+
+      (pres/agenda-talk db conf "lab1")
+
+      ;; lab1 for admin
+      (pres/check-talk db conf "lab1")
       (pres/drop-talk db conf "lab1" false)
       (pres/drop-talk db conf "lab1" true)
       (pres/all-scheduled-descriptions-dump-talk db conf "lab1")

@@ -160,26 +160,6 @@
           (talk/send-text token id (tr :general/send-help-for-help))
           (talk/stop-talk tx))))))
 
-(defn renameme-talk [db {token :token}]
-  (talk/def-talk db "renameme" (tr :general/rename-me-info)
-    :start
-    (fn [tx {{id :id} :from}]
-      (let [info (codax/get-at tx [id])]
-        (when (nil? (:name info))
-          (talk/send-text token id (tr :general/unregistered-rename-warn))
-          (talk/stop-talk tx))
-        (talk/send-text token id (tr :general/what-is-your-new-name))
-        (talk/change-branch tx :get-name)))
-
-    :get-name
-    (fn [tx {{id :id} :from text :text}]
-      (let [tx (-> tx
-                   (codax/assoc-at [id :name] text)
-                   (codax/assoc-at [id :rename-date] (str (new java.util.Date))))]
-        (talk/send-text token id (tr :general/renamed))
-        (send-whoami tx token id)
-        (talk/stop-talk tx)))))
-
 (defn warning-on-edited-message [{token :token}]
   (fn [{{{id :id} :from :as edited-message} :edited_message}]
     (when (some? edited-message)

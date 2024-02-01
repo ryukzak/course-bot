@@ -80,33 +80,3 @@
 
         (is (= '({:name "Bot Botovich", :group "gr1"})
                (codax/get-at! db [1 :old-info])))))))
-
-(deftest renameme-talk-test
-  (let [conf (misc/get-config "conf-example/csa-2023.edn")
-        db (tt/test-database (-> conf :db-path))
-
-        {talk :talk, *chat :*chat}
-        (tt/test-handler (general/start-talk db conf)
-                         (general/whoami-talk db conf)
-                         (general/renameme-talk db conf))]
-    (tt/with-mocked-morse *chat
-      (is (answers? (talk 1 "/renameme")
-                    "You should be registered to rename yourself!"))
-
-      (is (answers? (talk 1 "/start" "Bot Botovich" "gr1")
-                    "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"
-                    "What is your group (gr1, gr2)?"
-                    "Hi, Bot Botovich!"
-                    "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
-                    "Send /help for help."))
-
-      (is (answers? (talk 1 "/whoami")
-                    "Name: Bot Botovich; Group: gr1; Telegram ID: 1"))
-
-      (is (answers? (talk 1 "/renameme" "Buddy")
-                    "What is your new name?"
-                    "Renamed:"
-                    "Name: Buddy; Group: gr1; Telegram ID: 1"))
-
-      (is (answers? (talk 1 "/whoami")
-                    "Name: Buddy; Group: gr1; Telegram ID: 1")))))
