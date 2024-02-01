@@ -22,7 +22,7 @@
 (i18n/add-dict
  {:en
   {:csa
-   {:start "Bot activated, my Lord!"
+   {:start-:conf "Bot activated, my Lord! Configuration: %s"
     :webhook-:url "Webhook is set, my Lord: %s"
     :dot "."
     :stop "Bot is dead, my Lord!"
@@ -31,7 +31,7 @@
     :db-failure-path "Can't find the database path, my Lord!"}}
   :ru
   {:csa
-   {:start "Бот активирован, мой господин!"
+   {:start-:conf "Бот активирован, мой господин! Конфигурация: %s"
     :webhook-:url "Вебхук установлен, мой господин: %s"
     :stop "Бот погиб, мой господин!"
     :unknown-:message "Неизвестное сообщение: %s, а вы точно мой господин?"
@@ -56,31 +56,35 @@
 (declare bot-api id message)
 
 (defn -main [& _args]
-  (let [{token :token
+  (let [conf-file (or (System/getenv "CONF")
+                      (throw (ex-info "CONF env variable is not setted" {})))
+        {token :token
          db-path :db-path
          plagiarism-path :plagiarism-path
          webhook-url :webhook-url
          webhook-secrete :webhook-secrete
          webhook-port :webhook-port
-         :as conf} (misc/get-config "../edu-csa-internal/csa-2023.edn") ; FIXME:
+         :as conf} (misc/get-config conf-file)
         db (open-database-or-fail db-path)
         plagiarism-db (plagiarism/open-path-or-fail plagiarism-path)]
 
     (handlers/defhandler bot-api
       (general/start-talk db conf)
       (general/whoami-talk db conf)
-      (general/renameme-talk db conf)
 
       (general/listgroups-talk db conf)
-      (pres/setgroup-talk db conf "lab1")
 
-      (pres/submit-talk db conf "lab1")
+      (pres/setgroup-talk db conf "lab1")
       (pres/submissions-talk db conf "lab1")
-      (pres/check-talk db conf "lab1")
+      (pres/submit-talk db conf "lab1")
       (pres/schedule-talk db conf "lab1")
-      (pres/agenda-talk db conf "lab1")
       (pres/soon-talk db conf "lab1")
       (pres/feedback-talk db conf "lab1")
+
+      (pres/agenda-talk db conf "lab1")
+
+      ;; lab1 for admin
+      (pres/check-talk db conf "lab1")
       (pres/drop-talk db conf "lab1" false)
       (pres/drop-talk db conf "lab1" true)
       (pres/all-scheduled-descriptions-dump-talk db conf "lab1")
@@ -164,7 +168,7 @@
           (middleware/wrap-json-body {:keywords? true})
           (middleware/wrap-json-response)))
 
-    (println (tr :csa/start))
+    (println (format (tr :csa/start-:conf) conf-file))
 
     (cond (some? webhook-url)
           (let [url (str webhook-url "-" webhook-secrete)]
