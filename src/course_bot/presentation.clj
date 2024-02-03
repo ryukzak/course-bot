@@ -326,6 +326,19 @@
             sort
             (str/join "\n"))))
 
+(defn assert-pres-admin [tx conf pres-key id]
+  (let [admins (some-> conf (get pres-key) :admins)]
+    (when-not (some #(= id %) admins)
+      (general/assert-admin tx conf id))))
+
+(defn is-check-conflict [tx stud-id pres-key history-count]
+  (not= (count (codax/get-at tx [stud-id :presentation pres-key :history]))
+        history-count))
+
+(i18n/add-dict
+ {:en {:pres {:check-conflict "Check conflict, someone check it faster, so I use his review."}}
+  :ru {:pres {:check-conflict "Конфликт проверки. Кто-то вас опередил и я взял его результат."}}})
+
 (defn check-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "check")
         pres-key (keyword pres-key-name)
@@ -334,7 +347,7 @@
       (format (tr :pres/check-talk-info-:pres-name) name)
       :start
       (fn [tx {{id :id} :from}]
-        (general/assert-admin tx conf id)
+        (assert-pres-admin tx conf pres-key id)
         (let [submitions (wait-for-reviews tx pres-key)
               submition (first submitions)]
           (when (nil? submition)
@@ -343,7 +356,7 @@
           (let [[stud-id info] submition
                 group (-> info :presentation (get pres-key) :group)
                 desc (-> info :presentation (get pres-key) :description)
-                remarks (codax/get-at tx [stud-id :presentation pres-key :remarks])]
+                {:keys [history remarks]} (codax/get-at tx [stud-id :presentation pres-key])]
             (talk/send-text token id (format (tr :pres/wait-for-review-:submissions-count) (count submitions)))
             (talk/send-text token id (approved-submissions tx pres-key group))
             (when (some? remarks)
@@ -352,10 +365,13 @@
             (talk/send-text token id (format (tr :pres/receive-from-stud-topic-:group-:topic) (-> info :group) (topic desc)))
             (talk/send-text token id desc)
             (talk/send-yes-no-kbd token id (tr :pres/approve-yes-or-no))
-            (talk/change-branch tx :approve {:stud-id stud-id}))))
+            (talk/change-branch tx :approve {:stud-id stud-id :history-count (count history)}))))
 
       :approve
-      (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
+      (fn [tx {{id :id} :from text :text} {:keys [stud-id history-count] :as state}]
+        (when (is-check-conflict tx stud-id pres-key history-count)
+          (talk/send-text token id (tr :pres/check-conflict))
+          (talk/stop-talk tx))
         (case (i18n/normalize-yes-no-text text)
           "yes" (do (talk/send-text token id (format (tr :pres/ok-stud-will-receive-approve-:command) cmd))
                     (talk/send-text token stud-id (format (tr :pres/approved-description-:pres-name) name))
@@ -364,12 +380,15 @@
                         talk/stop-talk))
 
           "no" (do (talk/send-text token id (tr :pres/ok-need-send-remark-for-student))
-                   (talk/change-branch tx :remark {:stud-id stud-id}))
+                   (talk/change-branch tx :remark state))
 
           (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))
 
       :remark
-      (fn [tx {{id :id} :from remark :text} {stud-id :stud-id}]
+      (fn [tx {{id :id} :from remark :text} {:keys [stud-id history-count] :as state}]
+        (when (is-check-conflict tx stud-id pres-key history-count)
+          (talk/send-text token id (tr :pres/check-conflict))
+          (talk/stop-talk tx))
         (talk/send-text token id (format (tr :pres/declined-description-:command) cmd))
         (talk/send-text token stud-id (format (tr :pres/rejected-description-:pres-name-:remark) name remark))
         (-> tx

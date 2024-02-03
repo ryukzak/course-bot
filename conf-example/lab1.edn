@@ -1,4 +1,5 @@
 {:name "Lab 1 presentation"
+ :admins [100]
  :submition-hint "hint"
  :schedule-cut-off-time-in-min 30
  :agenda-hide-cut-off-time-in-min -1440

@@ -293,6 +293,53 @@
           (is (answers? (talk 2 "/lab1submissions")
                         (str/join "\n" (quote ("Submitted presentation in 'lgr1':" "- bla-bla-bla 2 (Bot Botovich) - APPROVED" "- pres 2 (Alice) - APPROVED"))))))))))
 
+(deftest multi-user-check-talks-test
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+                         (pres/setgroup-talk db conf "lab1")
+                         (pres/submit-talk db conf "lab1")
+                         (pres/check-talk db conf "lab1"))]
+    (tt/with-mocked-morse *chat
+      (register-user-2 talk 1 "Alice" "lgr1")
+
+      (testing "right for both admins"
+        (is (answers? (talk 0 "/lab1check") "Nothing to check."))
+        (is (answers? (talk 100 "/lab1check") "Nothing to check."))
+        (is (answers? (talk 1 "/lab1check") "That action requires admin rights.")))
+
+      (is (answers? (talk 1 "/lab1submit"
+                          "bla-bla-bla the best"
+                          "yes")
+                    "hint"
+                    "Your description:"
+                    "bla-bla-bla the best"
+                    "Do you approve it?"
+                    "Registered, the teacher will check it soon."))
+
+      (is (answers? (talk 0 "/lab1check")
+                    "Wait for review: 1"
+                    "Approved presentation in 'lgr1':"
+                    "We receive from the student (group gr1):\n\nTopic: bla-bla-bla the best"
+                    "bla-bla-bla the best"
+                    "Approve (yes or no)?"))
+
+      (is (answers? (talk 100 "/lab1check")
+                    "Wait for review: 1"
+                    "Approved presentation in 'lgr1':"
+                    "We receive from the student (group gr1):\n\nTopic: bla-bla-bla the best"
+                    "bla-bla-bla the best"
+                    "Approve (yes or no)?"))
+
+      (is (answers? (talk 0 "yes")
+                    [0 "OK, student will receive his approve.\n\n/lab1check"]
+                    [1 "'Lab 1 presentation' description was approved."]))
+
+      (is (answers? (talk 100 "yes")
+                    "Check conflict, someone check it faster, so I use his review.")))))
+
 (deftest schedule-agenda-and-drop-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
