@@ -63,12 +63,21 @@
     :quiz-answers-:answers-:stud-info-:stat "Ответы на тест: %s (%s) - %s"
     :incorrect-answer "Не понял, укажите корректный номер ответа (1, 2...)."}}})
 
+(defn utime [] (quot (System/currentTimeMillis) 1000))
+
 (def *quiz-state (atom {:started 0 :finished 0 :answers {}}))
 
-(defn quiz-stud-start! [] (swap! *quiz-state update :started inc))
+(defn quiz-stud-start! [stud-id]
+  (swap! *quiz-state #(-> %
+                          (update :started inc)
+                          (assoc-in [:time-marks stud-id :start] (utime)))))
 
-(defn quiz-stud-finish! [stud-id answers]
-  (swap! *quiz-state #(-> % (update :finished inc) (assoc-in [:answers stud-id] answers))))
+(defn quiz-stud-finish! [stud-id answers time-marks]
+  (swap! *quiz-state #(-> %
+                          (update :finished inc)
+                          (assoc-in [:time-marks stud-id :answers] time-marks)
+                          (assoc-in [:time-marks stud-id :finish] (utime))
+                          (assoc-in [:answers stud-id] answers))))
 
 (defn start-quiz! [tx quiz-key]
   (reset! *quiz-state {:started 0 :finished 0 :answers {}})
@@ -203,7 +212,7 @@
                (let [{quiz-key :key quiz-name :name
                       {:keys [questions]} :quiz} (current-quiz! tx conf)]
                  (case (i18n/normalize-yes-no-text text)
-                   "yes" (let [results (:answers @*quiz-state)
+                   "yes" (let [{results :answers :keys [time-marks]} @*quiz-state
                                per-studs (map (fn [stud-id]
                                                 (let [answers (get results stud-id)
                                                       {cur :count-correct
@@ -228,12 +237,15 @@
                                 (map #(talk/send-text token id %))
                                 doall)
 
+                           (talk/send-as-document token id (str quiz-key "-time-marks.edn") time-marks)
+
                            (doall (map (fn [[stud-id _cur info]]
                                          (talk/send-text token stud-id (str (tr :quiz/quiz-your-result) info)))
                                        per-studs))
                            (-> (reduce (fn [tx [_stud-id cur _info]] (codax/assoc-at tx [id :quiz quiz-name] cur))
                                        tx per-studs)
                                (codax/assoc-at [:quiz :results quiz-key] results)
+                               (codax/assoc-at [:quiz :time-marks quiz-key] time-marks)
                                stop-quiz!
                                talk/stop-talk))
                    "no" (talk/send-stop tx token id (tr :quiz/quiz-is-still-in-progress))
@@ -278,20 +290,21 @@
              (fn [tx {{id :id} :from text :text}]
                (let [{quiz :quiz} (current-quiz! tx conf)]
                  (case (i18n/normalize-yes-no-text text)
-                   "yes" (do (quiz-stud-start!)
+                   "yes" (do (quiz-stud-start! id)
                              (talk/send-text token id (tr :quiz/quiz-after-run-info))
                              (talk/send-text token id (question-msg quiz 0))
-                             (talk/change-branch tx :quiz-step {:results '()}))
+                             (talk/change-branch tx :quiz-step {:results '() :time-marks '()}))
                    "no" (talk/send-stop tx token id (tr :quiz/your-right))
                    (do (talk/send-yes-no-kbd token id (tr :quiz/what-question-yes-no))
                        (talk/wait tx)))))
 
              :quiz-step
-             (fn [tx {{id :id} :from text :text} {results :results}]
+             (fn [tx {{id :id} :from text :text} {:keys [results time-marks]}]
                (let [{quiz-key :key quiz :quiz} (current-quiz! tx conf)
                      question-index (count results)
                      next-question-index (+ 1 question-index)
-                     new-results (concat results (list text))]
+                     new-results (concat results (list text))
+                     new-time-marks (concat time-marks (list (utime)))]
                  (when (nil? quiz-key)
                    (talk/send-text token id (tr :quiz/already-stopped))
                    (-> tx talk/stop-talk))
@@ -304,15 +317,16 @@
 
                  (when-let [next-question (question-msg quiz next-question-index)]
                    (talk/send-text token id next-question)
-                   (talk/change-branch tx :quiz-step {:results new-results}))
+                   (talk/change-branch tx :quiz-step {:results new-results
+                                                      :time-marks new-time-marks}))
 
                  ; finish quiz
-                 (quiz-stud-finish! id new-results)
+                 (quiz-stud-finish! id new-results new-time-marks)
                  (talk/send-text token id (tr :quiz/quiz-passed))
                  (let [{student-name :name group :group} (general/stud-info tx id)]
                    (talk/send-text token (-> conf :admin-chat-id)
                                    (format (tr :quiz/quiz-answers-:answers-:stud-info-:stat)
                                            (str/join ", " new-results)
                                            (format "%s, %s, %s, %s" (:name quiz) student-name group id)
-                                           (dissoc @*quiz-state :answers))))
+                                           (dissoc @*quiz-state :answers :time-marks))))
                  (-> tx talk/stop-talk)))))
