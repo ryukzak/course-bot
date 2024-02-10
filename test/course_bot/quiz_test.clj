@@ -128,7 +128,9 @@
                       [0 (tt/unlines "Q2\n"
                                      "- [0] CORRECT a3"
                                      "- [1] a4")]
-                      [0 "{1 {:start 42, :answers (42 42), :finish 42}}"]
+                      [0 (tt/unlines
+                          ":stud,:start,1,2,:finish"
+                          "Bot Botovich,42,42,42,42")]
                       [1 "Your result: 0/2"]))
         (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results])))))))
 
@@ -197,7 +199,9 @@
                             ""
                             "- [1] CORRECT a3"
                             "- [0] a4")
-                "{1 {:start 42, :answers (42 42), :finish 42}}"])))
+                (tt/unlines
+                 ":stud,:start,1,2,:finish"
+                 "Bot Botovich,42,42,42,42")])))
       (is (= (tt/history *chat :user-id 1)
              ["Your result: 1/2"]))
 
@@ -263,11 +267,14 @@
                         (tt/text 0 "Q1\n\n- [3] a1\n- [1] CORRECT a2")
                         (tt/text 0 "Q2\n\n- [2] CORRECT a3\n- [2] a4")
                         (tt/text 0 "Q3\n\n- [3] CORRECT a5\n- [1] a6")
-                        (tt/text 0 "{1 {:start 42, :answers (42 42 42), :finish 42},
- 2 {:start 42, :answers (42 42 42), :finish 42},
- 3 {:start 42, :answers (42 42 42), :finish 42},
- 4 {:start 42, :answers (42 42 42), :finish 42}}
-")
+                        (tt/text 0 (tt/unlines
+
+                                    ":stud,:start,1,2,3,:finish"
+                                    "Alice,42,42,42,42,42"
+                                    "Bob,42,42,42,42,42"
+                                    "Charly,42,42,42,42,42"
+                                    "Dany,42,42,42,42,42"))
+
                         (tt/text 1 "Your result: 0/3")
                         (tt/text 2 "Your result: 1/3")
                         (tt/text 3 "Your result: 2/3")

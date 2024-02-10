@@ -237,7 +237,21 @@
                                 (map #(talk/send-text token id %))
                                 doall)
 
-                           (talk/send-as-document token id (str quiz-key "-time-marks.edn") time-marks)
+                           (talk/send-as-document
+                            token id (str quiz-key "-time-marks.csv")
+                            (let [time-mark (-> time-marks vals first)
+                                  header (str/join "," (concat [:stud :start]
+                                                               (range 1 (+ 1 (count (:answers time-mark))))
+                                                               [:finish]))
+                                  rows (->> time-marks
+                                            (map (fn [[stud-id time-mark]]
+                                                   (let [stud (or (:name (general/stud-info tx stud-id))
+                                                                  stud-id)
+                                                         dt (concat [stud (:start time-mark)]
+                                                                    (:answers time-mark)
+                                                                    [(:finish time-mark)])]
+                                                     (str/join "," dt)))))]
+                              (str/join "\n" (cons header rows))))
 
                            (doall (map (fn [[stud-id _cur info]]
                                          (talk/send-text token stud-id (str (tr :quiz/quiz-your-result) info)))

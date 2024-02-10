@@ -487,7 +487,9 @@
                                                          :text feedback})))}]
 
                   (talk/send-text token admin-chat-id (tr :essay/abusereport-received))
-                  (talk/send-as-document token admin-chat-id (str id "abuse-report.edn") full-report)
+                  (talk/send-as-document token admin-chat-id
+                                         (str id "abuse-report.edn")
+                                         (misc/doall* full-report))
                   (talk/send-text token id (tr :essay/report-sent))
                   (-> tx
                       (save-student-report essay-code id report)
