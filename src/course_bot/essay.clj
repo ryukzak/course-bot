@@ -313,6 +313,8 @@
         (let [index (try (- (Integer/parseInt (.trim (first (re-find #"^\d(\s|$)" text)))) 1)
                          (catch Exception _ nil))
               rank (+ 1 (count reviews))
+              min-feedback (or (-> conf (get (keyword essay-code)) :min-feedback-length)
+                               40)
               feedback (str/replace text #"^\d*\s*" "")]
 
           (when (or (nil? index)
@@ -320,7 +322,7 @@
             (talk/send-text token id (tr :essay/essay-number-error))
             (talk/wait tx))
 
-          (when (< (count text) 40)
+          (when (< (count text) min-feedback)
             (talk/send-text token id (tr :essay/essay-feedback-short))
             (talk/wait tx))
 
