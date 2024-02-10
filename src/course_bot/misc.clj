@@ -146,3 +146,6 @@
 (quote (merge-codaxs "../csa-db-snapshot-2023-10-30-22-58"
                      "../csa-db-snapshot-2023-11-05-16-55"
                      "../csa-db-merged"))
+
+(defn doall* [s]
+  (doall (tree-seq #(or (seq? %) (vector? %) (map? %)) identity s)) s)

@@ -72,63 +72,67 @@
                          (quiz/quiz-talk db conf))]
 
     (tt/with-mocked-morse *chat
-      (start-user *chat talk 1 "Bot Botovich")
+      (with-redefs [quiz/utime (fn [] 42)]
+        (start-user *chat talk 1 "Bot Botovich")
 
-      (is (answers? (talk 1 "/quiz")
-                    "The quiz is not running, wait for the teacher's signal."))
+        (is (answers? (talk 1 "/quiz")
+                      "The quiz is not running, wait for the teacher's signal."))
 
-      (talk 0 "/startquiz test-quiz")
-      (is (answers? (talk 0 "yes")
-                    "The quiz was started."))
+        (talk 0 "/startquiz test-quiz")
+        (is (answers? (talk 0 "yes")
+                      "The quiz was started."))
 
-      (is (answers? (talk 1 "/quiz")
-                    "Would you like to start quiz 'Test quiz' (2 question(s))?"))
+        (is (answers? (talk 1 "/quiz")
+                      "Would you like to start quiz 'Test quiz' (2 question(s))?"))
 
-      (is (answers? (talk 1 "nooooooo")
-                    "What (yes/no)?"))
+        (is (answers? (talk 1 "nooooooo")
+                      "What (yes/no)?"))
 
-      (is (answers? (talk 1 "no")
-                    "Your right."))
+        (is (answers? (talk 1 "no")
+                      "Your right."))
 
-      (is (answers? (talk 1 "/quiz")
-                    "Would you like to start quiz 'Test quiz' (2 question(s))?"))
+        (is (answers? (talk 1 "/quiz")
+                      "Would you like to start quiz 'Test quiz' (2 question(s))?"))
 
-      (is (answers? (talk 1 "yes")
-                    "Answer with a number. Your first question:"
-                    (tt/unlines "Q1\n"
-                                "1. a1"
-                                "2. a2")))
+        (is (answers? (talk 1 "yes")
+                      "Answer with a number. Your first question:"
+                      (tt/unlines "Q1\n"
+                                  "1. a1"
+                                  "2. a2")))
 
-      (is (answers? (talk 1 "first" "0" "3")
-                    "I don't understand you, send the correct answer number (1, 2...)."
-                    "I don't understand you, send the correct answer number (1, 2...)."
-                    "I don't understand you, send the correct answer number (1, 2...).")
-          "Wrong answer")
+        (is (answers? (talk 1 "first" "0" "3")
+                      "I don't understand you, send the correct answer number (1, 2...)."
+                      "I don't understand you, send the correct answer number (1, 2...)."
+                      "I don't understand you, send the correct answer number (1, 2...).")
+            "Wrong answer")
 
-      (is (answers? (talk 1 "1")
-                    "Remember your answer: 1"
-                    (tt/unlines "Q2\n"
-                                "1. a3"
-                                "2. a4")))
+        (is (answers? (talk 1 "1")
+                      "Remember your answer: 1"
+                      (tt/unlines "Q2\n"
+                                  "1. a3"
+                                  "2. a4")))
 
-      (is (answers? (talk 1 "2")
-                    [1 "Remember your answer: 2"]
-                    [1 "Thanks, quiz passed. The results will be sent when the quiz is closed."]
-                    [0 "Quiz answers: 1, 2 (Test quiz, Bot Botovich, gr1, 1) - {:started 1, :finished 1}"]))
+        (is (answers? (talk 1 "2")
+                      [1 "Remember your answer: 2"]
+                      [1 "Thanks, quiz passed. The results will be sent when the quiz is closed."]
+                      [0 "Quiz answers: 1, 2 (Test quiz, Bot Botovich, gr1, 1) - {:started 1, :finished 1}"]))
 
-      (is (answers? (talk 0 "/stopquiz")
-                    "Are you sure to stop 'Test quiz' quiz?"))
+        (is (answers? (talk 0 "/stopquiz")
+                      "Are you sure to stop 'Test quiz' quiz?"))
 
-      (is (answers? (talk 0 "yes")
-                    [0 "The quiz 'Test quiz' was stopped"]
-                    [0 (tt/unlines "Q1\n"
-                                   "- [1] a1"
-                                   "- [0] CORRECT a2")]
-                    [0 (tt/unlines "Q2\n"
-                                   "- [0] CORRECT a3"
-                                   "- [1] a4")]
-                    [1 "Your result: 0/2"]))
-      (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results]))))))
+        (is (answers? (talk 0 "yes")
+                      [0 "The quiz 'Test quiz' was stopped"]
+                      [0 (tt/unlines "Q1\n"
+                                     "- [1] a1"
+                                     "- [0] CORRECT a2")]
+                      [0 (tt/unlines "Q2\n"
+                                     "- [0] CORRECT a3"
+                                     "- [1] a4")]
+                      [0 (tt/unlines
+                          ":stud,:start,1,2,:finish"
+                          "Bot Botovich,42,42,42,42")]
+                      [1 "Your result: 0/2"]))
+        (is (= {:test-quiz {1 '("1" "2")}} (codax/get-at! db [:quiz :results])))))))
 
 (deftest stopquiz-talk-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
@@ -146,54 +150,58 @@
                              "percent" (quiz/success-tests-percent conf)))]
 
     (tt/with-mocked-morse *chat
-      (start-user *chat talk 1 "Bot Botovich")
-      (talk 0 "/startquiz test-quiz")
-      (talk 0 "yes")
-      (is (= (tt/history *chat :user-id 0)
-             ["The quiz was started."]))
+      (with-redefs [quiz/utime (fn [] 42)]
+        (start-user *chat talk 1 "Bot Botovich")
+        (talk 0 "/startquiz test-quiz")
+        (talk 0 "yes")
+        (is (= (tt/history *chat :user-id 0)
+               ["The quiz was started."]))
 
-      (talk 1 "/quiz")
-      (is (= (tt/history *chat :user-id 1)
-             ["Would you like to start quiz 'Test quiz' (2 question(s))?"]))
+        (talk 1 "/quiz")
+        (is (= (tt/history *chat :user-id 1)
+               ["Would you like to start quiz 'Test quiz' (2 question(s))?"]))
 
-      (talk 1 "yes")
-      (talk 1 "1")
-      (talk 1 "1")
-      (is (= (tt/history *chat :number 2)
-             [[1 "Thanks, quiz passed. The results will be sent when the quiz is closed."]
-              [0 "Quiz answers: 1, 1 (Test quiz, Bot Botovich, gr1, 1) - {:started 1, :finished 1}"]]))
+        (talk 1 "yes")
+        (talk 1 "1")
+        (talk 1 "1")
+        (is (= (tt/history *chat :number 2)
+               [[1 "Thanks, quiz passed. The results will be sent when the quiz is closed."]
+                [0 "Quiz answers: 1, 1 (Test quiz, Bot Botovich, gr1, 1) - {:started 1, :finished 1}"]]))
 
-      (talk 1 "/stopquiz")
-      (is (= (tt/history *chat :user-id 1)
-             ["That action requires admin rights."]))
+        (talk 1 "/stopquiz")
+        (is (= (tt/history *chat :user-id 1)
+               ["That action requires admin rights."]))
 
-      (talk 0 "/stopquiz")
-      (is (= (tt/history *chat :user-id 0)
-             ["Are you sure to stop 'Test quiz' quiz?"]))
+        (talk 0 "/stopquiz")
+        (is (= (tt/history *chat :user-id 0)
+               ["Are you sure to stop 'Test quiz' quiz?"]))
 
-      (talk 0 "noooooooooooo")
-      (is (= (tt/history *chat :user-id 0)
-             ["What?"]))
+        (talk 0 "noooooooooooo")
+        (is (= (tt/history *chat :user-id 0)
+               ["What?"]))
 
-      (talk 0 "no")
-      (is (= (tt/history *chat :user-id 0)
-             ["In a next time. The quiz is still in progress."]))
+        (talk 0 "no")
+        (is (= (tt/history *chat :user-id 0)
+               ["In a next time. The quiz is still in progress."]))
 
-      (talk 0 "/stopquiz")
-      (is (= (tt/history *chat :user-id 0)
-             ["Are you sure to stop 'Test quiz' quiz?"]))
+        (talk 0 "/stopquiz")
+        (is (= (tt/history *chat :user-id 0)
+               ["Are you sure to stop 'Test quiz' quiz?"]))
 
-      (talk 0 "yes")
-      (is (= (tt/history *chat :user-id 0 :number 3)
-             ["The quiz 'Test quiz' was stopped"
-              (tt/unlines "Q1"
-                          ""
-                          "- [1] a1"
-                          "- [0] CORRECT a2")
-              (tt/unlines "Q2"
-                          ""
-                          "- [1] CORRECT a3"
-                          "- [0] a4")]))
+        (talk 0 "yes")
+        (is (= (tt/history *chat :user-id 0 :number 4)
+               ["The quiz 'Test quiz' was stopped"
+                (tt/unlines "Q1"
+                            ""
+                            "- [1] a1"
+                            "- [0] CORRECT a2")
+                (tt/unlines "Q2"
+                            ""
+                            "- [1] CORRECT a3"
+                            "- [0] a4")
+                (tt/unlines
+                 ":stud,:start,1,2,:finish"
+                 "Bot Botovich,42,42,42,42")])))
       (is (= (tt/history *chat :user-id 1)
              ["Your result: 1/2"]))
 
@@ -246,10 +254,11 @@
 
       (talk 0 "/startquiz test-quiz-3")
       (is (answers? (talk 0 "yes") "The quiz was started."))
-      (do-test "Test quiz 3" 1 1 "1" "2" "2")
-      (do-test "Test quiz 3" 2 2 "1" "2" "1")
-      (do-test "Test quiz 3" 3 3 "1" "1" "1")
-      (do-test "Test quiz 3" 4 4 "2" "1" "1")
+      (with-redefs [quiz/utime (fn [] 42)]
+        (do-test "Test quiz 3" 1 1 "1" "2" "2")
+        (do-test "Test quiz 3" 2 2 "1" "2" "1")
+        (do-test "Test quiz 3" 3 3 "1" "1" "1")
+        (do-test "Test quiz 3" 4 4 "2" "1" "1"))
 
       (is (answers? (talk 0 "/stopquiz") "Are you sure to stop 'Test quiz 3' quiz?"))
       (talk 0 "yes")
@@ -258,6 +267,14 @@
                         (tt/text 0 "Q1\n\n- [3] a1\n- [1] CORRECT a2")
                         (tt/text 0 "Q2\n\n- [2] CORRECT a3\n- [2] a4")
                         (tt/text 0 "Q3\n\n- [3] CORRECT a5\n- [1] a6")
+                        (tt/text 0 (tt/unlines
+
+                                    ":stud,:start,1,2,3,:finish"
+                                    "Alice,42,42,42,42,42"
+                                    "Bob,42,42,42,42,42"
+                                    "Charly,42,42,42,42,42"
+                                    "Dany,42,42,42,42,42"))
+
                         (tt/text 1 "Your result: 0/3")
                         (tt/text 2 "Your result: 1/3")
                         (tt/text 3 "Your result: 2/3")

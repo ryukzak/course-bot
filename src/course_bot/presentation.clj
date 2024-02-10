@@ -385,7 +385,7 @@
           (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))
 
       :remark
-      (fn [tx {{id :id} :from remark :text} {:keys [stud-id history-count] :as state}]
+      (fn [tx {{id :id} :from remark :text} {:keys [stud-id history-count]}]
         (when (is-check-conflict tx stud-id pres-key history-count)
           (talk/send-text token id (tr :pres/check-conflict))
           (talk/stop-talk tx))

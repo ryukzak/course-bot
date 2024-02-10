@@ -366,25 +366,24 @@
                       "Your report text + reviewed essays and feedbacks will be send to the teacher. Are you sure?"))
         (is (answers? (talk 1 "yes")
                       [0 "Abuse report received:"]
-                      [0
-                       (tt/unlines
-                        "{:essay-code \"essay1\","
-                        " :report-author \"Name: u1; Group: gr1; Telegram ID: 1\","
-                        " :report \"bad-bad-bad essay, please, take a look\","
-                        " :essays"
-                        " ({:author \"Name: u4; Group: gr1; Telegram ID: 4\","
-                        "   :text \"user4 essay1 text-803074778\"}"
-                        "  {:author \"Name: u3; Group: gr1; Telegram ID: 3\","
-                        "   :text \"user3 essay1 text-1556392013\"}"
-                        "  {:author \"Name: u2; Group: gr1; Telegram ID: 2\","
-                        "   :text \"user2 essay1 text-971005196\"}),"
-                        " :reviews"
-                        " ({:author \"Name: u4; Group: gr1; Telegram ID: 4\","
-                        "   :text \"bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 4\"}"
-                        "  {:author \"Name: u3; Group: gr1; Telegram ID: 3\","
-                        "   :text \"bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 3\"}"
-                        "  {:author \"Name: u2; Group: gr1; Telegram ID: 2\","
-                        "   :text \"bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 2\"})}")]
+                      [0 '{:essay-code "essay1",
+                           :report-author "Name: u1; Group: gr1; Telegram ID: 1",
+                           :report "bad-bad-bad essay, please, take a look",
+                           :essays
+                           ({:author "Name: u4; Group: gr1; Telegram ID: 4",
+                             :text "user4 essay1 text-803074778"}
+                            {:author "Name: u3; Group: gr1; Telegram ID: 3",
+                             :text "user3 essay1 text-1556392013"}
+                            {:author "Name: u2; Group: gr1; Telegram ID: 2",
+                             :text "user2 essay1 text-971005196"}),
+                           :reviews
+                           ({:author "Name: u4; Group: gr1; Telegram ID: 4",
+                             :text "bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 4"}
+                            {:author "Name: u3; Group: gr1; Telegram ID: 3",
+                             :text "bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 3"}
+                            {:author "Name: u2; Group: gr1; Telegram ID: 2",
+                             :text
+                             "bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla from 2"})}]
 
                       [1 "Your report was sent to the teacher. Thank you!"]))
 
