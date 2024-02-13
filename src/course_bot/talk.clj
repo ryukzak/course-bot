@@ -162,7 +162,9 @@
   (let [dt (.format (java.text.SimpleDateFormat. "yyyy-MM-dd-HH-mm-Z") (misc/today))
         filename (str "tmp/" dt "-" filename)]
     (io/make-parents filename)
-    (spit filename (misc/pp-str content))
+    (spit filename (if (string? content)
+                     content
+                     (misc/pp-str content)))
     (send-document token id (io/file filename))))
 
 ;; Morse helpers
