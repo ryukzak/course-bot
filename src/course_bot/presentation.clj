@@ -723,7 +723,9 @@
 
             (talk/send-text token id (misc/pp-str pres-state))
             (when stud-lesson
-              (talk/send-text token id (misc/pp-str [dt stud-lesson])))
+              (talk/send-text token id
+                              (let [msg (misc/pp-str [dt stud-lesson])]
+                                (subs msg 0 (min 4096 (count msg))))))
 
             (talk/send-yes-no-kbd token id (format (tr :pres/drop-config-:pres-name-:stud-id) name stud-id))
 
