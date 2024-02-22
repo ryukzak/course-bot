@@ -25,8 +25,8 @@
 
 (defn match-history [*chat & asserts]
   (doall (map #(%1 %2)
-              asserts
-              (->> @*chat (take (count asserts)) reverse))))
+           asserts
+           (->> @*chat (take (count asserts)) reverse))))
 
 (defn match-csv [*chat tid & rows]
   (match-history *chat (apply (partial csv tid) rows)))
@@ -97,10 +97,10 @@
          answers# ~(into [] (drop 2 form))
          result# (= actual# answers#)]
      (t/do-report
-      {:type (if result# :pass :fail)
-       :message ~msg
-       :expected answers#
-       :actual actual#})
+       {:type (if result# :pass :fail)
+        :message ~msg
+        :expected answers#
+        :actual actual#})
      result#))
 
 (defn history

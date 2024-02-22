@@ -9,18 +9,18 @@
             [course-bot.talk :as talk]))
 
 (i18n/add-dict
- {:en
-  {:plagiarism
-   {:forest-failure "I failed to reach forest file, my Lord!"
-    :processed-:count "Processed %d texts, my Lord!"
-    :restore-forest-done "Forest restored, my Lord!"
-    :restore-forest-info "(admin) Restore forest"}}
-  :ru
-  {:plagiarism
-   {:forest-failure "Не удалось подключиться к хэш-лесу, мой господин!"
-    :processed-:count "Обработано %d текстов, мой господин!"
-    :restore-forest-done "Хэш-лес восстановлен, мой господин!"
-    :restore-forest-info "(admin) Восстановить хеш-лес"}}})
+  {:en
+   {:plagiarism
+    {:forest-failure "I failed to reach forest file, my Lord!"
+     :processed-:count "Processed %d texts, my Lord!"
+     :restore-forest-done "Forest restored, my Lord!"
+     :restore-forest-info "(admin) Restore forest"}}
+   :ru
+   {:plagiarism
+    {:forest-failure "Не удалось подключиться к хэш-лесу, мой господин!"
+     :processed-:count "Обработано %d текстов, мой господин!"
+     :restore-forest-done "Хэш-лес восстановлен, мой господин!"
+     :restore-forest-info "(admin) Восстановить хеш-лес"}}})
 
 (def default-conf {:top-k 10
                    :cosine-threshold 30.00
@@ -28,18 +28,18 @@
 
 (comment 'plagiarism-db
          (assoc default-conf
-                :forest-filename "tmp/plagiarism/forest"
-                :forest 'CONSIMILO-FOREST
-                :texts-path "tmp/plagiarism/texts"
-                :bad-texts-path "tmp/plagiarism/bad-texts-path"))
+           :forest-filename "tmp/plagiarism/forest"
+           :forest 'CONSIMILO-FOREST
+           :texts-path "tmp/plagiarism/texts"
+           :bad-texts-path "tmp/plagiarism/bad-texts-path"))
 
 (defn open-path-or-fail [path]
   (let [forest-filename (str path "/forest")
         texts-path (str path "/texts")
         db (assoc default-conf
-                  :forest-filename forest-filename
-                  :texts-path texts-path
-                  :bad-texts-path (str path "/bad-texts"))]
+             :forest-filename forest-filename
+             :texts-path texts-path
+             :bad-texts-path (str path "/bad-texts"))]
     (try
       (assoc db :forest (consimilo/thaw-forest forest-filename))
       (catch java.io.FileNotFoundException _
@@ -108,6 +108,6 @@
              (map (fn [{file :file key :key}]
                     (register-text! plagiarism-db key (slurp file))))
              (misc/count-with-report
-              50 #(talk/send-text token id (format (tr :plagiarism/processed-:count) %))))
+               50 #(talk/send-text token id (format (tr :plagiarism/processed-:count) %))))
         (talk/send-text token id (tr :plagiarism/restore-forest-done))
         (talk/stop-talk tx)))))

@@ -13,10 +13,10 @@
 
 (defn inline [path conf]
   (cond (map? conf) (update-vals conf
-                                 (fn [v]
-                                   (if-let [sub-conf (inline? v)]
-                                     (inline path (read-string (slurp (str path "/" sub-conf))))
-                                     (inline path v))))
+                      (fn [v]
+                        (if-let [sub-conf (inline? v)]
+                          (inline path (read-string (slurp (str path "/" sub-conf))))
+                          (inline path v))))
         :else conf))
 
 (defn get-config [filename]
@@ -74,10 +74,10 @@
                                 ymd (.format (java.text.SimpleDateFormat. "yyyyMMdd") dt)
                                 delta (- (.getTime now) (.getTime dt))]
                             (assoc info
-                                   :filename filename
-                                   :dt dt
-                                   :ymd ymd
-                                   :delta delta)))))
+                              :filename filename
+                              :dt dt
+                              :ymd ymd
+                              :delta delta)))))
 
         archives (->> files
                       (group-by :key)
@@ -127,10 +127,10 @@
         b-db (codax/open-database! b-db-path)
         a-keys (-> (codax/get-at! a-db []) keys)
         merged-data (doall
-                     (->> a-keys
-                          (map #(try
-                                  (let [dt (codax/get-at! b-db [%])] [:ok % dt])
-                                  (catch Exception _e [:fail % (codax/get-at! a-db [%])])))))
+                      (->> a-keys
+                           (map #(try
+                                   (let [dt (codax/get-at! b-db [%])] [:ok % dt])
+                                   (catch Exception _e [:fail % (codax/get-at! a-db [%])])))))
         failed-records (->> merged-data
                             (filter (fn [[status _k _v]] (= status :fail)))
                             (map (fn [[_status k v]]
@@ -144,8 +144,8 @@
     failed-records))
 
 (quote (merge-codaxs "../csa-db-snapshot-2023-10-30-22-58"
-                     "../csa-db-snapshot-2023-11-05-16-55"
-                     "../csa-db-merged"))
+         "../csa-db-snapshot-2023-11-05-16-55"
+         "../csa-db-merged"))
 
 (defn doall* [s]
   (doall (tree-seq #(or (seq? %) (vector? %) (map? %)) identity s)) s)

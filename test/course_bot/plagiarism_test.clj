@@ -48,4 +48,4 @@
       (is (= text2 (-> db (sut/get-text "text2"))))
 
       (is (= '("text3" "text4")
-             (->> (sut/sorted-similars db text3) (map :key) (take 2)))))))
+            (->> (sut/sorted-similars db text3) (map :key) (take 2)))))))

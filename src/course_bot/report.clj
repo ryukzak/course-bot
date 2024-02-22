@@ -16,7 +16,7 @@
         ids (->> data keys (filter number?))
         columns (map first fields)
         data (cons columns
-                   (map (fn [id] (map (fn [[_key get]] (get tx data id)) fields)) ids))
+               (map (fn [id] (map (fn [[_key get]] (get tx data id)) fields)) ids))
         dt (.format (java.text.SimpleDateFormat. "yyyy-MM-dd-HH-mm-Z") (misc/today))
         filename (str "tmp/" dt "-report.csv")]
     (io/make-parents filename)

@@ -8,136 +8,136 @@
              [course-bot.talk :as talk]))
 
 (i18n/add-dict
- {:en
-  {:pres
-   {:nothing-to-check "Nothing to check."
-    :group-is-already-set-error-:pres-name-:pres-group "Your %s group is already set: %s"
-    :select-group-:pres-name-:all-groups "Please, select your %s group: %s"
-    :missing-group-:all-groups "I don't know this group. Try again (%s)"
-    :group-is-already-set-:pres-name-:pres-group "Your %s group set: %s"
-    :on-review "On review, you will be informed when it is finished."
-    :provide-description-:pres-name "Please, provide description for your '%s' (in one message):"
-    :your-description "Your description:"
-    :do-you-approve "Do you approve it?"
-    :teacher-will-check "Registered, the teacher will check it soon."
-    :description-is-too-long-:max-length "Description is too long, max length is %s."
-    :later "You can do this later."
-    :yes-or-no "Please, yes or no?"
-    :wait-for-review-:submissions-count "Wait for review: %s"
-    :remarks "Remarks:"
-    :receive-from-stud-topic-:group-:topic "We receive from the student (group %s):\n\nTopic: %s"
-    :ok-stud-will-receive-approve-:command "OK, student will receive his approve.\n\n/%s"
-    :approved-description-:pres-name "'%s' description was approved."
-    :ok-need-send-remark-for-student "OK, you need to send your remark for the student:"
-    :declined-description-:command "Presentation description was declined. The student was informed about your decision.\n\n/%s"
-    :rejected-description-:pres-name-:remark "'%s' description was rejected. Remark:\n\n%s"
-    :approve-yes-or-no "Approve (yes or no)?"
-    :incorrect-group-one-from-:wrong-group-:all-groups "I don't know '%s', you should specify one from: %s"
-    :agenda-:datetime-:pres-group "Agenda %s (%s)"
-    :expect-soon-:pres-name "We will expect for %s soon:"
-    :not-have-options "I don't have options for you."
-    :select-option "Select your option:\n"
-    :not-found-allow-only "Not found, allow only:\n"
-    :enter-pres-number "Enter the number of the best presentation in the list:\n"
-    :lesson-feedback-not-available-:pres-group-:now-:right-times-list "Lesson feedback is not available. Your lab1 group: %s. Now: %s. Expected feedback dates:\n%s"
-    :lesson-feedback-no-presentations "No presentations."
-    :lesson-feedback-what-lesson-:key-str-:datetime-list "Use format: /%sfeedback [<datetime>]\n\nYou need to specify lesson datetime explicitly:\n%s"
-    :already-received "Already received."
-    :too-early "You can't give a feedback to the future lesson."
-    :collect-feedback-:pres-name-:pres-group-:datetime "Collect feedback for '%s' (%s) at %s"
-    :best-presentation-error "Wrong input. Enter the number of the best presentation in the list."
-    :thank-feedback-saved "Thanks, your feedback saved!"
-    :drop "drop"
-    :all "all"
-    :only-schedule "only schedule"
-    :wrong-input-:command "Wrong input: /%s 12345"
-    :not-found "Not found."
-    :drop-config-:pres-name-:stud-id "Drop '%s' config for %s?"
-    :drop-student-:stud-id "We drop student: %s"
-    :drop-state-:pres-name "We drop your state for %s"
-    :descriptions "%s descriptions"
-    :all-scheduled-description-by-group "File with all scheduled descriptions by groups:"
-    :set-group-help-:pres-name-:key-name "Please, set your '%s' group by /%ssetgroup"
-    :already-submitted-and-approved-help-:key-name "Already submitted and approved, maybe you need to schedule it? /%sschedule"
-    :submit-receive-before-schedule-help-:key-name "You should submit and receive approve before scheduling. Use /%ssubmit"
-    :already-scheduled-help-:key-name "Already scheduled, check /%sagenda."
-    :ok-check-schedule-help-:key-name "OK, you can check it by: /%sagenda"
-    :should-set-group-to-send-feedback-help-:pres-name-:key-str "To send feedback, you should set your group for %s by /%ssetgroup"
-    :setgroup-talk-info-:pres-name "Set your group for '%s'"
-    :submit-talk-info-:pres-name "Submit your '%s' description"
-    :check-talk-info-:pres-name "(admin) Check submitted presentation description for '%s'"
-    :submission-talk-info "List submissions and their status (no args -- your group, with args -- specified)"
-    :agenda-talk-info "Agenda (no args -- your group, with args -- specified)"
-    :soon-talk-info "Presentations that will be coming soon"
-    :schedule-talk-info "Select your presentation day"
-    :feedback-talk-info-:pres-name "Send feedback for '%s' (no args -- list of available dates, optional arg -- [<datetime>])"
-    :drop-talk-info-:pres-name-:suffix "(admin) Drop '%s' for specific student (%s)"
-    :all-scheduled-descriptions-dump-talk-info "(admin) All-scheduled-descriptions-dump"}}
-  :ru
-  {:pres
-   {:nothing-to-check "Нечего проверять."
-    :group-is-already-set-error-:pres-name-:pres-group "Ваша группа %s уже установлена: %s"
-    :select-group-:pres-name-:all-groups "Пожалуйста, выберите вашу группу %s: %s"
-    :missing-group-:all-groups "Я не знаю эту группу. Попробуйте еще раз (%s)"
-    :group-is-already-set-:pres-name-:pres-group "Ваш набор групп %s: %s"
-    :on-review "На рассмотрении. Вы будете проинформированы, когда оно будет завершено."
-    :provide-description-:pres-name "Пожалуйста, предоставьте описание вашего '%s' (в одном сообщении):"
-    :your-description "Ваше описание:"
-    :do-you-approve "Вы одобряете это?"
-    :teacher-will-check "Зарегистрировано, учитель скоро проверит."
-    :description-is-too-long-:max-length "Описание слишком длинное, максимальная длина %s."
-    :later "Вы можете сделать это позже."
-    :yes-or-no "Пожалуйста, да или нет?"
-    :wait-for-review-:submissions-count "Дождитесь проверки: %s"
-    :remarks "Примечания:"
-    :receive-from-stud-topic-:group-:topic "Получаем от студента (группа %s):\n\nТема: %s"
-    :ok-stud-will-receive-approve-:command "Хорошо, учащийся получит одобрение.\n\n/%s"
-    :approved-description-:pres-name "Описание '%s' одобрено."
-    :ok-need-send-remark-for-student "Хорошо, вам нужно отправить свое замечание для студента:"
-    :declined-description-:command "Описание презентации отклонено. Студент был проинформирован о вашем решении.\n\n/%s"
-    :rejected-description-:pres-name-:remark "Описание '%s' было отклонено. Примечание:\n\n%s"
-    :approve-yes-or-no "Одобрить (да или нет)?"
-    :incorrect-group-one-from-:wrong-group-:all-groups "Я не знаю '%s', вы должны указать один из: %s"
-    :agenda-:datetime-:pres-group "Повестка дня %s (%s)"
-    :expect-soon-:pres-name "Мы ожидаем для %s в ближайшее время:"
-    :not-have-options "У меня нет для вас вариантов."
-    :select-option "Выберите свой вариант:\n"
-    :not-found-allow-only "Не найдено, разрешить только:\n"
-    :enter-pres-number "Введите номер лучшей презентации в списке:\n"
-    :lesson-feedback-not-available-:pres-group-:now-:right-times-list "Отзывы не доступны для этого занятия. Ваша группа докладов: %s. Сейчас: %s. Ожидаемые сроки отзывов:\n%s"
-    :lesson-feedback-no-presentations "Нет презентаций для этого занятия."
-    :lesson-feedback-what-lesson-:key-str-:datetime-list "В формате: /%sfeedback [<datetime>]\n\nКакое занятие?:\n%s"
-    :already-received "Уже получено."
-    :too-early "Вы не можете оставить отзыв о будущем уроке."
-    :collect-feedback-:pres-name-:pres-group-:datetime "Собрать отзывы для '%s' (%s) в %s"
-    :best-presentation-error "Неправильный ввод. Введите номер лучшей презентации в списке."
-    :thank-feedback-saved "Спасибо, ваш отзыв сохранен!"
-    :drop "сбросить"
-    :all "все"
-    :only-schedule "только расписание"
-    :wrong-input-:command "Неверный ввод: /%s 12345"
-    :not-found "Не найден."
-    :drop-config-:pres-name-:stud-id "Удалить конфигурацию '%s' для %s?"
-    :drop-student-:stud-id "Мы сбрасываем студента: %s"
-    :drop-state-:pres-name "Мы сбрасываем ваше состояние на %s"
-    :descriptions "%s описаний"
-    :all-scheduled-description-by-group "Файл со всеми запланированными описаниями по группам:"
-    :set-group-help-:pres-name-:key-name "Пожалуйста, установите группу '%s' с помощью /%ssetgroup"
-    :already-submitted-and-approved-help-:key-name "Уже отправлено и одобрено, может быть, вам нужно запланировать его? /%sschedule"
-    :submit-receive-before-schedule-help-:key-name "Вы должны отправить и получить одобрение до планирования. Используйте /%ssubmit"
-    :already-scheduled-help-:key-name "Уже запланировано, проверьте /%sagenda."
-    :ok-check-schedule-help-:key-name "Хорошо, вы можете проверить это: /%sagenda"
-    :should-set-group-to-send-feedback-help-:pres-name-:key-str "Чтобы отправить отзыв, вы должны установить свою группу для %s с помощью /%ssetgroup"
-    :setgroup-talk-info-:pres-name "Установить вашу группу для '%s'"
-    :submit-talk-info-:pres-name "Отправить описание '%s'"
-    :check-talk-info-:pres-name "(admin) Ревью загруженных тем для '%s'"
-    :submission-talk-info "Статус загруженных эссе (опциональный аргумент -- группа)"
-    :agenda-talk-info "Расписание докладов (опциональный аргумент -- группа)"
-    :soon-talk-info "Презентации, назначенные на ближайшее время"
-    :schedule-talk-info "Выбрать день для презентации"
-    :feedback-talk-info-:pres-name "Отправить отзыв для '%s' (без аргумента -- список доступных дат, опциональный аргумент -- [<datetime>])"
-    :drop-talk-info-:pres-name-:suffix "(admin) Сбросить '%s' для конкретного ученика (%s)"
-    :all-scheduled-descriptions-dump-talk-info "(admin) Дамп всех запланированных описаний"}}})
+  {:en
+   {:pres
+    {:nothing-to-check "Nothing to check."
+     :group-is-already-set-error-:pres-name-:pres-group "Your %s group is already set: %s"
+     :select-group-:pres-name-:all-groups "Please, select your %s group: %s"
+     :missing-group-:all-groups "I don't know this group. Try again (%s)"
+     :group-is-already-set-:pres-name-:pres-group "Your %s group set: %s"
+     :on-review "On review, you will be informed when it is finished."
+     :provide-description-:pres-name "Please, provide description for your '%s' (in one message):"
+     :your-description "Your description:"
+     :do-you-approve "Do you approve it?"
+     :teacher-will-check "Registered, the teacher will check it soon."
+     :description-is-too-long-:max-length "Description is too long, max length is %s."
+     :later "You can do this later."
+     :yes-or-no "Please, yes or no?"
+     :wait-for-review-:submissions-count "Wait for review: %s"
+     :remarks "Remarks:"
+     :receive-from-stud-topic-:group-:topic "We receive from the student (group %s):\n\nTopic: %s"
+     :ok-stud-will-receive-approve-:command "OK, student will receive his approve.\n\n/%s"
+     :approved-description-:pres-name "'%s' description was approved."
+     :ok-need-send-remark-for-student "OK, you need to send your remark for the student:"
+     :declined-description-:command "Presentation description was declined. The student was informed about your decision.\n\n/%s"
+     :rejected-description-:pres-name-:remark "'%s' description was rejected. Remark:\n\n%s"
+     :approve-yes-or-no "Approve (yes or no)?"
+     :incorrect-group-one-from-:wrong-group-:all-groups "I don't know '%s', you should specify one from: %s"
+     :agenda-:datetime-:pres-group "Agenda %s (%s)"
+     :expect-soon-:pres-name "We will expect for %s soon:"
+     :not-have-options "I don't have options for you."
+     :select-option "Select your option:\n"
+     :not-found-allow-only "Not found, allow only:\n"
+     :enter-pres-number "Enter the number of the best presentation in the list:\n"
+     :lesson-feedback-not-available-:pres-group-:now-:right-times-list "Lesson feedback is not available. Your lab1 group: %s. Now: %s. Expected feedback dates:\n%s"
+     :lesson-feedback-no-presentations "No presentations."
+     :lesson-feedback-what-lesson-:key-str-:datetime-list "Use format: /%sfeedback [<datetime>]\n\nYou need to specify lesson datetime explicitly:\n%s"
+     :already-received "Already received."
+     :too-early "You can't give a feedback to the future lesson."
+     :collect-feedback-:pres-name-:pres-group-:datetime "Collect feedback for '%s' (%s) at %s"
+     :best-presentation-error "Wrong input. Enter the number of the best presentation in the list."
+     :thank-feedback-saved "Thanks, your feedback saved!"
+     :drop "drop"
+     :all "all"
+     :only-schedule "only schedule"
+     :wrong-input-:command "Wrong input: /%s 12345"
+     :not-found "Not found."
+     :drop-config-:pres-name-:stud-id "Drop '%s' config for %s?"
+     :drop-student-:stud-id "We drop student: %s"
+     :drop-state-:pres-name "We drop your state for %s"
+     :descriptions "%s descriptions"
+     :all-scheduled-description-by-group "File with all scheduled descriptions by groups:"
+     :set-group-help-:pres-name-:key-name "Please, set your '%s' group by /%ssetgroup"
+     :already-submitted-and-approved-help-:key-name "Already submitted and approved, maybe you need to schedule it? /%sschedule"
+     :submit-receive-before-schedule-help-:key-name "You should submit and receive approve before scheduling. Use /%ssubmit"
+     :already-scheduled-help-:key-name "Already scheduled, check /%sagenda."
+     :ok-check-schedule-help-:key-name "OK, you can check it by: /%sagenda"
+     :should-set-group-to-send-feedback-help-:pres-name-:key-str "To send feedback, you should set your group for %s by /%ssetgroup"
+     :setgroup-talk-info-:pres-name "Set your group for '%s'"
+     :submit-talk-info-:pres-name "Submit your '%s' description"
+     :check-talk-info-:pres-name "(admin) Check submitted presentation description for '%s'"
+     :submission-talk-info "List submissions and their status (no args -- your group, with args -- specified)"
+     :agenda-talk-info "Agenda (no args -- your group, with args -- specified)"
+     :soon-talk-info "Presentations that will be coming soon"
+     :schedule-talk-info "Select your presentation day"
+     :feedback-talk-info-:pres-name "Send feedback for '%s' (no args -- list of available dates, optional arg -- [<datetime>])"
+     :drop-talk-info-:pres-name-:suffix "(admin) Drop '%s' for specific student (%s)"
+     :all-scheduled-descriptions-dump-talk-info "(admin) All-scheduled-descriptions-dump"}}
+   :ru
+   {:pres
+    {:nothing-to-check "Нечего проверять."
+     :group-is-already-set-error-:pres-name-:pres-group "Ваша группа %s уже установлена: %s"
+     :select-group-:pres-name-:all-groups "Пожалуйста, выберите вашу группу %s: %s"
+     :missing-group-:all-groups "Я не знаю эту группу. Попробуйте еще раз (%s)"
+     :group-is-already-set-:pres-name-:pres-group "Ваш набор групп %s: %s"
+     :on-review "На рассмотрении. Вы будете проинформированы, когда оно будет завершено."
+     :provide-description-:pres-name "Пожалуйста, предоставьте описание вашего '%s' (в одном сообщении):"
+     :your-description "Ваше описание:"
+     :do-you-approve "Вы одобряете это?"
+     :teacher-will-check "Зарегистрировано, учитель скоро проверит."
+     :description-is-too-long-:max-length "Описание слишком длинное, максимальная длина %s."
+     :later "Вы можете сделать это позже."
+     :yes-or-no "Пожалуйста, да или нет?"
+     :wait-for-review-:submissions-count "Дождитесь проверки: %s"
+     :remarks "Примечания:"
+     :receive-from-stud-topic-:group-:topic "Получаем от студента (группа %s):\n\nТема: %s"
+     :ok-stud-will-receive-approve-:command "Хорошо, учащийся получит одобрение.\n\n/%s"
+     :approved-description-:pres-name "Описание '%s' одобрено."
+     :ok-need-send-remark-for-student "Хорошо, вам нужно отправить свое замечание для студента:"
+     :declined-description-:command "Описание презентации отклонено. Студент был проинформирован о вашем решении.\n\n/%s"
+     :rejected-description-:pres-name-:remark "Описание '%s' было отклонено. Примечание:\n\n%s"
+     :approve-yes-or-no "Одобрить (да или нет)?"
+     :incorrect-group-one-from-:wrong-group-:all-groups "Я не знаю '%s', вы должны указать один из: %s"
+     :agenda-:datetime-:pres-group "Повестка дня %s (%s)"
+     :expect-soon-:pres-name "Мы ожидаем для %s в ближайшее время:"
+     :not-have-options "У меня нет для вас вариантов."
+     :select-option "Выберите свой вариант:\n"
+     :not-found-allow-only "Не найдено, разрешить только:\n"
+     :enter-pres-number "Введите номер лучшей презентации в списке:\n"
+     :lesson-feedback-not-available-:pres-group-:now-:right-times-list "Отзывы не доступны для этого занятия. Ваша группа докладов: %s. Сейчас: %s. Ожидаемые сроки отзывов:\n%s"
+     :lesson-feedback-no-presentations "Нет презентаций для этого занятия."
+     :lesson-feedback-what-lesson-:key-str-:datetime-list "В формате: /%sfeedback [<datetime>]\n\nКакое занятие?:\n%s"
+     :already-received "Уже получено."
+     :too-early "Вы не можете оставить отзыв о будущем уроке."
+     :collect-feedback-:pres-name-:pres-group-:datetime "Собрать отзывы для '%s' (%s) в %s"
+     :best-presentation-error "Неправильный ввод. Введите номер лучшей презентации в списке."
+     :thank-feedback-saved "Спасибо, ваш отзыв сохранен!"
+     :drop "сбросить"
+     :all "все"
+     :only-schedule "только расписание"
+     :wrong-input-:command "Неверный ввод: /%s 12345"
+     :not-found "Не найден."
+     :drop-config-:pres-name-:stud-id "Удалить конфигурацию '%s' для %s?"
+     :drop-student-:stud-id "Мы сбрасываем студента: %s"
+     :drop-state-:pres-name "Мы сбрасываем ваше состояние на %s"
+     :descriptions "%s описаний"
+     :all-scheduled-description-by-group "Файл со всеми запланированными описаниями по группам:"
+     :set-group-help-:pres-name-:key-name "Пожалуйста, установите группу '%s' с помощью /%ssetgroup"
+     :already-submitted-and-approved-help-:key-name "Уже отправлено и одобрено, может быть, вам нужно запланировать его? /%sschedule"
+     :submit-receive-before-schedule-help-:key-name "Вы должны отправить и получить одобрение до планирования. Используйте /%ssubmit"
+     :already-scheduled-help-:key-name "Уже запланировано, проверьте /%sagenda."
+     :ok-check-schedule-help-:key-name "Хорошо, вы можете проверить это: /%sagenda"
+     :should-set-group-to-send-feedback-help-:pres-name-:key-str "Чтобы отправить отзыв, вы должны установить свою группу для %s с помощью /%ssetgroup"
+     :setgroup-talk-info-:pres-name "Установить вашу группу для '%s'"
+     :submit-talk-info-:pres-name "Отправить описание '%s'"
+     :check-talk-info-:pres-name "(admin) Ревью загруженных тем для '%s'"
+     :submission-talk-info "Статус загруженных эссе (опциональный аргумент -- группа)"
+     :agenda-talk-info "Расписание докладов (опциональный аргумент -- группа)"
+     :soon-talk-info "Презентации, назначенные на ближайшее время"
+     :schedule-talk-info "Выбрать день для презентации"
+     :feedback-talk-info-:pres-name "Отправить отзыв для '%s' (без аргумента -- список доступных дат, опциональный аргумент -- [<datetime>])"
+     :drop-talk-info-:pres-name-:suffix "(admin) Сбросить '%s' для конкретного ученика (%s)"
+     :all-scheduled-descriptions-dump-talk-info "(admin) Дамп всех запланированных описаний"}}})
 
 (defn get-lesson-state "per lesson" [tx pres-key pres-group datetime]
   (codax/get-at tx [:presentation pres-key pres-group datetime]))
@@ -155,16 +155,16 @@
   (-> tx
       (codax/assoc-at [stud-id :presentation pres-key :on-review?] true)
       (codax/update-at [stud-id :presentation pres-key :history]
-                       #(conj % {:date (misc/today-str-utc)
-                                 :action :submit}))
+        #(conj % {:date (misc/today-str-utc)
+                  :action :submit}))
       (codax/assoc-at [stud-id :presentation pres-key :description] text)))
 
 (defn approve-presentation [tx pres-key stud-id]
   (-> tx
       (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
       (codax/update-at [stud-id :presentation pres-key :history]
-                       #(conj % {:date (misc/today-str-utc)
-                                 :action :approve}))
+        #(conj % {:date (misc/today-str-utc)
+                  :action :approve}))
       (codax/assoc-at [stud-id :presentation pres-key :approved?] true)))
 
 (defn reject-presentation [tx pres-key stud-id remark]
@@ -172,8 +172,8 @@
       (codax/assoc-at [stud-id :presentation pres-key :on-review?] false)
       (codax/update-at [stud-id :presentation pres-key :remarks] conj remark)
       (codax/update-at [stud-id :presentation pres-key :history]
-                       #(conj % {:date (misc/today-str-utc)
-                                 :action :reject}))))
+        #(conj % {:date (misc/today-str-utc)
+                  :action :reject}))))
 
 (defn drop-presentation [tx pres-key stud-id]
   (-> tx
@@ -183,8 +183,8 @@
       (codax/dissoc-at [stud-id :presentation pres-key :group])
       (codax/dissoc-at [stud-id :presentation pres-key :description])
       (codax/update-at [stud-id :presentation pres-key :history]
-                       #(conj % {:date (misc/today-str-utc)
-                                 :action :drop}))))
+        #(conj % {:date (misc/today-str-utc)
+                  :action :drop}))))
 
 (defn schedule-lesson [tx pres-key pres-group datetime stud-id]
   (-> tx
@@ -333,11 +333,11 @@
 
 (defn is-check-conflict [tx stud-id pres-key history-count]
   (not= (count (codax/get-at tx [stud-id :presentation pres-key :history]))
-        history-count))
+    history-count))
 
 (i18n/add-dict
- {:en {:pres {:check-conflict "Check conflict, someone check it faster, so I use his review."}}
-  :ru {:pres {:check-conflict "Конфликт проверки. Кто-то вас опередил и я взял его результат."}}})
+  {:en {:pres {:check-conflict "Check conflict, someone check it faster, so I use his review."}}
+   :ru {:pres {:check-conflict "Конфликт проверки. Кто-то вас опередил и я взял его результат."}}})
 
 (defn check-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "check")
@@ -439,7 +439,7 @@
     (filter #(let [dt (misc/read-time (:datetime %))]
                (or (nil? now)
                    (<= cut-off-in-min (/ (- dt now) scale))))
-            lessons)))
+      lessons)))
 
 (defn future-lessons [pres-conf group now]
   (let [cut-off-in-min (-> pres-conf :schedule-cut-off-time-in-min)]
@@ -468,24 +468,24 @@
                      comment (-> conf (get pres-id) :groups (get group) :comment)
                      studs (codax/get-at tx [:presentation pres-id group dt :stud-ids])
                      last-names (str/join ", "
-                                          (map (fn [stud-id] (let [name (codax/get-at tx [stud-id :name])]
-                                                               (if (nil? name)
-                                                                 "ANONYMOUS"
-                                                                 (-> name
-                                                                     (str/split #"\s+")
-                                                                     first))))
+                                  (map (fn [stud-id] (let [name (codax/get-at tx [stud-id :name])]
+                                                       (if (nil? name)
+                                                         "ANONYMOUS"
+                                                         (-> name
+                                                             (str/split #"\s+")
+                                                             first))))
 
-                                               studs))]
+                                    studs))]
 
                  (str (format (tr :pres/agenda-:datetime-:pres-group) dt group)
                       (when (some? comment) (str ", " comment)) ":\n"
                       (format "1. [%s | %s %s]()"
-                              last-names
-                              (-> dt (str/split #"\s+") first)
-                              (-> conf (get pres-id) :agenda-postfix))
+                        last-names
+                        (-> dt (str/split #"\s+") first)
+                        (-> conf (get pres-id) :agenda-postfix))
                       (when (not-empty studs) "\n")
                       (str/join "\n"
-                                (map-indexed (fn [idx e] (str "    " (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
+                        (map-indexed (fn [idx e] (str "    " (+ 1 idx) ". " (presentation tx e pres-id))) studs))))))))
 
 (defn agenda-talk [db {token :token admin-chat-id :admin-chat-id :as conf} pres-key-name]
   (let [cmd (str pres-key-name "agenda")
@@ -562,12 +562,12 @@
               (talk/stop-talk tx))
 
             (doall (map #(talk/send-text token id %)
-                        (agenda tx pres-conf pres-key group (misc/today))))
+                     (agenda tx pres-conf pres-key group (misc/today))))
             (talk/send-text token id
-                            (str (tr :pres/select-option)
-                                 (->> future
-                                      (map #(str "- " (:datetime %)))
-                                      (str/join "\n"))))
+              (str (tr :pres/select-option)
+                   (->> future
+                        (map #(str "- " (:datetime %)))
+                        (str/join "\n"))))
             (talk/change-branch tx :get-date))))
 
       :get-date
@@ -578,10 +578,10 @@
               dt (some #(-> % :datetime (= text)) future)]
           (when (nil? dt)
             (talk/send-text token id
-                            (str (tr :pres/not-found-allow-only)
-                                 (->> future
-                                      (map #(str "- " (:datetime %)))
-                                      (str/join "\n"))))
+              (str (tr :pres/not-found-allow-only)
+                   (->> future
+                        (map #(str "- " (:datetime %)))
+                        (str/join "\n"))))
             (talk/repeat-branch tx))
           (talk/send-text token id (format (tr :pres/ok-check-schedule-help-:key-name) pres-key-name))
           (-> tx
@@ -631,22 +631,22 @@
                                     (filter #(in-min-interval? (:datetime %) now 0 nil)))]
               (if (not (empty? pass-lessons))
                 (talk/send-text token id
-                                (format (tr :pres/lesson-feedback-what-lesson-:key-str-:datetime-list)
-                                        pres-key-str
-                                        (->> pass-lessons
-                                             (map #(str "- " (:datetime %)))
-                                             (str/join "\n"))))
+                  (format (tr :pres/lesson-feedback-what-lesson-:key-str-:datetime-list)
+                    pres-key-str
+                    (->> pass-lessons
+                         (map #(str "- " (:datetime %)))
+                         (str/join "\n"))))
                 (let [lessons (->> (lessons pres-conf pres-group))]
                   (talk/send-text token id
-                                  (format (tr :pres/lesson-feedback-not-available-:pres-group-:now-:right-times-list)
-                                          pres-group
-                                          (misc/str-time now)
-                                          (->> lessons
-                                               (map #(str "- " (misc/str-time (+ (* 30 60 1000)
-                                                                                 (misc/read-time (:datetime %))))
-                                                          " -- " (misc/str-time (+ (* 180 60 1000)
-                                                                                   (misc/read-time (:datetime %))))))
-                                               (str/join "\n")))))))
+                    (format (tr :pres/lesson-feedback-not-available-:pres-group-:now-:right-times-list)
+                      pres-group
+                      (misc/str-time now)
+                      (->> lessons
+                           (map #(str "- " (misc/str-time (+ (* 30 60 1000)
+                                                            (misc/read-time (:datetime %))))
+                                      " -- " (misc/str-time (+ (* 180 60 1000)
+                                                              (misc/read-time (:datetime %))))))
+                           (str/join "\n")))))))
             (talk/stop-talk tx))
 
           (when (empty? studs)
@@ -662,7 +662,7 @@
             (talk/stop-talk tx))
 
           (talk/send-text token id
-                          (format (tr :pres/collect-feedback-:pres-name-:pres-group-:datetime) name pres-group dt))
+            (format (tr :pres/collect-feedback-:pres-name-:pres-group-:datetime) name pres-group dt))
           (talk/send-text token id (feedback-str studs))
           (talk/change-branch tx :select {:rank [] :remain studs :group pres-group :dt dt})))
 
@@ -678,18 +678,18 @@
                   studs (concat (take n studs) (drop (+ n 1) studs))]
               (talk/send-text token id (feedback-str studs))
               (talk/change-branch tx :select
-                                  (assoc state
-                                         :rank (conj rank best)
-                                         :remain studs))))
+                (assoc state
+                  :rank (conj rank best)
+                  :remain studs))))
 
           (talk/send-text token id (tr :pres/thank-feedback-saved))
           (-> tx
               ;; TODO: move :feedback-from into [:feedback :from]
               (codax/update-at [:presentation pres-key group dt :feedback-from]
-                               conj id)
+                conj id)
               (codax/update-at [:presentation pres-key group dt :feedback]
-                               conj {:receive-at (misc/str-time (misc/today))
-                                     :rank (conj rank (first studs))})
+                conj {:receive-at (misc/str-time (misc/today))
+                      :rank (conj rank (first studs))})
               talk/stop-talk))))))
 
 (defn drop-talk [db {token :token :as conf} pres-key-name drop-all]
@@ -697,7 +697,7 @@
         pres-key (keyword pres-key-name)
         name (-> conf (get pres-key) :name)
         help (format (tr :pres/drop-talk-info-:pres-name-:suffix) name
-                     (if drop-all (tr :pres/all) (tr :pres/drop)))]
+               (if drop-all (tr :pres/all) (tr :pres/drop)))]
     (talk/def-talk db cmd help
 
       :start
@@ -724,8 +724,8 @@
             (talk/send-text token id (misc/pp-str pres-state))
             (when stud-lesson
               (talk/send-text token id
-                              (let [msg (misc/pp-str [dt stud-lesson])]
-                                (subs msg 0 (min 4096 (count msg))))))
+                (let [msg (misc/pp-str [dt stud-lesson])]
+                  (subs msg 0 (min 4096 (count msg))))))
 
             (talk/send-yes-no-kbd token id (format (tr :pres/drop-config-:pres-name-:stud-id) name stud-id))
 
@@ -742,11 +742,11 @@
                         (drop-presentation tx pres-key stud-id)
                         (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
                       (codax/assoc-at [:presentation pres-key group]
-                                      (->> lessons
-                                           (map (fn [[dt desc]]
-                                                  [dt (assoc desc
-                                                             :stud-ids (filter #(not= stud-id %) (:stud-ids desc)))]))
-                                           (into {})))
+                        (->> lessons
+                             (map (fn [[dt desc]]
+                                    [dt (assoc desc
+                                          :stud-ids (filter #(not= stud-id %) (:stud-ids desc)))]))
+                             (into {})))
                       talk/stop-talk))
           "no" (talk/send-stop tx token id (tr :talk/cancelled))
           (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
@@ -754,11 +754,11 @@
 (defn avg-rank [tx pres-key stud-id]
   (let [group (codax/get-at tx [stud-id :presentation pres-key :group])
         feedback (some
-                  (fn [[_dt fb]] (when (some #(= % stud-id) (:stud-ids fb)) fb))
-                  (codax/get-at tx [:presentation pres-key group]))
+                   (fn [[_dt fb]] (when (some #(= % stud-id) (:stud-ids fb)) fb))
+                   (codax/get-at tx [:presentation pres-key group]))
         ranks (->> (:feedback feedback)
                    (map #(map-indexed (fn [idx rank] (assoc rank :rank (+ 1 idx)))
-                                      (:rank %)))
+                           (:rank %)))
                    (apply concat)
                    (filter #(-> % :id (= stud-id))))]
     (when (> (count ranks) 0)
@@ -771,8 +771,8 @@
 
         {stud-ids :stud-ids feedback :feedback}
         (some
-         (fn [[_dt fb]] (when (some #(= % stud-id) (:stud-ids fb)) fb))
-         (codax/get-at tx [:presentation pres-key group]))
+          (fn [[_dt fb]] (when (some #(= % stud-id) (:stud-ids fb)) fb))
+          (codax/get-at tx [:presentation pres-key group]))
         scores (get all-scores (count stud-ids))]
     (cond
       (or (empty? stud-ids) (nil? group)) nil
@@ -839,18 +839,18 @@
         tx))))
 
 (i18n/add-dict
- {:en {:pres
-       {:restore-lost-and-found-cmd-info "(admin) Restore lost-and-found lessons."
-        :lost-and-found-collision "Collision between lost-and-found lessons and scheduled lessons. Canceled."
-        :lost-and-found-restore? "Restore lost-and-found lessons?"
-        :lost-and-found-canceled "Lost-and-found lessons restore canceled."
-        :lost-and-found-restored "Lost-and-found lessons restored."}}
-  :ru {:pres
-       {:restore-lost-and-found-cmd-info "(admin) Восстановить lost-and-found занятия."
-        :lost-and-found-collision "Конфликт между занятиями из lost-and-found и запланированными занятиями. Отменено."
-        :lost-and-found-restore? "Восстановить занятия из lost-and-found?"
-        :lost-and-found-canceled "Восстановление из lost-and-found отменено."
-        :lost-and-found-restored "Занятия из lost-and-found восстановлены."}}})
+  {:en {:pres
+        {:restore-lost-and-found-cmd-info "(admin) Restore lost-and-found lessons."
+         :lost-and-found-collision "Collision between lost-and-found lessons and scheduled lessons. Canceled."
+         :lost-and-found-restore? "Restore lost-and-found lessons?"
+         :lost-and-found-canceled "Lost-and-found lessons restore canceled."
+         :lost-and-found-restored "Lost-and-found lessons restored."}}
+   :ru {:pres
+        {:restore-lost-and-found-cmd-info "(admin) Восстановить lost-and-found занятия."
+         :lost-and-found-collision "Конфликт между занятиями из lost-and-found и запланированными занятиями. Отменено."
+         :lost-and-found-restore? "Восстановить занятия из lost-and-found?"
+         :lost-and-found-canceled "Восстановление из lost-and-found отменено."
+         :lost-and-found-restored "Занятия из lost-and-found восстановлены."}}})
 
 (defn lost-and-found-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "lostandfound")
@@ -898,10 +898,10 @@
                                                 (submit-presentation pres-key stud-id topic)
                                                 (approve-presentation pres-key stud-id)
                                                 (schedule-lesson pres-key pres-group datetime stud-id)))
-                                          tx'
-                                          lost-state))
-                                tx
-                                changes)
+                                    tx'
+                                    lost-state))
+                          tx
+                          changes)
                         talk/stop-talk))
 
           "no" (talk/send-stop tx token id (tr :pres/lost-and-found-canceled))

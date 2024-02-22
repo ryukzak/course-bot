@@ -9,20 +9,20 @@
             [course-bot.misc :as misc]))
 
 (i18n/add-dict
- {:en
-  {:talk
-   {:yes "yes"
-    :no "no"
-    :cancelled "Cancelled."
-    :question-yes-no "What (yes or no)?"
-    :clarify-input-tmpl "Didn't understand: %s. Yes or no?"}}
-  :ru
-  {:talk
-   {:yes "да"
-    :no "нет"
-    :cancelled "Отменено."
-    :question-yes-no "Что (да или нет)?"
-    :clarify-input-tmpl "Не разобрал: %s. Да или нет?"}}})
+  {:en
+   {:talk
+    {:yes "yes"
+     :no "no"
+     :cancelled "Cancelled."
+     :question-yes-no "What (yes or no)?"
+     :clarify-input-tmpl "Didn't understand: %s. Yes or no?"}}
+   :ru
+   {:talk
+    {:yes "да"
+     :no "нет"
+     :cancelled "Отменено."
+     :question-yes-no "Что (да или нет)?"
+     :clarify-input-tmpl "Не разобрал: %s. Да или нет?"}}})
 
 ;; Talk flow
 
@@ -132,9 +132,9 @@
                 (swap! res (constantly :ok))
                 (case (ex-message e)
                   "Change branch" (set-talk-branch (-> e ex-data :tx)
-                                                   id name
-                                                   (-> e ex-data :next-branch)
-                                                   (-> e ex-data :state))
+                                    id name
+                                    (-> e ex-data :next-branch)
+                                    (-> e ex-data :state))
                   "Stop talk" (set-talk-branch (-> e ex-data :tx) id nil nil nil)
                   "Wait talk" (-> e ex-data :tx)
                   (throw e))))))

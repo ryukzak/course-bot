@@ -20,31 +20,31 @@
 
 (i18n/set-locales [:ru :en])
 (i18n/add-dict
- {:en
-  {:csa
-   {:start-:conf "Bot activated, my Lord! Configuration: %s"
-    :webhook-:url "Webhook is set, my Lord: %s"
-    :dot "."
-    :stop "Bot is dead, my Lord!"
-    :unknown-:message "Unknown message: %s"
-    :db-failure "I failed to reach the database, my Lord!"
-    :db-failure-path "Can't find the database path, my Lord!"}}
-  :ru
-  {:csa
-   {:start-:conf "Бот активирован, мой господин! Конфигурация: %s"
-    :webhook-:url "Вебхук установлен, мой господин: %s"
-    :stop "Бот погиб, мой господин!"
-    :unknown-:message "Неизвестное сообщение: %s, а вы точно мой господин?"
-    :db-failure "Не удалось подключиться к базе данных, мой господин!"
-    :db-failure-path "Не удалось найти путь к базе данных, мой господин!"}}})
+  {:en
+   {:csa
+    {:start-:conf "Bot activated, my Lord! Configuration: %s"
+     :webhook-:url "Webhook is set, my Lord: %s"
+     :dot "."
+     :stop "Bot is dead, my Lord!"
+     :unknown-:message "Unknown message: %s"
+     :db-failure "I failed to reach the database, my Lord!"
+     :db-failure-path "Can't find the database path, my Lord!"}}
+   :ru
+   {:csa
+    {:start-:conf "Бот активирован, мой господин! Конфигурация: %s"
+     :webhook-:url "Вебхук установлен, мой господин: %s"
+     :stop "Бот погиб, мой господин!"
+     :unknown-:message "Неизвестное сообщение: %s, а вы точно мой господин?"
+     :db-failure "Не удалось подключиться к базе данных, мой господин!"
+     :db-failure-path "Не удалось найти путь к базе данных, мой господин!"}}})
 
 (defn open-database-or-fail [path]
   (if path
     (try
       (codax/open-database! path
-                            :backup-fn (misc/codax-backup-fn
-                                        {:dir path
-                                         :archive-deep (* 2 24 60 60 1000)}))
+        :backup-fn (misc/codax-backup-fn
+                     {:dir path
+                      :archive-deep (* 2 24 60 60 1000)}))
       (catch Exception e
         (println (tr :csa/db-failure))
         (println (.getMessage e))
@@ -91,57 +91,57 @@
       (pres/lost-and-found-talk db conf "lab1")
 
       (talk/when-handlers (:essay1 conf)
-                          (essay/submit-talk db conf "essay1" plagiarism-db)
-                          (essay/status-talk db conf "essay1")
-                          (essay/assignreviewers-talk db conf "essay1")
-                          (essay/not-assigned-talk db conf "essay1")
-                          (essay/review-talk db conf "essay1")
-                          (essay/myfeedback-talk db conf "essay1")
-                          (essay/reportabuse-talk db conf "essay1")
-                          (essay/warmup-plagiarism-talk db conf "essay1" plagiarism-db))
+        (essay/submit-talk db conf "essay1" plagiarism-db)
+        (essay/status-talk db conf "essay1")
+        (essay/assignreviewers-talk db conf "essay1")
+        (essay/not-assigned-talk db conf "essay1")
+        (essay/review-talk db conf "essay1")
+        (essay/myfeedback-talk db conf "essay1")
+        (essay/reportabuse-talk db conf "essay1")
+        (essay/warmup-plagiarism-talk db conf "essay1" plagiarism-db))
 
       (talk/when-handlers (:essay2 conf)
-                          (essay/submit-talk db conf "essay2" plagiarism-db)
-                          (essay/status-talk db conf "essay2")
-                          (essay/assignreviewers-talk db conf "essay2")
-                          (essay/not-assigned-talk db conf "essay2")
-                          (essay/review-talk db conf "essay2")
-                          (essay/myfeedback-talk db conf "essay2")
-                          (essay/reportabuse-talk db conf "essay2")
-                          (essay/warmup-plagiarism-talk db conf "essay2" plagiarism-db))
+        (essay/submit-talk db conf "essay2" plagiarism-db)
+        (essay/status-talk db conf "essay2")
+        (essay/assignreviewers-talk db conf "essay2")
+        (essay/not-assigned-talk db conf "essay2")
+        (essay/review-talk db conf "essay2")
+        (essay/myfeedback-talk db conf "essay2")
+        (essay/reportabuse-talk db conf "essay2")
+        (essay/warmup-plagiarism-talk db conf "essay2" plagiarism-db))
 
       (talk/when-handlers (:essay3 conf)
-                          (essay/submit-talk db conf "essay3" plagiarism-db)
-                          (essay/status-talk db conf "essay3")
-                          (essay/assignreviewers-talk db conf "essay3")
-                          (essay/not-assigned-talk db conf "essay3")
-                          (essay/review-talk db conf "essay3")
-                          (essay/myfeedback-talk db conf "essay3")
-                          (essay/reportabuse-talk db conf "essay3")
-                          (essay/warmup-plagiarism-talk db conf "essay3" plagiarism-db))
+        (essay/submit-talk db conf "essay3" plagiarism-db)
+        (essay/status-talk db conf "essay3")
+        (essay/assignreviewers-talk db conf "essay3")
+        (essay/not-assigned-talk db conf "essay3")
+        (essay/review-talk db conf "essay3")
+        (essay/myfeedback-talk db conf "essay3")
+        (essay/reportabuse-talk db conf "essay3")
+        (essay/warmup-plagiarism-talk db conf "essay3" plagiarism-db))
 
       (quiz/startquiz-talk db conf)
       (quiz/stopquiz-talk db conf)
       (quiz/quiz-talk db conf)
 
       (report/report-talk db conf
-                          "ID" report/stud-id
-                          "name" report/stud-name
-                          "group" report/stud-group
-                          "lab1-group" (pres/report-presentation-group "lab1")
-                          "lab1-rank" (pres/report-presentation-avg-rank "lab1")
-                          "lab1-score" (pres/report-presentation-score conf "lab1")
-                          "lab1-count" (pres/lesson-count "lab1")
-                          "failed-tests" (quiz/fail-tests conf)
-                          "success-test-percent" (quiz/success-tests-percent conf)
-                          "essay1" (essay/essay-score "essay1")
-                          "essay1-reviews" (essay/review-score conf "essay1")
-                          "essay2" (essay/essay-score "essay2")
-                          "essay2-reviews" (essay/review-score conf "essay2")
-                          "essay3" (essay/essay-score "essay3")
-                          "essay3-reviews" (essay/review-score conf "essay3")
-                          "stud-chat" report/stud-chat
-                          "stud-old-info" report/stud-old-info)
+        "ID" report/stud-id
+        "name" report/stud-name
+        "group" report/stud-group
+        "lab1-group" (pres/report-presentation-group "lab1")
+        "lab1-rank" (pres/report-presentation-avg-rank "lab1")
+        "lab1-score" (pres/report-presentation-score conf "lab1")
+        "lab1-count" (pres/lesson-count "lab1")
+        "failed-tests" (quiz/fail-tests conf)
+        "success-test-percent" (quiz/success-tests-percent conf)
+        "essay1" (essay/essay-score "essay1")
+        "essay1-reviews" (essay/review-score conf "essay1")
+        "essay2" (essay/essay-score "essay2")
+        "essay2-reviews" (essay/review-score conf "essay2")
+        "essay3" (essay/essay-score "essay3")
+        "essay3-reviews" (essay/review-score conf "essay3")
+        "stud-chat" report/stud-chat
+        "stud-old-info" report/stud-old-info)
 
       (plagiarism/restore-forest-talk db conf plagiarism-db)
       (general/warning-on-edited-message conf)
@@ -149,10 +149,10 @@
       (general/help-talk db conf)
       (general/description-talk db conf)
       (handlers/message {{id :id} :chat :as message}
-                        (let [err (format (tr :csa/unknown-:message) message)
-                              cropped (subs err 0 (min 4096 (count err)))]
-                          (println err)
-                          (talk/send-text token id cropped))))
+        (let [err (format (tr :csa/unknown-:message) message)
+              cropped (subs err 0 (min 4096 (count err)))]
+          (println err)
+          (talk/send-text token id cropped))))
 
     #_:clj-kondo/ignore
     (defroutes bot-routes
