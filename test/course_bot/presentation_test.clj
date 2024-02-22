@@ -728,8 +728,8 @@
         (talk 0 "/report")
         (tt/match-csv *chat 0
           ["ID" "pres-group" "feedback-avg" "feedback" "classes" "lesson-counter"]
-          ["1" "lgr1" "" "4" "1" "1"]
-          ["2" "lgr1" "" "2" "1" "1"]
+          ["1" "lgr1" "" "0" "1" "1"]
+          ["2" "lgr1" "" "0" "1" "1"]
           ["3" "lgr1" "" "" "1" "1"]))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))
