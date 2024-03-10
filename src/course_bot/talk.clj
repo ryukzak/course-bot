@@ -155,7 +155,15 @@
 
 ;; Re-exports
 
-(defn send-text [& args] (apply morse/send-text args))
+(defn send-text [token id msg]
+  (cond
+    (> (count msg) 4096)
+    (do (morse/send-text token id (subs msg 0 4096))
+        (send-text token id (subs msg 4096)))
+
+    :else
+    (morse/send-text token id msg)))
+
 (defn send-document [& args] (apply morse/send-document args))
 
 (defn send-as-document [token id filename content]
