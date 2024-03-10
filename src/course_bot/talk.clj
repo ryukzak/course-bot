@@ -156,7 +156,7 @@
 ;; Re-exports
 
 (defn send-text [token id msg]
-  (cond 
+  (cond
     (> (count msg) 4096)
     (do (morse/send-text token id (subs msg 0 4096))
         (send-text token id (subs msg 4096)))
