@@ -778,7 +778,7 @@
       (or (empty? stud-ids) (nil? group)) nil
 
 
-      (and (:random-without-feedback conf)
+      (and (-> conf (get pres-key) :random-without-feedback)
            (empty? feedback)) 0
       (->> (map vector (sort stud-ids) scores)
         (some (fn [[id score]] (when (= stud-id id) score))))
