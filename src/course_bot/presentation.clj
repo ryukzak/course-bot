@@ -777,9 +777,13 @@
     (cond
       (or (empty? stud-ids) (nil? group)) nil
 
+
+      (and (:random-without-feedback conf)
+           (empty? feedback)) 0
+      (->> (map vector (sort stud-ids) scores)
+        (some (fn [[id score]] (when (= stud-id id) score))))
+
       (empty? feedback) 0
-      ; (->> (map vector (sort stud-ids) scores)
-      ;   (some (fn [[id score]] (when (= stud-id id) score))))
 
       (some? feedback)
       (let [ranks (->> stud-ids
