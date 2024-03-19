@@ -202,7 +202,10 @@
 (i18n/add-dict
   {:en
    {:essay
-    {:not-assigned-help " (admin only) send not assigned essays."}}})
+    {:not-assigned-help " (admin only) send not assigned essays."}}
+   :ru
+    {:essay
+      {:not-assigned-help " (admin only) Отправить неназначенные эссе."}}})
 
 (defn not-assigned-talk [db {token :token admin-chat-id :admin-chat-id :as conf} essay-code]
   (talk/def-talk db (str essay-code "notassigned")
@@ -391,13 +394,12 @@
             )))))
 
 (defn calculate-essay-score [scores]
-  (-> (/ (apply + scores) (count scores))
+  (-> (/ (apply + scores) (count scores) 3))
       float
       Math/floor
       int
-      (#(- 4 %)) ; 3 (max score) = 4 - 1; 1 (min score) = 4 - 3
-      (+ 1) ; + 1 to get actual score
-      ))
+      (#(- 5 %)) ; 5 (max score) = 5 - floor(avg < 3); 4 (min score) = 5 - floor(avg = 3)
+      )
 
 (defn essay-score "hardcoded: rank + 1" [essay-code]
   (fn [_tx data id]
@@ -406,7 +408,7 @@
           scores (->> reviews (map :rank))]
       (cond (not (empty? scores))
             (calculate-essay-score scores)
-            essay-uploaded? 1
+            essay-uploaded? 3
 
             :else 0))))
 

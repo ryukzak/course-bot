@@ -490,8 +490,8 @@
 
 (deftest essay-calculate-score-test
   (testing "calculate a score based on 3 reviews"
-    (is (= 4 (essay/calculate-essay-score [1 1 2])))
-    (is (= 4 (essay/calculate-essay-score [1 2 2])))
-    (is (= 3 (essay/calculate-essay-score [1 2 3])))
-    (is (= 3 (essay/calculate-essay-score [2 3 3])))
-    (is (= 2 (essay/calculate-essay-score [3 3 3])))))
+    (is (= 5 (essay/calculate-essay-score [1 1 2])))
+    (is (= 5 (essay/calculate-essay-score [1 2 2])))
+    (is (= 5 (essay/calculate-essay-score [1 2 3])))
+    (is (= 5 (essay/calculate-essay-score [2 3 3])))
+    (is (= 4 (essay/calculate-essay-score [3 3 3])))))
