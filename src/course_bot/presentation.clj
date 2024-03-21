@@ -442,7 +442,7 @@
                                               :utime (misc/read-time datetime)
                                               :stud-count (count (get-in actual [datetime :stud-ids]))})))
                             pass (filter #(< (:utime %) now) both)
-                            future (filter #(<= now (:utime %)) both) ]
+                            future (filter #(<= now (:utime %)) both)]
                         {:group group
                          :lessons (sort-by :utime both)
                          :total (count both)
@@ -453,13 +453,13 @@
                          :future (->> future count)})))
                (map (fn [{:keys [group lessons total skipped pass-students pass future-students future]}]
                       (talk/send-text token id
-                            (str group " (" total " lessons):\n"
-                                 "skipped: " skipped "\n"
-                                 "passed: " pass " (students: " pass-students ")\n"
-                                 "future: " future " (students: " future-students ")\n"
-                                 "lessons:\n"
-                                 (->> lessons (map #(str "- " (:datetime %) " - " (:stud-count %)))
-                                      (str/join "\n"))))))
+                        (str group " (" total " lessons):\n"
+                             "skipped: " skipped "\n"
+                             "passed: " pass " (students: " pass-students ")\n"
+                             "future: " future " (students: " future-students ")\n"
+                             "lessons:\n"
+                             (->> lessons (map #(str "- " (:datetime %) " - " (:stud-count %)))
+                                  (str/join "\n"))))))
                doall))
         tx))))
 
