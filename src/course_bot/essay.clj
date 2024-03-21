@@ -378,37 +378,33 @@
 (defn review-score [conf essay-code]
   (let [essay-key (keyword essay-code)]
     (fn [_tx data id]
-      (let [n (-> data (get id) :essays (get essay-code) :my-reviews count)
+      (let [_n (-> data (get id) :essays (get essay-code) :my-reviews count)
             deadline (-> conf (get essay-key) :review-deadline)
             at (-> data (get id) :essays (get essay-code) :my-reviews-submitted-at)
-            score-per-review (cond
-                               (or (nil? deadline) (nil? at)) 1
-                               (< (misc/read-time deadline) (misc/read-time at)) 0.5
-                               :else 1)]
-        (-> (* n score-per-review)
-            str
+            score (cond
+                    (or (nil? deadline) (nil? at)) 2
+                    (< (misc/read-time deadline) (misc/read-time at)) 2
+                    :else 3)]
+        (-> score str
             ;; (str/replace #"\." ",")
             )))))
 
 (defn calculate-essay-score [scores]
-  (-> (/ (apply + scores) (count scores))
-      float
-      Math/floor
-      int
-      (#(- 4 %)) ; 3 (max score) = 4 - 1; 1 (min score) = 4 - 3
-      (+ 1) ; + 1 to get actual score
-      ))
+  (max (some {3 4
+              2 5
+              1 5} scores)))
 
 (defn essay-score "hardcoded: rank + 1" [essay-code]
   (fn [_tx data id]
     (let [essay-uploaded? (-> data (get id) :essays (get essay-code) :text nil? not)
           reviews (-> data (get id) :essays (get essay-code) :received-review)
           scores (->> reviews (map :rank))]
-      (cond (not (empty? scores))
-            (calculate-essay-score scores)
-            essay-uploaded? 1
+      (cond
+        (not (empty? scores)) (calculate-essay-score scores)
 
-            :else 0))))
+        essay-uploaded? 3
+
+        :else 0))))
 
 (defn warmup-plagiarism-talk [db {token :token :as conf} essay-code plagiarism-db]
   (let [cmd (str essay-code "warmupplagiarism")

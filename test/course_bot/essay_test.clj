@@ -405,10 +405,10 @@
         (talk 0 "/report")
         (tt/match-csv *chat 0
           ["ID" "review-score" "essay-score"]
-          ["1" "3" "3"]
-          ["2" "1.5" "3"]
-          ["3" "1.5" "3"]
-          ["4" "1.5" "3"]))
+          ["1" "3" "4"]
+          ["2" "2" "5"]
+          ["3" "2" "5"]
+          ["4" "2" "4"]))
 
       (testing "additional essays from new users"
         (doall (map #(register-user *chat talk %1 %2)
@@ -490,8 +490,14 @@
 
 (deftest essay-calculate-score-test
   (testing "calculate a score based on 3 reviews"
-    (is (= 4 (essay/calculate-essay-score [1 1 2])))
-    (is (= 4 (essay/calculate-essay-score [1 2 2])))
-    (is (= 3 (essay/calculate-essay-score [1 2 3])))
-    (is (= 3 (essay/calculate-essay-score [2 3 3])))
-    (is (= 2 (essay/calculate-essay-score [3 3 3])))))
+    (is (= 5 (essay/calculate-essay-score [1 1 2])))
+    (is (= 5 (essay/calculate-essay-score [1 2 2])))
+    (is (= 5 (essay/calculate-essay-score [1 2 3])))
+    (is (= 5 (essay/calculate-essay-score [2 3 3])))
+    (is (= 5 (essay/calculate-essay-score [2 3 3])))
+    (is (= 5 (essay/calculate-essay-score [2])))
+    (is (= 5 (essay/calculate-essay-score [2 3])))
+    (is (= 5 (essay/calculate-essay-score [2 3 3])))
+    (is (= 4 (essay/calculate-essay-score [3])))
+    (is (= 4 (essay/calculate-essay-score [3 3])))
+    (is (= 4 (essay/calculate-essay-score [3 3 3])))))
