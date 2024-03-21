@@ -670,6 +670,7 @@
           (pres/schedule-talk db conf "lab1")
           (pres/agenda-talk db conf "lab1")
           (pres/feedback-talk db conf "lab1")
+          (pres/lessonstat-talk db conf "lab1")
           (report/report-talk db conf
             "ID" report/stud-id
             "pres-group" (pres/report-presentation-group "lab1")
@@ -706,6 +707,23 @@
 
       (is (answers? (talk 1 "/lab1feedback 2022.01.02 12:00 +0000")
             "No presentations."))
+
+      (is (answers? (talk 1 "/lab1lessonstat")
+            (tt/unlines
+              "lgr1 (2 lessons):"
+              "skipped: 2"
+              "passed: 2 (students: 0)"
+              "future: 0 (students: 0)"
+              "lessons:"
+              "- 2022.01.01 12:00 +0000 - 0"
+              "- 2022.01.02 12:00 +0000 - 0")
+            (tt/unlines
+              "lgr2 (1 lessons):"
+              "skipped: 1"
+              "passed: 1 (students: 0)"
+              "future: 0 (students: 0)"
+              "lessons:"
+              "- 2022.02.02 12:00 +0000 - 0")))
 
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:29 +0000"))]
         (talk 2 "/lab1schedule")
@@ -867,7 +885,24 @@
           ["ID" "pres-group" "feedback-avg" "feedback" "classes" "lesson-counter"]
           ["1" "lgr1" "1,33" "4" "1" "1"]
           ["2" "lgr1" "1,67" "2" "1" "1"]
-          ["3" "lgr1" "" "" "1" "1"])))))
+          ["3" "lgr1" "" "" "1" "1"]))
+
+      (is (answers? (talk 1 "/lab1lessonstat")
+            (tt/unlines
+              "lgr1 (2 lessons):"
+              "skipped: 1"
+              "passed: 2 (students: 2)"
+              "future: 0 (students: 0)"
+              "lessons:"
+              "- 2022.01.01 12:00 +0000 - 2"
+              "- 2022.01.02 12:00 +0000 - 0")
+            (tt/unlines
+              "lgr2 (1 lessons):"
+              "skipped: 1"
+              "passed: 1 (students: 0)"
+              "future: 0 (students: 0)"
+              "lessons:"
+              "- 2022.02.02 12:00 +0000 - 0"))))))
 
 (deftest lost-and-found-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")

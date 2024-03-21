@@ -80,6 +80,7 @@
       (pres/schedule-talk db conf "lab1")
       (pres/soon-talk db conf "lab1")
       (pres/feedback-talk db conf "lab1")
+      (pres/lessonstat-talk db conf "lab1")
 
       (pres/agenda-talk db conf "lab1")
 

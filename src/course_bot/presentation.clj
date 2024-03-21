@@ -423,6 +423,46 @@
             (talk/send-text token id (format (tr :pres/incorrect-group-one-from-:wrong-group-:all-groups) arg groups-text)))
           (talk/stop-talk tx))))))
 
+(defn lessonstat-talk [db {token :token :as conf} pres-key-name]
+  (let [cmd (str pres-key-name "lessonstat")
+        pres-key (keyword pres-key-name)
+        groups (-> conf (get pres-key) :groups keys)]
+
+    (talk/def-command db cmd
+      (tr :pres/submission-talk-info)
+      (fn [tx {{id :id} :from text :text}]
+        (let [now (misc/today)]
+          (->> groups
+               (map (fn [group]
+                      (let [plan (get-in conf [pres-key :groups group :lessons])
+                            actual (codax/get-at tx [:presentation pres-key group])
+                            both (->> plan
+                                      (map (fn [{:keys [datetime]}]
+                                             {:datetime datetime
+                                              :utime (misc/read-time datetime)
+                                              :stud-count (count (get-in actual [datetime :stud-ids]))})))
+                            pass (filter #(< (:utime %) now) both)
+                            future (filter #(<= now (:utime %)) both) ]
+                        {:group group
+                         :lessons (sort-by :utime both)
+                         :total (count both)
+                         :skipped (->> pass (filter #(= 0 (:stud-count %))) count)
+                         :pass-students (->> pass (map :stud-count) (reduce +))
+                         :pass (->> pass count)
+                         :future-students (->> future (map :stud-count) (reduce +))
+                         :future (->> future count)})))
+               (map (fn [{:keys [group lessons total skipped pass-students pass future-students future]}]
+                      (talk/send-text token id
+                            (str group " (" total " lessons):\n"
+                                 "skipped: " skipped "\n"
+                                 "passed: " pass " (students: " pass-students ")\n"
+                                 "future: " future " (students: " future-students ")\n"
+                                 "lessons:\n"
+                                 (->> lessons (map #(str "- " (:datetime %) " - " (:stud-count %)))
+                                      (str/join "\n"))))))
+               doall))
+        tx))))
+
 (defn lessons [pres-conf group]
   (-> pres-conf :groups (get group) :lessons))
 
