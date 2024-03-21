@@ -430,7 +430,7 @@
 
     (talk/def-command db cmd
       (tr :pres/submission-talk-info)
-      (fn [tx {{id :id} :from text :text}]
+      (fn [tx {{id :id} :from}]
         (let [now (misc/today)]
           (->> groups
                (map (fn [group]
