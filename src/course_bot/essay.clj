@@ -391,8 +391,8 @@
 
 (defn calculate-essay-score [scores]
   (apply max (map {3 4
-             2 5
-             1 5} scores)))
+                   2 5
+                   1 5} scores)))
 
 (defn essay-score "hardcoded: rank + 1" [essay-code]
   (fn [_tx data id]
