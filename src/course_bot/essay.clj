@@ -378,10 +378,11 @@
 (defn review-score [conf essay-code]
   (let [essay-key (keyword essay-code)]
     (fn [_tx data id]
-      (let [_n (-> data (get id) :essays (get essay-code) :my-reviews count)
+      (let [n (-> data (get id) :essays (get essay-code) :my-reviews count)
             deadline (-> conf (get essay-key) :review-deadline)
             at (-> data (get id) :essays (get essay-code) :my-reviews-submitted-at)
             score (cond
+                    (= n 0) 0
                     (or (nil? deadline) (nil? at)) 2
                     (< (misc/read-time deadline) (misc/read-time at)) 2
                     :else 3)]
