@@ -202,7 +202,10 @@
 (i18n/add-dict
   {:en
    {:essay
-    {:not-assigned-help " (admin only) send not assigned essays."}}})
+    {:not-assigned-help " (admin only) send not assigned essays."}}
+   :ru
+   {:essay
+    {::not-assigned-help " (admin only) Отправить неназначенные эссе."}}})
 
 (defn not-assigned-talk [db {token :token admin-chat-id :admin-chat-id :as conf} essay-code]
   (talk/def-talk db (str essay-code "notassigned")
