@@ -539,13 +539,7 @@
           (cond
             (and (= id admin-chat-id) (or (= arg "")
                                           (= arg "all")))
-            (->> groups
-                 ;; sort them
-                 (map vec)
-                 (sort-by (fn [[group {:keys [index comment]}]] (or index comment group)))
-                 ;; get only group names
-                 (map first)
-                 ;; sort keys
+            (->> groups keys sort
                  (map #(agenda tx pres-conf pres-key % (when (= arg "") (misc/today))))
                  (apply concat)
                  (map #(talk/send-text token id %))
@@ -575,7 +569,13 @@
       (tr :pres/soon-talk-info)
       (fn [tx {{id :id} :from}]
         (talk/send-text token id (format (tr :pres/expect-soon-:pres-name) name))
-        (doall (->> groups keys sort
+        (doall (->> groups
+                    ;; sort them
+                    (map vec)
+                    (sort-by (fn [[group {:keys [index comment]}]] (or index comment group)))
+                    ;; get only group names
+                    (map first)
+                    ;; sort keys
                     (map #(soon tx conf pres-key % (misc/today)))
                     (apply concat)
                     (map #(talk/send-text token id %))))
