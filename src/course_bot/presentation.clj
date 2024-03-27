@@ -572,7 +572,7 @@
         (doall (->> groups
                     ;; sort them
                     (map vec)
-                    (sort-by (fn [[group {:keys [index comment]}]] (or index comment group)))
+                    (sort-by (fn [[group {:keys [index comment]}]] (str (or index comment group))))
                     ;; get only group names
                     (map first)
                     ;; sort keys
