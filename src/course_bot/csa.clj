@@ -88,6 +88,7 @@
       (pres/check-talk db conf "lab1")
       (pres/drop-talk db conf "lab1" false)
       (pres/drop-talk db conf "lab1" true)
+      (pres/droplesson-talk db conf "lab1")
       (pres/all-scheduled-descriptions-dump-talk db conf "lab1")
       (pres/lost-and-found-talk db conf "lab1")
 
