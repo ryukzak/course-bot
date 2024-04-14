@@ -53,7 +53,12 @@
                                :state state})
   tx)
 
-(defn command-args [text] (filter #(not (empty? %)) (str/split (str/replace-first text #"^/\w+\s*" "") #"\s+")))
+(defn strip-command [text]
+  (str/replace-first text #"^/\w+\s*" ""))
+
+(defn command-args [text]
+  (filter #(not (empty? %))
+    (str/split (strip-command text) #"\s+")))
 
 (defn command-text-arg [text]
   (str/replace-first text #"^/\w+\s*" ""))

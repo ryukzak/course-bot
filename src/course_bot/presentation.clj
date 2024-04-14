@@ -739,6 +739,21 @@
                       :rank (conj rank (first studs))})
               talk/stop-talk))))))
 
+(defn drop-stud [tx token pres-key name id stud-id drop-all]
+  (let [{:keys [group]} (get-presentation-state tx pres-key stud-id)
+        lessons (codax/get-at tx [:presentation pres-key group])]
+    (talk/send-text token id (format (tr :pres/drop-student-:stud-id) stud-id))
+    (talk/send-text token stud-id (format (tr :pres/drop-state-:pres-name) name))
+    (-> (if drop-all
+          (drop-presentation tx pres-key stud-id)
+          (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
+        (codax/assoc-at [:presentation pres-key group]
+          (->> lessons
+               (map (fn [[dt desc]]
+                      [dt (assoc desc
+                            :stud-ids (filter #(not= stud-id %) (:stud-ids desc)))]))
+               (into {}))))))
+
 (defn drop-talk [db {token :token :as conf} pres-key-name drop-all]
   (let [cmd (str pres-key-name "drop" (when drop-all "all"))
         pres-key (keyword pres-key-name)
@@ -781,20 +796,9 @@
       :approve
       (fn [tx {{id :id} :from text :text} {stud-id :stud-id}]
         (case (i18n/normalize-yes-no-text text)
-          "yes" (let [{:keys [group]} (get-presentation-state tx pres-key stud-id)
-                      lessons (codax/get-at tx [:presentation pres-key group])]
-                  (talk/send-text token id (format (tr :pres/drop-student-:stud-id) stud-id))
-                  (talk/send-text token stud-id (format (tr :pres/drop-state-:pres-name) name))
-                  (-> (if drop-all
-                        (drop-presentation tx pres-key stud-id)
-                        (codax/assoc-at tx [stud-id :presentation pres-key :scheduled?] nil))
-                      (codax/assoc-at [:presentation pres-key group]
-                        (->> lessons
-                             (map (fn [[dt desc]]
-                                    [dt (assoc desc
-                                          :stud-ids (filter #(not= stud-id %) (:stud-ids desc)))]))
-                             (into {})))
-                      talk/stop-talk))
+          "yes" (-> tx
+                    (drop-stud token pres-key name id stud-id drop-all)
+                    talk/stop-talk)
           "no" (talk/send-stop tx token id (tr :talk/cancelled))
           (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
 
@@ -959,3 +963,53 @@
           "no" (talk/send-stop tx token id (tr :pres/lost-and-found-canceled))
 
           (talk/clarify-input tx token id))))))
+
+(i18n/add-dict
+  {:en {:pres
+        {:droplesson-cmd-info "(admin) Restore lost-and-found lessons."
+         :lesson-not-found-:group-:datetime "Lesson not found in %s at %s."
+         :lesson-without-studs "Lesson without students in %s at %s."
+         :droplesson-studs-:group-:datetime "Drop these students from lesson in %s at %s?"}}})
+
+(defn droplesson-talk [db {token :token :as conf} pres-key-name]
+  (let [cmd (str pres-key-name "droplesson")
+        pres-key (keyword pres-key-name)
+        name (-> conf (get pres-key) :name)
+        help (format (tr :pres/droplesson-cmd-info) name)]
+    (talk/def-talk db cmd help
+
+      :start
+      (fn [tx {{id :id} :from text :text}]
+        (general/assert-admin tx conf id)
+        (let [[group dt-str] (-> text
+                                 talk/strip-command
+                                 (str/split #"\s+" 2))
+              lesson (->> (get-in conf [pres-key :groups group :lessons])
+                          (filter #(= dt-str (:datetime %)))
+                          first)
+              stud-ids (codax/get-at tx [:presentation pres-key group dt-str :stud-ids])]
+          (when (nil? lesson)
+            (talk/send-text token id (format (tr :pres/lesson-not-found-:group-:datetime) group dt-str))
+            (talk/stop-talk tx))
+          (when (nil? stud-ids)
+            (talk/send-text token id (format (tr :pres/lesson-without-studs) group dt-str))
+            (talk/stop-talk tx))
+
+          (->> stud-ids
+               (map (fn [stud-id] (general/send-whoami tx token id stud-id)))
+               doall)
+
+          (talk/send-yes-no-kbd token id (format (tr :pres/droplesson-studs-:group-:datetime) group dt-str))
+          (talk/change-branch tx :approve {:group group
+                                           :dt-str dt-str
+                                           :stud-ids stud-ids})))
+
+      :approve
+      (fn [tx {{id :id} :from text :text} {:keys [stud-ids]}]
+        (case (i18n/normalize-yes-no-text text)
+          "yes" (-> (reduce (fn [tx stud-id]
+                              (drop-stud tx token pres-key name id stud-id false))
+                      tx stud-ids)
+                    talk/stop-talk)
+          "no" (talk/send-stop tx token id (tr :talk/cancelled))
+          (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))

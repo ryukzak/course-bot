@@ -658,6 +658,94 @@
                       "2022.01.02 12:00 +0000" {:stud-ids '()}}}
             (codax/get-at! db [:presentation :lab1]))))))
 
+(deftest droplesson-talk-test
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+          (pres/setgroup-talk db conf "lab1")
+          (pres/submit-talk db conf "lab1")
+          (pres/check-talk db conf "lab1")
+          (pres/schedule-talk db conf "lab1")
+          (pres/agenda-talk db conf "lab1")
+          (pres/droplesson-talk db conf "lab1"))
+
+        prepare-user (fn [id name]
+                       (register-user *chat talk id name)
+                       (talk id "/lab1setgroup"
+                         "lgr1"
+                         "/lab1submit"))
+        submit-and-approve (fn [id desc]
+                             (talk id "/lab1submit" desc)
+                             (is (answers? (talk id "yes")
+                                   "Registered, the teacher will check it soon."))
+                             (talk 0 "/lab1check")
+                             (answers? (talk 0 "yes"))
+                             (is (answers? (talk 0 "/lab1check")
+                                   "Nothing to check.")))
+        schedule (fn [id date]
+                   (talk id "/lab1schedule")
+                   (is (answers? (talk id date)
+                         "OK, you can check it by: /lab1agenda")))]
+
+    (tt/with-mocked-morse *chat
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:30 +0000"))]
+        (prepare-user 1 "Alice")
+        (prepare-user 2 "Bob"))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.02 11:30 +0000"))]
+        (submit-and-approve 1 "pres 1")
+        (submit-and-approve 2 "pres 2"))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 10:00 +0000"))]
+        (schedule 1 "2022.01.01 12:00 +0000")
+        (schedule 2 "2022.01.01 12:00 +0000")
+        (is (answers? (talk 1 "/lab1agenda")
+              (tt/unlines "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
+                "1. pres 1 (Alice)"
+                "2. pres 2 (Bob)")
+              "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:")))
+
+      (is (answers? (talk 0 "/lab1droplesson lgr1 2022.01.01 12:00 +0000")
+            "Name: Alice; Group: gr1; Telegram ID: 1"
+            "Name: Bob; Group: gr1; Telegram ID: 2"
+            "Drop these students from lesson in lgr1 at 2022.01.01 12:00 +0000?"))
+
+      (is (answers? (talk 0 "yes")
+            [0 "We drop student: 1"]
+            [1 "We drop your state for Lab 1 presentation"]
+            [0 "We drop student: 2"]
+            [2 "We drop your state for Lab 1 presentation"]))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 10:00 +0000"))]
+        (is (answers? (talk 1 "/lab1agenda")
+              "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
+              "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"))
+
+        (schedule 1 "2022.01.02 12:00 +0000")
+        (schedule 2 "2022.01.01 12:00 +0000")
+        (is (answers? (talk 1 "/lab1agenda")
+              (tt/unlines "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
+                "1. pres 2 (Bob)")
+              (tt/unlines
+                "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"
+                "1. pres 1 (Alice)"))))
+
+      (is (answers? (talk 0 "/lab1droplesson lgr1 2022.01.02 12:00 +0000")
+            "Name: Alice; Group: gr1; Telegram ID: 1"
+            "Drop these students from lesson in lgr1 at 2022.01.02 12:00 +0000?"))
+
+      (is (answers? (talk 0 "yes")
+            [0 "We drop student: 1"]
+            [1 "We drop your state for Lab 1 presentation"]))
+
+      (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 10:00 +0000"))]
+        (is (answers? (talk 1 "/lab1agenda")
+              (tt/unlines "Agenda 2022.01.01 12:00 +0000 (lgr1), ABC:"
+                "1. pres 2 (Bob)")
+              "Agenda 2022.01.02 12:00 +0000 (lgr1), ABC:"))))))
+
 (deftest feedback-and-rank-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
