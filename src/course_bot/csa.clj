@@ -68,6 +68,8 @@
         db (open-database-or-fail db-path)
         plagiarism-db (plagiarism/open-path-or-fail plagiarism-path)]
 
+    (clojure.pprint/pprint conf)
+
     (handlers/defhandler bot-api
       (general/start-talk db conf)
       (general/whoami-talk db conf)
