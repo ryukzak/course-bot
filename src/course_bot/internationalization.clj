@@ -15,6 +15,14 @@
           m
           updates)))))
 
+(defn add-tr [lang & {:as tags}]
+  (swap! *tr-options-dict
+    (fn [m]
+      (reduce (fn [m [key text]]
+                (assoc-in m [lang nil key] text))
+        m
+        tags))))
+
 (def *tr-locales (atom [:en]))
 (defn set-locales [langs]
   (compare-and-set! *tr-locales @*tr-locales langs)

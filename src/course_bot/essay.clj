@@ -21,9 +21,6 @@
      :text-of-your-essay "The text of your essay\n<<<<<<<<<<<<<<<<<<<<"
      :is-loading-question "Uploading (yes/no)?"
      :thank-you-your-essay-submited "Thank you, the text has been uploaded and will be submitted for review soon."
-     :assignment-error "ERROR: can't find assignment for some reason!"
-     :assignment-count "Assignment count: "
-     :assignment-examples "Examples: "
      :first-essay-best "The first essay -- best.\n\n"
      :rank-:number "Rank: %d; "
      :preview-reviews-:rank-:essay-number-:review "Rank: %d, essay number in the list: #%d, your review: %s \n(few words from the essay: "
@@ -48,8 +45,7 @@
      :plagirism-report-:similarity-:origin-key-:new-key "%s original: %s new: %s"
      :warmup-plagiarism-info-:essay-name "(admin) Recheck and register existed '%s' for plagiarism"
      :warmup-no-plagiarsm "No plagiarism found."
-     :warmup-processed-:count "Processed %d essays."
-     :assignreviewers-info-:essay-name "(admin) Assign reviewers for '%s'"}}
+     :warmup-processed-:count "Processed %d essays."}}
    :ru
    {:essay
     {:submit-info-:essay-name "Отправить '%s'"
@@ -62,9 +58,6 @@
      :text-of-your-essay "Текст вашего эссе\n<<<<<<<<<<<<<<<<<<<<"
      :is-loading-question "Загружаем (да/нет)?"
      :thank-you-your-essay-submited "Спасибо, текст загружен и скоро попадёт на рецензирование."
-     :assignment-error "ОШИБКА: почему-то не удается найти задание!"
-     :assignment-count "Количество заданий: "
-     :assignment-examples "Примеры: "
      :first-essay-best "Первое эссе -- лучшее.\n\n"
      :rank-:number "Ранг: %d, "
      :preview-reviews-:rank-:essay-number-:review "Ранг: %d, номер эссе в списке: #%d, ваше ревью: %s \n(несколько слов из эссе: "
@@ -89,8 +82,7 @@
      :plagirism-report-:similarity-:origin-key-:new-key "%s оригинал: %s новое: %s"
      :warmup-plagiarism-info-:essay-name "(admin) Перепроверить и зарегистрировать существующие '%s' на плагиат"
      :warmup-no-plagiarsm "Плагиат не найден."
-     :warmup-processed-:count "Обработано %d эссе."
-     :assignreviewers-info-:essay-name "(admin) Назначить рецензентов для '%s'"}}})
+     :warmup-processed-:count "Обработано %d эссе."}}})
 
 (defn get-stud-reviews [tx essay-code stud-id]
   (codax/get-at tx [stud-id :essays essay-code :received-review]))
@@ -246,22 +238,46 @@
              (<= limit 0)) nil
         :else (recur n (- limit 1) essays)))))
 
+(i18n/add-tr :en
+  ::assignreviewers-info-:essay-name "(admin) Assign reviewers for '%s'"
+  ::assignreviewers-info-confirm "Are you sure you want to assign reviewers for '%s'?"
+  ::assignment-error "ERROR: can't find assignment for some reason!"
+  ::assignment-count "Assignment count: "
+  ::assignment-examples "Examples: ")
+
+(i18n/add-tr :ru
+  ::assignreviewers-info-:essay-name "(admin) Назначить рецензентов для '%s'"
+  ::assignreviewers-info-confirm "Вы уверены, что хотите назначить рецензентов для '%s'?"
+  ::assignment-error "ОШИБКА: почему-то не удается найти задание!"
+  ::assignment-count "Количество заданий: "
+  ::assignment-examples "Примеры: ")
+
 (defn assignreviewers-talk [db {token :token :as conf} essay-code]
   (let [cmd (str essay-code "assignreviewers")
-        help (format (tr :essay/assignreviewers-info-:essay-name) essay-code)]
-    (talk/def-command db cmd help
+        help (format (tr ::assignreviewers-info-:essay-name) essay-code)]
+    (talk/def-talk db cmd help
+      :start
       (fn [tx {{id :id} :from}]
         (general/assert-admin tx conf id)
         (let [update (assign-reviews tx essay-code 3)]
           (when (nil? update)
-            (talk/send-text token id (tr :essay/assignment-error))
+            (talk/send-text token id (tr ::assignment-error))
             (talk/stop-talk tx))
           (talk/send-text token id
-            (str (tr :essay/assignment-count) (count update) "; "
-                 (tr :essay/assignment-examples) (some-> update first second :essays (get essay-code) :request-review)))
-          (reduce (fn [tx' [id desc]]
-                    (codax/assoc-at tx' [id] desc))
-            tx update))))))
+            (str (tr ::assignment-count) (count update) "; "
+                 (tr ::assignment-examples)
+                 (some-> update first second :essays (get essay-code) :request-review)))
+          (talk/change-branch tx :approve {:update update})))
+
+      :approve
+      (fn [tx {{id :id} :from text :text} {update :update}]
+        (case (i18n/normalize-yes-no-text text)
+          "yes" (-> (reduce (fn [tx' [id desc]]
+                              (codax/assoc-at tx' [id] desc))
+                      tx update)
+                    talk/stop-talk)
+          "no" (talk/send-stop tx token id (tr :talk/cancelled))
+          (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
 
 (defn stud-review-assignments [tx id essay-code]
   (let [reviewer-ids (codax/get-at tx [id :essays essay-code :request-review])
