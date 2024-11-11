@@ -10,7 +10,8 @@
            org.clojure/core.cache               {:mvn/version "0.6.5"}
 
            com.taoensso/tempura                 {:mvn/version "1.5.3"}
-           consimilo/consimilo                  {:mvn/version "0.1.1"}
+           consimilo/consimilo                  {:mvn/version "0.1.1" :exclusions [ch.qos.logback/logback-classic]}
+           org.slf4j/slf4j-nop                  {:mvn/version "1.7.36"}
 
            compojure/compojure                  {:mvn/version "1.7.0"}
            ring/ring-core                       {:mvn/version "1.8.2"}
