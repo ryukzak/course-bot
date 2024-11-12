@@ -77,16 +77,23 @@
   (let [{name :name group :group} (stud-info tx stud-id)]
     (format (tr :general/who-am-i-:name-:group-:tg-id) name group stud-id)))
 
-(defn send-whoami
-  ([tx token id] (send-whoami tx token id id))
-  ([tx token id stud-id]
-   (let [{name :name group :group} (stud-info tx stud-id)]
-     (talk/send-text token id (format (tr :general/who-am-i-:name-:group-:tg-id) name group stud-id)))))
+(defn send-whoami [tx token {:keys [to about terms]}]
+  (let [about (or about to)
+        terms (or terms [whoami])]
+    (talk/send-text token to (->> terms
+                                  (map #(% tx about))
+                                  (str/join "\n")))))
 
-(defn whoami-talk [db {token :token}]
+(defn ^:deprecated send-whoami-old [tx token id stud-id]
+  (send-whoami tx token {:to id :about stud-id :terms [whoami]}))
+
+(defn whoami-talk [db {token :token} & details]
   (talk/def-command db "whoami" (tr :general/who-am-i-info)
+    ;; TODO: add check for specific id by admin only
     (fn [tx {{id :id} :from}]
-      (send-whoami tx token id)
+      (send-whoami tx token {:to id
+                             :about id
+                             :terms (concat [whoami (constantly nil)] details)})
       (talk/stop-talk tx))))
 
 (defn help-talk [db {token :token}]
@@ -156,7 +163,7 @@
                      (codax/assoc-at [id :reg-date] (str (new java.util.Date)))
                      (codax/assoc-at [id :allow-restart] false))]
           (talk/send-text token id (format (tr :general/hi-:name) name))
-          (send-whoami tx token id)
+          (send-whoami-old tx token id id)
           (talk/send-text token id (tr :general/send-help-for-help))
           (talk/stop-talk tx))))))
 

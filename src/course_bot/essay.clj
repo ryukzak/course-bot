@@ -206,7 +206,7 @@
         (->> essays
              (filter-not-assigned essay-code)
              (map (fn [[stud-id info]]
-                    (general/send-whoami tx token admin-chat-id stud-id)
+                    (general/send-whoami-old tx token admin-chat-id stud-id)
                     (talk/send-text token admin-chat-id
                       (-> info :essays (get essay-code) :text))))
              doall)
@@ -422,6 +422,30 @@
         essay-uploaded? 3
 
         :else 0))))
+
+(i18n/add-tr :en
+  ::is-uploaded-:essay-code-:bool "Essay %s uploaded: %s"
+  ::is-essay-uploaded-:essay-code-:bool "Your reviews on %s uploaded: %s")
+
+(i18n/add-tr :ru
+  ::is-uploaded-:essay-code-:bool "Эссе %s загружено: %s"
+  ::is-essay-uploaded-:essay-code-:bool "Ваши ревью на %s загружены: %s")
+
+(defn is-uploaded [essay-code]
+  (fn [tx id]
+    (format (tr ::is-uploaded-:essay-code-:bool)
+      essay-code
+      (-> (codax/get-at tx [id :essays essay-code])
+          nil?
+          not))))
+
+(defn is-review-uploaded [essay-code]
+  (fn [tx id]
+    (format (tr ::is-essay-uploaded-:essay-code-:bool)
+      essay-code
+      (-> (codax/get-at tx [id :essays essay-code :my-reviews])
+          nil?
+          not))))
 
 (defn warmup-plagiarism-talk [db {token :token :as conf} essay-code plagiarism-db]
   (let [cmd (str essay-code "warmupplagiarism")

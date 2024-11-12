@@ -117,6 +117,9 @@
           (essay/review-talk db conf "essay1")
           (essay/myfeedback-talk db conf "essay1")
           (essay/reportabuse-talk db conf "essay1")
+          (general/whoami-talk db conf
+            (essay/is-uploaded "essay1")
+            (essay/is-review-uploaded "essay1"))
           (report/report-talk db conf
             "ID" report/stud-id
             "review-score" (essay/review-score conf "essay1")
@@ -127,9 +130,19 @@
         (doall (map #(register-user *chat talk %1 %2)
                  [1 2 3 4]
                  ["u1" "u2" "u3" "u4"]))
-
+        (is (answers? (talk 1 "/whoami")
+              (tt/unlines "Name: u1; Group: gr1; Telegram ID: 1"
+                ""
+                "Essay essay1 uploaded: false"
+                "Your reviews on essay1 uploaded: false")))
         (doall (map #(essay-submit *chat talk %1)
                  [1 2 3 4]))
+
+        (is (answers? (talk 1 "/whoami")
+              (tt/unlines "Name: u1; Group: gr1; Telegram ID: 1"
+                ""
+                "Essay essay1 uploaded: true"
+                "Your reviews on essay1 uploaded: false")))
 
         (talk 1 "/essay1status")
         (is (= (tt/history *chat :user-id 1)
@@ -299,6 +312,12 @@
                   :review-author 1
                   :feedback "111bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla-bla"})
               (codax/get-at! db [4 :essays "essay1" :received-review]))))
+
+      (is (answers? (talk 1 "/whoami")
+            (tt/unlines "Name: u1; Group: gr1; Telegram ID: 1"
+              ""
+              "Essay essay1 uploaded: true"
+              "Your reviews on essay1 uploaded: true")))
 
       (talk 1 "/essay1myfeedback")
       (is (= (tt/history *chat :user-id 1)

@@ -781,7 +781,7 @@
               (talk/send-text token id (tr :pres/not-found))
               (talk/stop-talk tx))
 
-            (general/send-whoami tx token id stud-id)
+            (general/send-whoami-old tx token id stud-id)
 
             (talk/send-text token id (misc/pp-str pres-state))
             (when stud-lesson
@@ -996,7 +996,7 @@
             (talk/stop-talk tx))
 
           (->> stud-ids
-               (map (fn [stud-id] (general/send-whoami tx token id stud-id)))
+               (map (fn [stud-id] (general/send-whoami-old tx token id stud-id)))
                doall)
 
           (talk/send-yes-no-kbd token id (format (tr :pres/droplesson-studs-:group-:datetime) group dt-str))
