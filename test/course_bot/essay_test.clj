@@ -175,6 +175,7 @@
                                   (swap! *shuffles rest)
                                   res))]
           (is (answers? (talk 0 "/essay1assignreviewers" "yes")
+                "Are you sure you want to assign reviewers?"
                 "Assignment count: 4; Examples: (4 3 2)"))))
 
       (is (= (list {:request-review '(4 3 2), :text (str "user1 essay1 text" (hash 1))}
@@ -448,6 +449,7 @@
                                     res))]
 
             (is (answers? (talk 0 "/essay1assignreviewers" "yes")
+                  "Are you sure you want to assign reviewers?"
                   "Assignment count: 4; Examples: (8 7 6)"))))
 
         (is (= '({:my-reviews-submitted-at "2022.01.03 11:30 +0000",

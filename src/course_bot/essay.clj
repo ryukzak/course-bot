@@ -240,14 +240,14 @@
 
 (i18n/add-tr :en
   ::assignreviewers-info-:essay-name "(admin) Assign reviewers for '%s'"
-  ::assignreviewers-info-confirm "Are you sure you want to assign reviewers for '%s'?"
+  ::assignreviewers-info-confirm "Are you sure you want to assign reviewers?"
   ::assignment-error "ERROR: can't find assignment for some reason!"
   ::assignment-count "Assignment count: "
   ::assignment-examples "Examples: ")
 
 (i18n/add-tr :ru
   ::assignreviewers-info-:essay-name "(admin) Назначить рецензентов для '%s'"
-  ::assignreviewers-info-confirm "Вы уверены, что хотите назначить рецензентов для '%s'?"
+  ::assignreviewers-info-confirm "Вы уверены, что хотите назначить рецензентов?"
   ::assignment-error "ОШИБКА: почему-то не удается найти задание!"
   ::assignment-count "Количество заданий: "
   ::assignment-examples "Примеры: ")
@@ -267,6 +267,7 @@
             (str (tr ::assignment-count) (count update) "; "
                  (tr ::assignment-examples)
                  (some-> update first second :essays (get essay-code) :request-review)))
+          (talk/send-yes-no-kbd token id (tr ::assignreviewers-info-confirm))
           (talk/change-branch tx :approve {:update update})))
 
       :approve
