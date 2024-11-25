@@ -62,8 +62,6 @@
     (run! io/delete-file (reverse (file-seq (io/file path)))))
   (plagiarism/open-path-or-fail path))
 
-(defn atom? [v] (instance? clojure.lang.Atom v))
-
 (defn test-handler [& handlers]
   (let [*chat (atom (list))]
     {:*chat *chat
@@ -103,7 +101,7 @@
         :actual actual#})
      result#))
 
-(defn history
+(defn ^:deprecated history
   [*chat & {:keys [user-id number] :or {user-id nil number 1}}]
   (->> @*chat
        (filter #(or (nil? user-id) (= user-id (:id %))))
