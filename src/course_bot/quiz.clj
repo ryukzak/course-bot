@@ -181,7 +181,9 @@
                                                       (> fail-test-threshold)))))
 
                              count)]
-      (Math/round (* 100.0 (/ count-success (count tests)))))))
+      (if (= (count tests) 0)
+        0
+        (Math/round (* 100.0 (/ count-success (count tests))))))))
 
 (defn result-stat [questions results]
   (let [full-answers (->> results
