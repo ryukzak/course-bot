@@ -11,12 +11,17 @@
 (defn stud-chat [_tx data id] (-> data (get id) :chat misc/pp-str))
 (defn stud-old-info [_tx data id] (-> data (get id) :old-info misc/pp-str))
 
-(defn send-report [tx token id fields]
+(defn prepare-report [tx fields]
   (let [data (codax/get-at tx [])
         ids (->> data keys (filter number?))
         columns (map first fields)
         data (cons columns
-               (map (fn [id] (map (fn [[_key get]] (get tx data id)) fields)) ids))
+               (map (fn [id] (map (fn [[_key get]] (get tx data id)) fields)) ids))]
+
+    data))
+
+(defn send-report [tx token id fields]
+  (let [data (prepare-report tx fields)
         dt (.format (java.text.SimpleDateFormat. "yyyy-MM-dd-HH-mm-Z") (misc/today))
         filename (str "tmp/" dt "-report.csv")]
     (io/make-parents filename)

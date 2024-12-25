@@ -55,6 +55,32 @@
 
 (declare bot-api id message)
 
+(comment
+  (def db (open-database-or-fail "db"))
+  (def conf (misc/get-config "../edu-csa-internal/csa-2024-repeat.edn"))
+  db
+  (codax/with-read-transaction [db tx]
+    (course-bot.report/prepare-report
+      tx
+      {"ID" report/stud-id
+       "name" report/stud-name
+       "group" report/stud-group
+       "lab1-group" (pres/report-presentation-group "lab1")
+       "lab1-rank" (pres/report-presentation-avg-rank "lab1")
+       "lab1-score" (pres/report-presentation-score conf "lab1")
+       "lab1-count" (pres/lesson-count "lab1")
+       "failed-tests" (quiz/fail-tests conf)
+       "success-test-percent" (quiz/success-tests-percent conf)
+       "essay1" (essay/essay-score "essay1")
+       "essay1-reviews" (essay/review-score conf "essay1")
+       "essay2" (essay/essay-score "essay2")
+       "essay2-reviews" (essay/review-score conf "essay2")
+       "essay3" (essay/essay-score "essay3")
+       "essay3-reviews" (essay/review-score conf "essay3")}))
+
+  (-> (codax/get-at! db []) count)
+  (-main))
+
 (defn -main [& _args]
   (let [conf-file (or (System/getenv "CONF")
                       (throw (ex-info "CONF env variable is not setted" {})))
