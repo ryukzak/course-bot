@@ -4,8 +4,8 @@
   (:require [course-bot.general :as general]
             [course-bot.misc :as misc]
             [course-bot.report :as report]
-            [course-bot.talk-test :as tt :refer [answers?]]
-            [course-bot.talk :as talk]))
+            [course-bot.talk :as talk]
+            [course-bot.talk-test :as tt :refer [answers?]]))
 
 (deftest start-talk-test
   (reset! talk/*helps [])
@@ -14,7 +14,7 @@
 
         {talk :talk *chat :*chat}
         (tt/test-handler
-         (general/start-talk db conf)
+          (general/start-talk db conf)
           (general/listgroups-talk db conf)
           (report/report-talk db conf
             "ID" report/stud-id
@@ -26,8 +26,8 @@
     (tt/with-mocked-morse *chat
       (testing "help & description"
         (is (answers? (talk 1 "/help")
-                      [nil
-                       "- /start - register student
+              [nil
+               "- /start - register student
 - /listgroups - Send me group list know by the bot
 - /report - receive report
 
@@ -36,8 +36,8 @@ Header
 - /help - Show list of supported commands
 - /description - Descriptions for supported commands"]))
         (is (answers? (talk 1 "/description")
-                      [nil
-              "start - register student
+              [nil
+               "start - register student
 listgroups - Send me group list know by the bot
 report - receive report
 help - Show list of supported commands

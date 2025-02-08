@@ -84,11 +84,11 @@
 (def *helps (atom []))
 
 (defn add-help-record [name desc]
-  (swap! *helps conj {:help    (str "- /" name " - " desc)
+  (swap! *helps conj {:help (str "- /" name " - " desc)
                       :command (str name " - " desc)}))
 
 (defn add-help-section [name]
-  (swap! *helps conj {:help    (str "\n" name "\n")
+  (swap! *helps conj {:help (str "\n" name "\n")
                       :command nil})
   (constantly nil))
 
