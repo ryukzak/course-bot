@@ -4,20 +4,45 @@
   (:require [course-bot.general :as general]
             [course-bot.misc :as misc]
             [course-bot.report :as report]
-            [course-bot.talk-test :as tt :refer [answers?]]))
+            [course-bot.talk-test :as tt :refer [answers?]]
+            [course-bot.talk :as talk]))
 
 (deftest start-talk-test
+  (reset! talk/*helps [])
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
         db (tt/test-database (-> conf :db-path))
 
         {talk :talk *chat :*chat}
-        (tt/test-handler (general/start-talk db conf)
+        (tt/test-handler
+         (general/start-talk db conf)
           (general/listgroups-talk db conf)
           (report/report-talk db conf
             "ID" report/stud-id
             "name" report/stud-name
-            "group" report/stud-group))]
+            "group" report/stud-group)
+          (talk/add-help-section "Header")
+          (general/help-talk db conf)
+          (general/description-talk db conf))]
     (tt/with-mocked-morse *chat
+      (testing "help & description"
+        (is (answers? (talk 1 "/help")
+                      [nil
+                       "- /start - register student
+- /listgroups - Send me group list know by the bot
+- /report - receive report
+
+Header
+
+- /help - Show list of supported commands
+- /description - Descriptions for supported commands"]))
+        (is (answers? (talk 1 "/description")
+                      [nil
+              "start - register student
+listgroups - Send me group list know by the bot
+report - receive report
+help - Show list of supported commands
+description - Descriptions for supported commands"])))
+
       (testing "registration"
         (is (answers? (talk 1 "/start")
               "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))

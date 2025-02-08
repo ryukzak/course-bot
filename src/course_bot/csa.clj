@@ -97,6 +97,7 @@
     (clojure.pprint/pprint conf)
 
     (handlers/defhandler bot-api
+      (talk/add-help-section "# General")
       (general/start-talk db conf)
       (general/whoami-talk db conf
         (essay/is-uploaded "essay1")
@@ -110,6 +111,8 @@
         (essay/is-review-uploaded "essay3"))
 
       (general/listgroups-talk db conf)
+
+      (talk/add-help-section "# Lab 1")
 
       (pres/setgroup-talk db conf "lab1")
       (pres/submissions-talk db conf "lab1")
@@ -128,6 +131,8 @@
       (pres/droplesson-talk db conf "lab1")
       (pres/all-scheduled-descriptions-dump-talk db conf "lab1")
       (pres/lost-and-found-talk db conf "lab1")
+
+      (talk/add-help-section "# Lab 2")
 
       (talk/when-handlers (:essay1 conf)
         (essay/submit-talk db conf "essay1" plagiarism-db)
@@ -159,10 +164,12 @@
         (essay/reportabuse-talk db conf "essay3")
         (essay/warmup-plagiarism-talk db conf "essay3" plagiarism-db))
 
+      (talk/add-help-section "# Tests")
       (quiz/startquiz-talk db conf)
       (quiz/stopquiz-talk db conf)
       (quiz/quiz-talk db conf)
 
+      (talk/add-help-section "# Other")
       (report/report-talk db conf
         "ID" report/stud-id
         "name" report/stud-name

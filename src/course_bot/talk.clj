@@ -81,19 +81,28 @@
       (keyword (first args))
       nil)))
 
-(def *helps (atom {}))
+(def *helps (atom []))
 
-(defn descriptions []
+(defn add-help-record [name desc]
+  (swap! *helps conj {:help    (str "- /" name " - " desc)
+                      :command (str name " - " desc)}))
+
+(defn add-help-section [name]
+  (swap! *helps conj {:help    (str "\n" name "\n")
+                      :command nil})
+  (constantly nil))
+
+(defn commands []
   (->> @*helps
-       (map (fn [[n d]] (str n " - " d)))
-       sort
+       (map :command)
+       (filter some?)
        (str/join "\n")))
 
 (defn helps []
-  (let [commands (->> (descriptions)
-                      (str/split-lines)
-                      (map #(str "/" %)))]
-    (str/join "\n" commands)))
+  (->> @*helps
+       (map :help)
+       (filter some?)
+       (str/join "\n")))
 
 ;; TODO: move help hint to name, like: "start - register student"
 
@@ -104,8 +113,8 @@
         handlers (apply hash-map handlers)
         start-handler (:start handlers)
         handlers (into {} (filter #(not= :start (first %)) handlers))]
-    (when (and (some? help) (not (contains? @*helps name)))
-      (swap! *helps assoc name help))
+    (when (some? help)
+      (add-help-record name help))
     (fn talk-top [update]
       (let [res (atom nil)]
         (declare tx)

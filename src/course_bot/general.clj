@@ -105,7 +105,7 @@
 (defn description-talk [db {token :token}]
   (talk/def-command db "description" (tr :general/description-info)
     (fn [tx {{id :id} :chat}]
-      (talk/send-text token id (talk/descriptions))
+      (talk/send-text token id (talk/commands))
       (talk/stop-talk tx))))
 
 (defn send-list-groups
