@@ -293,7 +293,8 @@
   (->> (codax/get-at tx [])
        (filter (fn [[_id info]]
                  (and (some-> info :presentation (get pres-key) :on-review?)
-                      (not (some-> info :presentation (get pres-key) :approved?)))))))
+                      (not (some-> info :presentation (get pres-key) :approved?)))))
+       (shuffle)))
 
 (defn topic [desc] (if (nil? desc) "nil" (-> desc str/split-lines first)))
 
