@@ -84,9 +84,6 @@
                                   (map #(% tx about))
                                   (str/join "\n")))))
 
-(defn ^:deprecated send-whoami-old [tx token id stud-id]
-  (send-whoami tx token {:to id :about stud-id :terms [whoami]}))
-
 (defn whoami-talk [db {token :token} & details]
   (talk/def-command db "whoami" (tr :general/who-am-i-info)
     ;; TODO: add check for specific id by admin only
@@ -163,7 +160,7 @@
                      (codax/assoc-at [id :reg-date] (str (new java.util.Date)))
                      (codax/assoc-at [id :allow-restart] false))]
           (talk/send-text token id (format (tr :general/hi-:name) name))
-          (send-whoami-old tx token id id)
+          (send-whoami tx token {:to id :about id :terms [whoami]})
           (talk/send-text token id (tr :general/send-help-for-help))
           (talk/stop-talk tx))))))
 

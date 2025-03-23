@@ -206,7 +206,7 @@
         (->> essays
              (filter-not-assigned essay-code)
              (map (fn [[stud-id info]]
-                    (general/send-whoami-old tx token admin-chat-id stud-id)
+                    (general/send-whoami tx token {:to id :about stud-id :terms [general/whoami]})
                     (talk/send-text token admin-chat-id
                       (-> info :essays (get essay-code) :text))))
              doall)

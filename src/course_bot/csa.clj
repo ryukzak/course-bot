@@ -1,6 +1,7 @@
 (ns course-bot.csa
   (:gen-class)
-  (:require [codax.core :as codax]
+  (:require [clojure.pprint :as pprint]
+            [codax.core :as codax]
             [compojure.core :refer [POST defroutes]]
             [compojure.route :as route]
             [course-bot.essay :as essay]
@@ -94,7 +95,7 @@
         db (open-database-or-fail db-path)
         plagiarism-db (plagiarism/open-path-or-fail plagiarism-path)]
 
-    (clojure.pprint/pprint conf)
+    (pprint/pprint conf)
 
     (handlers/defhandler bot-api
       (talk/add-help-section "# General")
