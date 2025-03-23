@@ -60,6 +60,7 @@
   (def db (open-database-or-fail "db"))
   (def conf (misc/get-config "../edu-csa-internal/csa-2024-repeat.edn"))
   db
+  (declare tx)
   (codax/with-read-transaction [db tx]
     (course-bot.report/prepare-report
       tx
