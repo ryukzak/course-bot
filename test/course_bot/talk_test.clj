@@ -23,7 +23,7 @@
       (is (= (str/join "\n" lines) actual-msg) "wrong message"))
     (apply (partial text 1) lines)))
 
-(defn match-history [*chat & asserts]
+(defn ^:deprecated match-history [*chat & asserts]
   (doall (map #(%1 %2)
            asserts
            (->> @*chat (take (count asserts)) reverse))))
