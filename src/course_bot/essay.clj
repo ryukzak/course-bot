@@ -183,17 +183,16 @@
           "yes" (do (plagiarism/register-text! plagiarism-db (plagiarism-key essay-code id) essay-text)
                     (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
                     (-> tx
-                        ;; Store the essay text
-                        (codax/assoc-at [id :essays essay-code :text] essay-text)
-                        ;; Record in history that it was reuploaded if it's a reupload
-                        (codax/update-at [id :essays essay-code :history]
-                          (fn [history]
-                            (if (some? history)
-                              ;; It's a reupload
-                              (conj history {:action :reupload :date (misc/today-str-utc)})
-                              ;; It's a first upload
-                              [{:action :submit :date (misc/today-str-utc)}])))
-                        talk/stop-talk))
+                      ;; Store the essay text
+                      (codax/assoc-at [id :essays essay-code :text] essay-text)
+                      ;; Record in history that it was reuploaded if it's a reupload
+                      (codax/update-at [id :essays essay-code :history]
+                        (fn [history]
+                          (conj (or history []) 
+                                (if (some? history)
+                                  {:action :reupload :date (misc/today-str-utc)}
+                                  {:action :submit :date (misc/today-str-utc)}))))
+                      talk/stop-talk)
           "no" (talk/send-stop tx token id)
           (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
 

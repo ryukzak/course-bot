@@ -545,64 +545,56 @@
 
       ;; Test scenario 1: First-time essay submission
       (testing "First-time essay submission"
-        (talk 1 "/essay1submit")
-        (is (answers? (tt/history *chat :user-id 1)
-              [(format (tr :essay/send-essay-text-in-one-message-:essay-name) "essay1")]))
-
-        (talk 1 "Alice's essay text")
-        (tt/match-history *chat
-          (tt/text 1 (tr :essay/text-of-your-essay))
-          (tt/text 1 "Alice's essay text")
-          (tt/text 1 ">>>>>>>>>>>>>>>>>>>>")
-          (tt/text 1 (tr :essay/is-loading-question)))
-
-        (talk 1 "yes")
-        (is (answers? (tt/history *chat :user-id 1)
-              [(tr :essay/thank-you-your-essay-submited)])))
+      (talk 1 "/essay1submit")
+      (is (answers? (talk 1 (format (tr :essay/send-essay-text-in-one-message-:essay-name) "essay1"))
+            "Alice's essay text"))
+      
+      (is (answers? (talk 1 (tr :essay/text-of-your-essay)
+                        "Alice's essay text"
+                        ">>>>>>>>>>>>>>>>>>>>"
+                        (tr :essay/is-loading-question))))
+      
+      (is (answers? (talk 1 "yes")
+            (tr :essay/thank-you-your-essay-submited))))
 
       ;; Test scenario 2: Reupload before reviewers assigned
       (testing "Reupload before reviewers assigned"
-        (talk 1 "/essay1submit")
-        (is (answers? (tt/history *chat :user-id 1)
-              [(format (tr :essay/reupload-confirmation-:essay-name) "essay1")
-               (tr :essay/reupload-question)]))
-
-        ;; User cancels reupload
-        (talk 1 "no")
-        (is (answers? (tt/history *chat :user-id 1)
-              [(tr :talk/cancelled)]))
-
-        ;; User tries again and confirms
-        (talk 1 "/essay1submit")
-        (talk 1 "yes")
-        (is (answers? (tt/history *chat :user-id 1)
-              [(format (tr :essay/send-essay-text-in-one-message-:essay-name) "essay1")]))
-
-        (talk 1 "Alice's updated essay text")
-        (talk 1 "yes")
-        (is (answers? (tt/history *chat :user-id 1)
-              [(tr :essay/thank-you-your-essay-submited)])))
+      (is (answers? (talk 1 "/essay1submit")
+            (format (tr :essay/reupload-confirmation-:essay-name) "essay1")
+            (tr :essay/reupload-question)))
+      
+      ;; User cancels reupload
+      (is (answers? (talk 1 "no")
+            (tr :talk/cancelled)))
+      
+      ;; User tries again and confirms
+      (talk 1 "/essay1submit")
+      (is (answers? (talk 1 "yes")
+            (format (tr :essay/send-essay-text-in-one-message-:essay-name) "essay1")))
+      
+      (talk 1 "Alice's updated essay text")
+      (is (answers? (talk 1 "yes")
+            (tr :essay/thank-you-your-essay-submited))))
 
       ;; Submit essays from other users
       (testing "Submit essays from other users"
-        (talk 2 "/essay1submit")
-        (talk 2 "Bob's essay text") 
-        (talk 2 "yes")
-        
-        (talk 3 "/essay1submit")
-        (talk 3 "Charlie's essay text")
-        (talk 3 "yes"))
+      (talk 2 "/essay1submit")
+      (talk 2 "Bob's essay text") 
+      (talk 2 "yes")
+      
+      (talk 3 "/essay1submit")
+      (talk 3 "Charlie's essay text")
+      (talk 3 "yes"))
 
       ;; Test scenario 3: Reupload after reviewers assigned
       (testing "Reupload after reviewers assigned"
-        ;; Admin assigns reviewers
-        (talk 0 "/essay1assignreviewers")
-        (talk 0 "yes")
-
-        ;; Verify that Alice can't reupload now
-        (talk 1 "/essay1submit")
-        (is (answers? (tt/history *chat :user-id 1)
-              [(tr :essay/reupload-not-allowed-reviewers-assigned)])))
+      ;; Admin assigns reviewers
+      (talk 0 "/essay1assignreviewers")
+      (talk 0 "yes")
+      
+      ;; Verify that Alice can't reupload now
+      (is (answers? (talk 1 "/essay1submit")
+            (tr :essay/reupload-not-allowed-reviewers-assigned))))
 
       ;; Test history tracking of reupload
       (testing "History tracking of reupload"
