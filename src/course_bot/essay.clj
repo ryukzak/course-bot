@@ -45,7 +45,12 @@
      :plagirism-report-:similarity-:origin-key-:new-key "%s original: %s new: %s"
      :warmup-plagiarism-info-:essay-name "(admin) Recheck and register existed '%s' for plagiarism"
      :warmup-no-plagiarsm "No plagiarism found."
-     :warmup-processed-:count "Processed %d essays."}}
+     :warmup-processed-:count "Processed %d essays."
+     :reupload-confirmation-:essay-name "Your essay '%s' is already uploaded. Do you want to replace it with a new version?"
+     :reupload-question "Are you sure you want to replace your existing essay? This cannot be undone."
+     :reupload-reviews-warning "Your essay has already received %d reviews. If you reupload, these reviewers will not be automatically notified."
+     :reupload-continue-question "Do you want to continue with the reupload?"
+     :reupload-not-allowed-reviewers-assigned "It is not possible to reload the essay, as your essay has already been assigned to reviewers."}}
    :ru
    {:essay
     {:submit-info-:essay-name "Отправить '%s'"
@@ -82,7 +87,12 @@
      :plagirism-report-:similarity-:origin-key-:new-key "%s оригинал: %s новое: %s"
      :warmup-plagiarism-info-:essay-name "(admin) Перепроверить и зарегистрировать существующие '%s' на плагиат"
      :warmup-no-plagiarsm "Плагиат не найден."
-     :warmup-processed-:count "Обработано %d эссе."}}})
+     :warmup-processed-:count "Обработано %d эссе."
+     :reupload-confirmation-:essay-name "Ваше эссе '%s' уже загружено. Хотите заменить его новой версией?"
+     :reupload-question "Вы уверены, что хотите заменить существующее эссе? Это действие нельзя отменить."
+     :reupload-reviews-warning "Ваше эссе уже получило %d отзывов. Если вы перезагрузите эссе, рецензенты не будут автоматически уведомлены об изменениях."
+     :reupload-continue-question "Хотите продолжить перезагрузку?"
+     :reupload-not-allowed-reviewers-assigned "Перезагрузка эссе невозможна, так как ваше эссе уже назначено на проверку рецензентам."}}})
 
 (defn get-stud-reviews [tx essay-code stud-id]
   (codax/get-at tx [stud-id :essays essay-code :received-review]))
@@ -103,13 +113,40 @@
     (talk/def-talk db cmd help
       :start
       (fn [tx {{id :id} :from}]
-        (let [submitted? (codax/get-at tx [id :essays essay-code :text])]
-          (when submitted?
-            (talk/send-text token id (format (tr :essay/your-essay-already-uploaded-:essay-name) essay-code))
-            (talk/stop-talk tx))
-          (talk/send-text token id (str (format (tr :essay/send-essay-text-in-one-message-:essay-name) essay-code)
-                                        (when topics-msg (str (tr :essay/themes) topics-msg))))
-          (talk/change-branch tx :submit)))
+        (let [submitted? (codax/get-at tx [id :essays essay-code :text])
+              reviews (codax/get-at tx [id :essays essay-code :received-review])
+              reviewers-assigned? (-> (codax/get-at tx [id :essays essay-code :request-review]) empty? not)]
+          (cond
+            ;; If the essay has been assigned to reviewers, don't allow reupload
+            (and submitted? reviewers-assigned?)
+            (do
+              (talk/send-text token id (tr :essay/reupload-not-allowed-reviewers-assigned))
+              (talk/stop-talk tx))
+            
+            ;; If the essay is submitted but no reviewers assigned, confirm reupload
+            submitted?
+            (do
+              (talk/send-text token id (format (tr :essay/reupload-confirmation-:essay-name) essay-code))
+              (talk/send-yes-no-kbd token id (tr :essay/reupload-question))
+              (talk/change-branch tx :confirm-reupload))
+            
+            ;; If the essay is not submitted, continue as normal
+            :else
+            (do
+              (talk/send-text token id (str (format (tr :essay/send-essay-text-in-one-message-:essay-name) essay-code)
+                                            (when topics-msg (str (tr :essay/themes) topics-msg))))
+              (talk/change-branch tx :submit)))))
+
+      ;; For reuploading an essay without reviews
+      :confirm-reupload
+      (fn [tx {{id :id} :from text :text}]
+        (case (i18n/normalize-yes-no-text text)
+          "yes" (do
+                  (talk/send-text token id (str (format (tr :essay/send-essay-text-in-one-message-:essay-name) essay-code)
+                                               (when topics-msg (str (tr :essay/themes) topics-msg))))
+                  (talk/change-branch tx :submit))
+          "no" (talk/send-stop tx token id)
+          (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text))))
 
       :submit
       (fn [tx {{id :id} :from text :text}]
@@ -146,8 +183,16 @@
           "yes" (do (plagiarism/register-text! plagiarism-db (plagiarism-key essay-code id) essay-text)
                     (talk/send-text token id (tr :essay/thank-you-your-essay-submited))
                     (-> tx
-                        (codax/assoc-at [id :essays essay-code :text] essay-text)
-                        talk/stop-talk))
+                      ;; Store the essay text
+                      (codax/assoc-at [id :essays essay-code :text] essay-text)
+                      ;; Record in history that it was reuploaded if it's a reupload
+                      (codax/update-at [id :essays essay-code :history]
+                        (fn [history]
+                          (conj (or history []) 
+                                (if (some? history)
+                                  {:action :reupload :date (misc/today-str-utc)}
+                                  {:action :submit :date (misc/today-str-utc)}))))
+                      talk/stop-talk)
           "no" (talk/send-stop tx token id)
           (talk/clarify-input tx token id (format (tr :talk/clarify-input-tmpl) text)))))))
 
