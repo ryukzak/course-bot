@@ -108,6 +108,7 @@
         (essay/is-uploaded "essay2")
         (essay/is-review-uploaded "essay2")
         (constantly nil)
+        (pres/submition-info "lab1")
         ;; (essay/is-uploaded "essay3")
         ;; (essay/is-review-uploaded "essay3")
         )
