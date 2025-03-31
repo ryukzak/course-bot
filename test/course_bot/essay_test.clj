@@ -385,7 +385,7 @@
         (is (answers? (talk 1 "bad-bad-bad essay, please, take a look")
               "Your report text + reviewed essays and feedbacks will be send to the teacher. Are you sure?"))
         (is (answers? (talk 1 "yes")
-              [0 "Abuse report received:"]
+              [0 "Abuse report received: bad-bad-bad essay, please, take a look"]
               [0 '{:essay-code "essay1",
                    :report-author "Name: u1; Group: gr1; Telegram ID: 1",
                    :report "bad-bad-bad essay, please, take a look",

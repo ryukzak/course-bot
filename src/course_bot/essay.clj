@@ -479,13 +479,13 @@
                 :no-assignments "No assignments for this essay, how you can report abuse?"
                 :describe-essay-or-review-problem "Describe whats wrong with essay or review on your essay in one text message (with quote of problem place)?"
                 :report-approve? "Your report text + reviewed essays and feedbacks will be send to the teacher. Are you sure?"
-                :abusereport-received "Abuse report received:"
+                :abusereport-received-:report "Abuse report received: %s"
                 :report-sent "Your report was sent to the teacher. Thank you!"}}
    :ru {:essay {:reportabuse-cmd-info-:essay-name "Пожаловаться на нарушение в эссе или ревью в '%s'"
                 :no-assignments "Нет назначений для этого эссе, как вы можете сообщить о нарушении?"
                 :describe-essay-or-review-problem "Опишите, что не так с эссе или ревью на ваше эссе в одном текстовом сообщении (с цитатой места проблемы)?"
                 :report-approve? "Ваш текст + проверенные эссе и отзывы будут отправлены учителю. Вы уверены?"
-                :abusereport-received "Получено сообщение о нарушении:"
+                :abusereport-received-:report "Получено сообщение о нарушении: %s"
                 :report-sent "Ваша жалоба была отправлена учителю. Спасибо!"}}})
 
 (defn reportabuse-talk [db {token :token admin-chat-id :admin-chat-id} essay-code]
@@ -524,7 +524,8 @@
                                                         {:author (general/whoami tx review-author)
                                                          :text feedback})))}]
 
-                  (talk/send-text token admin-chat-id (tr :essay/abusereport-received))
+                  (talk/send-text token admin-chat-id (format (tr :essay/abusereport-received-:report)
+                                                        report))
                   (talk/send-as-document token admin-chat-id
                     (str id "abuse-report.edn")
                     (misc/doall* full-report))
