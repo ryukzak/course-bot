@@ -88,6 +88,7 @@
   (talk/def-command db "whoami" (tr :general/who-am-i-info)
     ;; TODO: add check for specific id by admin only
     (fn [tx {{id :id} :from}]
+      (talk/send-text token id (str id))
       (send-whoami tx token {:to id
                              :about id
                              :terms (concat [whoami (constantly nil)] details)})

@@ -93,6 +93,7 @@ description - Descriptions for supported commands"])))
       (testing "register user for restart"
         (talk 1 "/start" "Bot Botovich" "gr1")
         (is (answers? (talk 1 "/whoami")
+              "1"
               "Name: Bot Botovich; Group: gr1; Telegram ID: 1"))
         (is (answers? (talk 1 "/start")
               "Hi, I'm a bot for your course. I will help you with your work. What is your name (like in the registry)?"))

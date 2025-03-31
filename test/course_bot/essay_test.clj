@@ -131,6 +131,7 @@
                  [1 2 3 4]
                  ["u1" "u2" "u3" "u4"]))
         (is (answers? (talk 1 "/whoami")
+              "1"
               (tt/unlines "Name: u1; Group: gr1; Telegram ID: 1"
                 ""
                 "Essay essay1 uploaded: false"
@@ -139,6 +140,7 @@
                  [1 2 3 4]))
 
         (is (answers? (talk 1 "/whoami")
+              "1"
               (tt/unlines "Name: u1; Group: gr1; Telegram ID: 1"
                 ""
                 "Essay essay1 uploaded: true"
@@ -315,6 +317,7 @@
               (codax/get-at! db [4 :essays "essay1" :received-review]))))
 
       (is (answers? (talk 1 "/whoami")
+            "1"
             (tt/unlines "Name: u1; Group: gr1; Telegram ID: 1"
               ""
               "Essay essay1 uploaded: true"
