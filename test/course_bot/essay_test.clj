@@ -527,3 +527,106 @@
     (is (= 4 (essay/calculate-essay-score [3])))
     (is (= 4 (essay/calculate-essay-score [3 3])))
     (is (= 4 (essay/calculate-essay-score [3 3 3])))))
+
+(deftest essay-reupload-test
+  (let [conf (misc/get-config "conf-example/csa-2023.edn")
+        db (tt/test-database (-> conf :db-path))
+        plagiarism-db (tt/test-plagiarsm-database (-> conf :plagiarism-path))
+
+        {talk :talk, *chat :*chat}
+        (tt/test-handler (general/start-talk db conf)
+          (essay/submit-talk db conf "essay1" plagiarism-db)
+          (essay/assignreviewers-talk db conf "essay1"))]
+
+    (tt/with-mocked-morse *chat
+      ;; Register three users
+      (doseq [[id name] [[1 "Alice"] [2 "Bob"] [3 "Charlie"]]]
+        (testing (str "Register user " name)
+          (talk id "/start")
+          (talk id name)
+          (talk id "gr1")))
+
+      ;; Test scenario 1: First-time essay submission
+      (testing "First-time essay submission"
+      (talk 1 "/essay1submit")
+      (is (answers? (talk 1 (format (tr :essay/send-essay-text-in-one-message-:essay-name) "essay1"))
+            "Alice's essay text"))
+      
+      (is (answers? (talk 1 (tr :essay/text-of-your-essay)
+                        "Alice's essay text"
+                        ">>>>>>>>>>>>>>>>>>>>"
+                        (tr :essay/is-loading-question))))
+      
+      (is (answers? (talk 1 "yes")
+            (tr :essay/thank-you-your-essay-submited))))
+
+      ;; Test scenario 2: Reupload before reviewers assigned
+      (testing "Reupload before reviewers assigned"
+      (is (answers? (talk 1 "/essay1submit")
+            (format (tr :essay/reupload-confirmation-:essay-name) "essay1")
+            (tr :essay/reupload-question)))
+      
+      ;; User cancels reupload
+      (is (answers? (talk 1 "no")
+            (tr :talk/cancelled)))
+      
+      ;; User tries again and confirms
+      (talk 1 "/essay1submit")
+      (is (answers? (talk 1 "yes")
+            (format (tr :essay/send-essay-text-in-one-message-:essay-name) "essay1")))
+      
+      (talk 1 "Alice's updated essay text")
+      (is (answers? (talk 1 "yes")
+            (tr :essay/thank-you-your-essay-submited))))
+
+      ;; Submit essays from other users
+      (testing "Submit essays from other users"
+      (talk 2 "/essay1submit")
+      (talk 2 "Bob's essay text") 
+      (talk 2 "yes")
+      
+      (talk 3 "/essay1submit")
+      (talk 3 "Charlie's essay text")
+      (talk 3 "yes"))
+
+      ;; Test scenario 3: Reupload after reviewers assigned
+      (testing "Reupload after reviewers assigned"
+      ;; Admin assigns reviewers
+      (talk 0 "/essay1assignreviewers")
+      (talk 0 "yes")
+      
+      ;; Verify that Alice can't reupload now
+      (is (answers? (talk 1 "/essay1submit")
+            (tr :essay/reupload-not-allowed-reviewers-assigned))))
+
+      ;; Test history tracking of reupload
+      (testing "History tracking of reupload"
+        (let [history (codax/get-at! db [1 :essays "essay1" :history])]
+          (is (= 2 (count history)))
+          (is (= :submit (:action (first history))))
+          (is (= :reupload (:action (second history))))))
+      
+      ;; Test that the essay content was actually updated
+      (testing "Essay content was updated"
+        (is (= "Alice's updated essay text" 
+               (codax/get-at! db [1 :essays "essay1" :text]))))
+      
+      ;; Verify the plagiarism detection works during reupload
+      (testing "Plagiarism check during reupload"
+        ;; Register a text in the plagiarism database
+        (plagiarism/register-text! plagiarism-db "test-key" "Plagiarized content here")
+        
+        ;; Try to reupload with plagiarized content for user without assigned reviewers
+        (talk 0 "/essay1assignreviewers") ;; This assigns reviewers to all users
+        
+        ;; Reset the assignments for user to test this scenario
+        (codax/assoc-at! db [3 :essays "essay1" :request-review] [])
+        
+        ;; user tries to reupload with plagiarized content
+        (talk 3 "/essay1submit")
+        (talk 3 "yes")
+        (talk 3 "Plagiarized content here with some modifications")
+        
+        ;; We should see a plagiarism warning
+        (let [history (tt/history *chat :user-id 3)]
+          (is (some #(str/includes? % "plagiarism") history)))))))
