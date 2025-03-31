@@ -239,6 +239,16 @@
            (filter (fn [[_k v]] (-> v :stud-ids empty? not)))
            count))))
 
+(defn submition-info [pres-key-name]
+  (let [pres-key (keyword pres-key-name)]
+    (fn [tx id]
+      (let [pres (codax/get-at tx [id :presentation pres-key])]
+        (format "Group: %s, Submitted: %s, Approved: %s, Scheduled: %s"
+          (-> pres :group)
+          (if (:on-review? pres) "yes" "no")
+          (if (:approved? pres) "yes" "no")
+          (if (:scheduled? pres) "yes" "no"))))))
+
 (defn submit-talk [db {token :token :as conf} pres-key-name]
   (let [cmd (str pres-key-name "submit")
         pres-key (keyword pres-key-name)

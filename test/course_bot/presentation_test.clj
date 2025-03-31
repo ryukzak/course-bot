@@ -56,10 +56,16 @@
         {talk :talk, *chat :*chat}
         (tt/test-handler (general/start-talk db conf)
           (pres/setgroup-talk db conf "lab1")
-          (pres/submit-talk db conf "lab1"))]
+          (pres/submit-talk db conf "lab1")
+          (general/whoami-talk db conf (pres/submition-info "lab1")))]
     (tt/with-mocked-morse *chat
 
       (register-user *chat talk 1 "Bot Botovich")
+      (is (answers? (talk 1 "/whoami")
+            "1"
+            (tt/unlines "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
+              ""
+              "Group: null, Submitted: no, Approved: no, Scheduled: no")))
       (is (answers? (talk 1 "/lab1submit")
             "Please, set your 'Lab 1 presentation' group by /lab1setgroup"))
       (talk 1 "/lab1setgroup")
@@ -92,7 +98,13 @@
                  :group "lgr1"
                  :history '({:date "2022.01.01 11:34 +0000", :action :submit})
                  :on-review? true}}
-              (codax/get-at! db [1 :presentation])))))))
+              (codax/get-at! db [1 :presentation])))
+
+        (is (answers? (talk 1 "/whoami")
+              "1"
+              (tt/unlines "Name: Bot Botovich; Group: gr1; Telegram ID: 1"
+                ""
+                "Group: lgr1, Submitted: yes, Approved: no, Scheduled: no")))))))
 
 (deftest check-and-submissions-talks-test
   (let [conf (misc/get-config "conf-example/csa-2023.edn")
@@ -355,7 +367,8 @@
           (pres/soon-talk db conf "lab1")
           (pres/all-scheduled-descriptions-dump-talk db conf "lab1")
           (pres/drop-talk db conf "lab1" false)
-          (pres/drop-talk db conf "lab1" true))]
+          (pres/drop-talk db conf "lab1" true)
+          (general/whoami-talk db conf (pres/submition-info "lab1")))]
 
     (tt/with-mocked-morse *chat
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 11:30 +0000"))]
@@ -535,6 +548,12 @@
                 ["We will expect for Lab 1 presentation soon:"
                  (tt/unlines "Agenda 2022.02.02 12:00 +0000 (lgr2):"
                    "1. [ | 2022.02.02 | Лаб. | АК-2023 | ПИиКТ | Университет ИТМО]()")]))))
+
+      (is (answers? (talk 1 "/whoami")
+            "1"
+            (tt/unlines "Name: Alice; Group: gr1; Telegram ID: 1"
+              ""
+              "Group: lgr1, Submitted: no, Approved: yes, Scheduled: yes")))
 
       (is (= {:lab1 {:approved? true
                      :description "pres 1"

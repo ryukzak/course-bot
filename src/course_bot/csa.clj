@@ -106,11 +106,11 @@
         (essay/is-review-uploaded "essay1")
         (constantly nil)
         (essay/is-uploaded "essay2")
-
         (essay/is-review-uploaded "essay2")
         (constantly nil)
-        (essay/is-uploaded "essay3")
-        (essay/is-review-uploaded "essay3"))
+        ;; (essay/is-uploaded "essay3")
+        ;; (essay/is-review-uploaded "essay3")
+        )
 
       (general/listgroups-talk db conf)
 
