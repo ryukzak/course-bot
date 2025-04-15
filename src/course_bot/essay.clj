@@ -401,16 +401,16 @@
             score (cond
                     (= n 0) 0
                     (or (nil? deadline) (nil? at)) 2
-                    (< (misc/read-time deadline) (misc/read-time at)) 2
-                    :else 3)]
+                    (< (misc/read-time deadline) (misc/read-time at)) 1
+                    :else 2)]
         (-> score str
             ;; (str/replace #"\." ",")
             )))))
 
 (defn calculate-essay-score [scores]
-  (apply max (map {3 4
-                   2 5
-                   1 5} scores)))
+  (apply max (map {3 1
+                   2 2
+                   1 3} scores)))
 
 (defn essay-score "hardcoded: rank + 1" [essay-code]
   (fn [_tx data id]
@@ -420,7 +420,7 @@
       (cond
         (not (empty? scores)) (calculate-essay-score scores)
 
-        essay-uploaded? 3
+        essay-uploaded? 1
 
         :else 0))))
 
