@@ -775,7 +775,7 @@
 
       :start
       (fn [tx {{id :id} :from text :text}]
-        (general/assert-admin tx conf id)
+        (assert-pres-admin tx conf pres-key id)
         (let [stud-id (talk/command-num-arg text)]
           (when (nil? stud-id)
             (talk/send-text token id (format (tr :pres/wrong-input-:command) cmd))
