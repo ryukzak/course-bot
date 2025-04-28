@@ -208,7 +208,11 @@
     (defroutes bot-routes
       (POST (str "/handler-" webhook-secrete)
         {body :body :as request}
-        (bot-api body)
+        (try
+          (bot-api body)
+          (catch Exception e
+            (println "Error:" (ex-message e))
+            (throw e)))
         "ok")
       (route/not-found "Not Found"))
 
