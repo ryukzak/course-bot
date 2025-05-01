@@ -211,7 +211,7 @@
         (try
           (bot-api body)
           (catch Exception e
-            (println "Error:" (ex-message e))
+            (println "Error:" (ex-message e) "\nStacktrace:" (apply str (interpose "\n" (.getStackTrace e))))
             (throw e)))
         "ok")
       (route/not-found "Not Found"))
