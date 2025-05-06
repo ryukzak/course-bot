@@ -6,7 +6,8 @@
 (s/def ::text string?)
 (s/def ::correct boolean?)
 (s/def ::option (s/keys :req-un [::text] :opt-un [::correct]))
-(s/def ::options (s/coll-of ::option :kind vector?))
+(s/def ::options (s/and (s/coll-of ::option :kind vector?)
+                        #(not-empty %)))
 
 (s/def ::ask string?)
 (s/def ::question (s/keys :req-un [::ask ::options]))
@@ -22,7 +23,7 @@
 (s/def ::topic-msg string?)
 (s/def ::review-msg string?)
 (s/def ::review-deadline string?)
-(s/def ::min-length int?)
+(s/def ::min-length (s/and int? pos?))
 
 (s/def ::essay-config
   (s/keys :req-un [::topic-msg ::review-deadline ::min-length]
@@ -41,7 +42,13 @@
 
 (s/def ::comment string?)
 (s/def ::group (s/keys :req-un [::lessons] :opt-un [::comment]))
-(s/def ::groups (s/map-of string? ::group))
+
+(defn valid-groups? [groups-map]
+  (let [valid-group? (fn [[_group-name group-data]]
+                       (s/valid? ::group group-data))]
+    (every? valid-group? groups-map)))
+
+(s/def ::lab-groups (s/and (s/map-of string? map?) valid-groups?))
 
 (s/def ::stud-id int?)
 (s/def ::presentation (s/keys :req-un [::stud-id ::text]))
@@ -60,7 +67,7 @@
 (s/def ::feedback-scores (s/map-of int? (s/coll-of int? :kind vector?)))
 
 (s/def ::lab-config
-  (s/keys :req-un [::name ::admins ::groups ::feedback-scores]
+  (s/keys :req-un [::name ::admins ::lab-groups ::feedback-scores]
     :opt-un [::submition-hint
              ::schedule-cut-off-time-in-min
              ::agenda-hide-cut-off-time-in-min
@@ -99,8 +106,11 @@
 
 (defn validate-lab-config
   [config]
-  (when-not (s/valid? ::lab-config config)
-    (s/explain-str ::lab-config config)))
+  (let [config-with-lab-groups (if (contains? config :groups)
+                                 (assoc config :lab-groups (:groups config))
+                                 config)]
+    (when-not (s/valid? ::lab-config config-with-lab-groups)
+      (s/explain-str ::lab-config config-with-lab-groups))))
 
 (defn validate-essay-config
   [config]
