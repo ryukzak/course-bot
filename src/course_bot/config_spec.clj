@@ -48,7 +48,13 @@
 (s/def ::presentations (s/coll-of ::presentation :kind vector?))
 (s/def ::lost-lesson (s/keys :req-un [::datetime ::presentations]))
 (s/def ::lost-lessons (s/coll-of ::lost-lesson :kind vector?))
-(s/def ::lost-group (s/keys :req-un [::lessons]))
+
+(defn has-valid-lost-lessons? [group]
+  (and (contains? group :lessons)
+       (s/valid? ::lost-lessons (:lessons group))))
+
+(s/def ::lost-group (s/and (s/keys :req-un [::lessons])
+                           has-valid-lost-lessons?))
 (s/def ::lost-and-found (s/map-of string? ::lost-group))
 
 (s/def ::feedback-scores (s/map-of int? (s/coll-of int? :kind vector?)))
