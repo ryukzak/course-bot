@@ -17,7 +17,7 @@
 
 (s/def ::quiz-config
   (s/keys :req-un [::name ::questions]
-          :opt-un [::ignore-in-score]))
+    :opt-un [::ignore-in-score]))
 
 (s/def ::topic-msg string?)
 (s/def ::review-msg string?)
@@ -26,7 +26,7 @@
 
 (s/def ::essay-config
   (s/keys :req-un [::topic-msg ::review-deadline ::min-length]
-          :opt-un [::review-msg]))
+    :opt-un [::review-msg]))
 
 (s/def ::admins (s/coll-of int? :kind vector?))
 (s/def ::submition-hint string?)
@@ -61,12 +61,12 @@
 
 (s/def ::lab-config
   (s/keys :req-un [::name ::admins ::groups ::feedback-scores]
-          :opt-un [::submition-hint
-                   ::schedule-cut-off-time-in-min
-                   ::agenda-hide-cut-off-time-in-min
-                   ::max-description-length
-                   ::agenda-postfix
-                   ::lost-and-found]))
+    :opt-un [::submition-hint
+             ::schedule-cut-off-time-in-min
+             ::agenda-hide-cut-off-time-in-min
+             ::max-description-length
+             ::agenda-postfix
+             ::lost-and-found]))
 
 (s/def ::admin-chat-id int?)
 (s/def ::token string?)
@@ -89,8 +89,8 @@
                    ::lab1
                    ::essay1
                    ::quiz]
-           :opt-un [::can-receive-reports
-                    ::allow-restart]))
+    :opt-un [::can-receive-reports
+             ::allow-restart]))
 
 (defn validate-csa-config
   [config]
@@ -112,7 +112,7 @@
   (when-not (s/valid? ::quiz-config config)
     (s/explain-str ::quiz-config config)))
 
-(defn test-validation 
+(defn test-validation
   ([file]
    (let [filename (.getName (clojure.java.io/file file))
          config-type (cond
@@ -138,4 +138,4 @@
          false)
        (do
          (println "Validation successful!")
-         true))))) 
+         true)))))

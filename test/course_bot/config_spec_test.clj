@@ -1,8 +1,8 @@
 (ns course-bot.config-spec-test
-  (:require [clojure.test :refer [deftest testing is are]]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.test :refer [deftest testing is are]]
             [course-bot.config-spec :as config-spec]
-            [course-bot.misc :as misc]
-            [clojure.spec.alpha :as s]))
+            [course-bot.misc :as misc]))
 
 (defn test-valid-config [file validator message]
   (let [conf (read-string (slurp file))]
@@ -13,35 +13,35 @@
 
 (deftest config-validation-test
   (testing "Validation of correct configs"
-    (test-valid-config "conf-example/csa-2023.edn" config-spec/validate-csa-config 
-                      "Valid config should pass validation")
-    (test-valid-config "conf-example/lab1.edn" config-spec/validate-lab-config 
-                      "Valid lab config should pass validation")
-    (test-valid-config "conf-example/essay1.edn" config-spec/validate-essay-config 
-                      "Valid essay config should pass validation")
-    (test-valid-config "conf-example/quiz/test-quiz.edn" config-spec/validate-quiz-config 
-                      "Valid quiz config should pass validation"))
-  
+    (test-valid-config "conf-example/csa-2023.edn" config-spec/validate-csa-config
+      "Valid config should pass validation")
+    (test-valid-config "conf-example/lab1.edn" config-spec/validate-lab-config
+      "Valid lab config should pass validation")
+    (test-valid-config "conf-example/essay1.edn" config-spec/validate-essay-config
+      "Valid essay config should pass validation")
+    (test-valid-config "conf-example/quiz/test-quiz.edn" config-spec/validate-quiz-config
+      "Valid quiz config should pass validation"))
+
   (testing "Validation of incorrect configs"
-    (test-invalid-config 
-      {:admin-chat-id "not-a-number", :token 123, :db-path 123, 
-       :plagiarism-path "./tmp/test/plagiarism", :groups {"gr1" {}}, 
-       :lab1 [:inline "lab1.edn"], :essay1 [:inline "essay1.edn"], 
-       :quiz {:test-quiz [:inline "quiz/test-quiz.edn"]}}
-      config-spec/validate-csa-config 
-      "Invalid config should not pass validation")
-    
     (test-invalid-config
-      {:name 123, :admins ["not-a-number"], 
+      {:admin-chat-id "not-a-number", :token 123, :db-path 123,
+       :plagiarism-path "./tmp/test/plagiarism", :groups {"gr1" {}},
+       :lab1 [:inline "lab1.edn"], :essay1 [:inline "essay1.edn"],
+       :quiz {:test-quiz [:inline "quiz/test-quiz.edn"]}}
+      config-spec/validate-csa-config
+      "Invalid config should not pass validation")
+
+    (test-invalid-config
+      {:name 123, :admins ["not-a-number"],
        :groups {"lgr1" {:lessons [{:datetime 123}]}}, :feedback-scores {1 [2]}}
       config-spec/validate-lab-config
       "Invalid lab config should not pass validation")
-    
+
     (test-invalid-config
       {:topic-msg 123, :review-deadline 123, :min-length "not-a-number"}
       config-spec/validate-essay-config
       "Invalid essay config should not pass validation")
-    
+
     (test-invalid-config
       {:name 123, :questions [{:ask 123, :options [{:text 123}]}]}
       config-spec/validate-quiz-config
@@ -59,4 +59,4 @@
 (deftest complete-config-validation-test
   (testing "Loading complete config with embedded files"
     (is (map? (misc/get-config "conf-example/csa-2023.edn"))
-        "Complete config with embedded files should load without errors"))) 
+      "Complete config with embedded files should load without errors")))
