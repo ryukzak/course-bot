@@ -1,5 +1,4 @@
 {:parallel? true
- :remove-multiple-non-indenting-spaces? true
  :remove-surrounding-whitespace? true
  :remove-trailing-whitespace? true
  :sort-ns-references? true

@@ -189,6 +189,7 @@
         "essay2-reviews" (essay/review-score conf "essay2")
         "essay3" (essay/essay-score "essay3")
         "essay3-reviews" (essay/review-score conf "essay3")
+        "lab1-lesson-number" (pres/lesson-number "lab1")
         ;; "stud-chat" report/stud-chat
         ;; "stud-old-info" report/stud-old-info
         )

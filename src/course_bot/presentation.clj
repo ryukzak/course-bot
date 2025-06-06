@@ -875,6 +875,19 @@
            (filter #(-> % second :stud-ids empty? not))
            count))))
 
+(defn lesson-number [pres-name]
+  (fn [_tx data id]
+    (let [pres-key (keyword pres-name)
+          group (-> data (get id) :presentation (get pres-key) :group)
+          schedule (-> data :presentation (get pres-key) (get group))
+          pres-day (->> schedule
+                        (map vector (map inc (range)))
+                        (some (fn [[i [dt desc]]]
+                                (when (some #(= id %) (:stud-ids desc))
+                                  i))))]
+      (prn schedule)
+      pres-day)))
+
 (defn scheduled-descriptions-dump [data pres-key group]
   (->> data
        (filter #(and (-> % second :presentation (get pres-key) :group (= group))
