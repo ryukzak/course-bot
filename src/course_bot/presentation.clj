@@ -885,7 +885,6 @@
                         (some (fn [[i [dt desc]]]
                                 (when (some #(= id %) (:stud-ids desc))
                                   i))))]
-      (prn schedule)
       pres-day)))
 
 (defn scheduled-descriptions-dump [data pres-key group]
