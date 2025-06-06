@@ -1015,20 +1015,20 @@
 (deftest report-lesson-number-test
   (let [conf (-> (misc/get-config "conf-example/csa-2023.edn")
                  (update-in [:lab1 :groups "lgr1" :lessons]
-                            concat [{:datetime "2022.01.01 10:00 +0000"}
-                                    {:datetime "2022.01.01 11:00 +0000"}]))
+                   concat [{:datetime "2022.01.01 10:00 +0000"}
+                           {:datetime "2022.01.01 11:00 +0000"}]))
         db (tt/test-database (-> conf :db-path))
 
         {talk :talk *chat :*chat}
         (tt/test-handler (general/start-talk db conf)
-                         (pres/setgroup-talk db conf "lab1")
-                         (pres/submit-talk db conf "lab1")
-                         (pres/check-talk db conf "lab1")
-                         (pres/schedule-talk db conf "lab1")
-                         (report/report-talk db conf
-                                             "ID" report/stud-id
-                                             "lesson-counter" (pres/lesson-count "lab1")
-                                             "lesson-n" (pres/lesson-number "lab1")))]
+          (pres/setgroup-talk db conf "lab1")
+          (pres/submit-talk db conf "lab1")
+          (pres/check-talk db conf "lab1")
+          (pres/schedule-talk db conf "lab1")
+          (report/report-talk db conf
+            "ID" report/stud-id
+            "lesson-counter" (pres/lesson-count "lab1")
+            "lesson-n" (pres/lesson-number "lab1")))]
     (tt/with-mocked-morse *chat
       (register-user *chat talk 1 "Alice")
       (talk 1 "/lab1setgroup")
@@ -1036,21 +1036,21 @@
       (talk 1 "/lab1submit")
       (talk 1 "pres 1")
       (is (answers? (talk 1 "yes")
-                    "Registered, the teacher will check it soon."))
+            "Registered, the teacher will check it soon."))
       (register-user *chat talk 2 "Bob")
       (talk 2 "/lab1setgroup")
       (talk 2 "lgr1")
       (talk 2 "/lab1submit")
       (talk 2 "pres 2")
       (is (answers? (talk 2 "yes")
-                    "Registered, the teacher will check it soon."))
+            "Registered, the teacher will check it soon."))
       (register-user *chat talk 3 "Charly")
       (talk 3 "/lab1setgroup")
       (talk 3 "lgr1")
       (talk 3 "/lab1submit")
       (talk 3 "pres 2")
       (is (answers? (talk 3 "yes")
-                    "Registered, the teacher will check it soon."))
+            "Registered, the teacher will check it soon."))
 
       (talk 0 "/lab1check")
       (talk 0 "yes")
@@ -1064,23 +1064,23 @@
       (with-redefs [misc/today (fn [] (misc/read-time "2022.01.01 8:00 +0000"))]
         (talk 1 "/lab1schedule")
         (is (answers? (talk 1 "2022.01.01 12:00 +0000")
-                      "OK, you can check it by: /lab1agenda"))
+              "OK, you can check it by: /lab1agenda"))
 
         (talk 2 "/lab1schedule")
         (is (answers? (talk 2 "2022.01.02 12:00 +0000")
-                      "OK, you can check it by: /lab1agenda"))
+              "OK, you can check it by: /lab1agenda"))
 
         (talk 3 "/lab1schedule")
         (is (answers? (talk 3 "2022.01.01 11:00 +0000")
-                      "OK, you can check it by: /lab1agenda")))
+              "OK, you can check it by: /lab1agenda")))
 
       (testing "report without feedback"
         (talk 0 "/report")
         (tt/match-csv *chat 0
-                      ["ID"  "lesson-counter" "lesson-n"]
-                      ["1"   "3"              "2"]
-                      ["2"   "3"              "3"]
-                      ["3"   "3"              "1"])))))
+          ["ID"  "lesson-counter" "lesson-n"]
+          ["1"   "3"              "2"]
+          ["2"   "3"              "3"]
+          ["3"   "3"              "1"])))))
 
 (deftest lost-and-found-talks-test
   (with-redefs [shuffle identity]
