@@ -1,7 +1,8 @@
 (ns course-bot.misc
   (:require [clojure.java.io :as io]
             [clojure.pprint :as pprint]
-            [codax.core :as codax]))
+            [codax.core :as codax]
+            [course-bot.config-spec :as config-spec]))
 
 (defn pp-str [content]
   (with-out-str (pprint/pprint content)))
@@ -11,17 +12,37 @@
 
 (declare get-config)
 
+(defn validate-config [config path]
+  (let [filename (.getName (io/file path))
+        config-type (cond
+                      (re-matches #"(?i).*csa.*\.edn" filename) [:csa config-spec/validate-csa-config "main configuration file"]
+                      (re-matches #"lab\d+\.edn" filename) [:lab config-spec/validate-lab-config "lab configuration file"]
+                      (re-matches #"essay\d+\.edn" filename) [:essay config-spec/validate-essay-config "essay configuration file"]
+                      (re-matches #"test-quiz.*\.edn" filename) [:quiz config-spec/validate-quiz-config "quiz configuration file"]
+                      :else nil)]
+    (when config-type
+      (let [[type-key validator error-msg] config-type]
+        (when-let [error (validator config)]
+          (println (str "Error in " error-msg ": " path))
+          (println error)
+          (System/exit 1))))))
+
 (defn inline [path conf]
   (cond (map? conf) (update-vals conf
                       (fn [v]
                         (if-let [sub-conf (inline? v)]
-                          (inline path (read-string (slurp (str path "/" sub-conf))))
+                          (let [sub-path (str path "/" sub-conf)
+                                sub-config (read-string (slurp sub-path))]
+                            (validate-config sub-config sub-path)
+                            (inline path sub-config))
                           (inline path v))))
+        (vector? conf) (mapv #(inline path %) conf)
         :else conf))
 
 (defn get-config [filename]
   (let [path (-> (io/file filename) .getAbsolutePath io/file .getParent)
         conf (read-string (slurp filename))]
+    (validate-config conf filename)
     (inline path conf)))
 
 (defn today [] (.getTime (new java.util.Date)))
